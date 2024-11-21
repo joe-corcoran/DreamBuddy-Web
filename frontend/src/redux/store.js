@@ -6,11 +6,19 @@ import {
   combineReducers,
 } from "redux";
 import thunk from "redux-thunk";
-import logger from "redux-logger"; // Regular import
+import logger from "redux-logger";
 import sessionReducer from "./session";
+import dreamsReducer from "./dreams";
+import characterReducer from "./character";
+import dreamscapesReducer from "./dreamscapes";
+import insightsReducer from "./insights";
 
 const rootReducer = combineReducers({
   session: sessionReducer,
+  dreams: dreamsReducer,
+  character: characterReducer,
+  dreamscapes: dreamscapesReducer,
+  insights: insightsReducer
 });
 
 let enhancer;

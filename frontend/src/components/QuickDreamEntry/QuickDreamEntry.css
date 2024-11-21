@@ -1,0 +1,78 @@
+/* frontend/src/components/QuickDreamEntry/QuickDreamEntry.css */
+
+.quick-dream-entry {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .quick-dream-title {
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+  }
+  
+  .quick-dream-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .dream-input-container {
+    position: relative;
+  }
+  
+  .dream-input {
+    width: 100%;
+    min-height: 80px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    color: white;
+    font-size: 16px;
+    resize: vertical;
+  }
+  
+  .dream-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .save-dream-btn {
+    background: linear-gradient(to right, #4a90e2, #357abd);
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  
+  .save-dream-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+  
+  .save-dream-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
+  .success-message {
+    color: #4caf50;
+    background: rgba(76, 175, 80, 0.1);
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+    text-align: center;
+  }
+  
+  .error-message {
+    color: #f44336;
+    background: rgba(244, 67, 54, 0.1);
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+    text-align: center;
+  }

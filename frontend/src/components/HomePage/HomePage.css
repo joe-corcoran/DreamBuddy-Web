@@ -1,0 +1,191 @@
+/* frontend/src/components/HomePage/HomePage.css */
+
+.home-container {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #000000 0%, #1a1a2e 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .stars-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+  }
+  
+  .star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle 2s infinite;
+  }
+  
+  @keyframes twinkle {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  
+  .content-container {
+    position: relative;
+    z-index: 2;
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+  }
+  
+  .app-title {
+    color: white;
+    font-size: 2rem;
+    text-align: center;
+    margin: 0;
+  }
+  
+  .profile-icon, .reality-check-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    opacity: 0.8;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  
+  .profile-icon:hover, .reality-check-icon:hover {
+    opacity: 1;
+  }
+  
+  .main-content {
+    padding: 20px 0;
+  }
+  
+  .character-status {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .status-bar {
+    margin-bottom: 15px;
+  }
+  
+  .status-bar label {
+    color: white;
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  .progress-bar {
+    background: rgba(255, 255, 255, 0.1);
+    height: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+  }
+  
+  .progress-fill.happiness {
+    background: linear-gradient(to right, #ffd700, #ffa500);
+  }
+  
+  .progress-fill.health {
+    background: linear-gradient(to right, #4caf50, #45a049);
+  }
+  
+  .loading-spinner {
+    color: white;
+    text-align: center;
+    padding: 20px;
+  }
+
+
+.auth-prompt {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    color: white;
+    margin: 20px;
+  }
+  
+  .auth-prompt h2 {
+    margin-bottom: 15px;
+    font-size: 1.8rem;
+  }
+  
+  .auth-prompt p {
+    margin-bottom: 20px;
+    opacity: 0.8;
+  }
+  
+  .auth-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+  }
+  
+  .auth-button {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s;
+  }
+  
+  .auth-button:first-child {
+    background: linear-gradient(to right, #4a90e2, #357abd);
+    color: white;
+  }
+  
+  .auth-button:last-child {
+    background: linear-gradient(to right, #6c757d, #495057);
+    color: white;
+  }
+  
+  .auth-button:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* Update modal styles to match the theme */
+  #modal-content {
+    background-color: #1a1a2e;
+    border-radius: 20px;
+    padding: 20px;
+    color: white;
+  }
+  
+  /* Mobile responsiveness */
+  @media (max-width: 600px) {
+    .content-container {
+      padding: 10px;
+    }
+    
+    .app-title {
+      font-size: 1.5rem;
+    }
+    
+    .character-status {
+      margin: 10px;
+      padding: 15px;
+    }
+  }
