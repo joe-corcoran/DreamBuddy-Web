@@ -1,5 +1,16 @@
+//frontend/src/redux/session.js
+
 const SET_USER = 'session/setUser';
 const REMOVE_USER = 'session/removeUser';
+
+const getCookie = (name) => {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [cookieName, cookieValue] = cookie.trim().split('=');
+    if (cookieName === name) return cookieValue;
+  }
+  return null;
+};
 
 const setUser = (user) => ({
   type: SET_USER,
@@ -25,7 +36,10 @@ export const thunkAuthenticate = () => async (dispatch) => {
 export const thunkLogin = (credentials) => async dispatch => {
   const response = await fetch("/api/auth/login", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "XSRF-TOKEN": getCookie("XSRF-TOKEN")
+    },
     body: JSON.stringify(credentials)
   });
 
@@ -43,7 +57,10 @@ export const thunkLogin = (credentials) => async dispatch => {
 export const thunkSignup = (user) => async (dispatch) => {
   const response = await fetch("/api/auth/signup", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "XSRF-TOKEN": getCookie("XSRF-TOKEN")
+    },
     body: JSON.stringify(user)
   });
 
