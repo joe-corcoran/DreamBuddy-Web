@@ -159,6 +159,73 @@
   .close-button:hover {
     background: rgba(255, 255, 255, 0.2);
   }
+
+  .interpretation-types {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .type-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    background-color: var(--type-color);
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+  }
+  
+  .type-button:hover {
+    transform: translateY(-2px);
+    opacity: 1 !important;
+  }
+  
+  .type-button.selected {
+    box-shadow: 0 0 10px var(--type-color);
+  }
+  
+  .interpretation-content {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+  }
+  
+  .interpretation-content p {
+    color: white;
+    line-height: 1.6;
+    margin: 0;
+  }
+  
+  .loading {
+    text-align: center;
+    color: white;
+    padding: 20px;
+  }
+  
+  .generate-button {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #4a90e2, #357abd);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    font-size: 1rem;
+  }
+  
+  .generate-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+  
+  .generate-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
   
   @media (max-width: 768px) {
     .modal-content {

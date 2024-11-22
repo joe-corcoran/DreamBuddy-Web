@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.models import db, DreamJournal, DreamTags
 from app.forms.dream_form import DreamForm
-from datetime import datetime
+from datetime import datetime, date
 from sqlalchemy import func
 import logging
 

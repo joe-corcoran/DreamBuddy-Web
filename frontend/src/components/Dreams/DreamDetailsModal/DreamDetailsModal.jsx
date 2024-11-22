@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useModal } from '../../../context/Modal';
+import { generateInterpretation, setTypeInterpretation } from '../../../redux/interpretations';
 import './DreamDetailsModal.css';
+
+const InterpretationType = {
+  SPIRITUAL: 'spiritual',
+  PRACTICAL: 'practical',
+  EMOTIONAL: 'emotional',
+  ACTIONABLE: 'actionable',
+  LUCID: 'lucid'
+};
 
 const DreamDetailsModal = ({ date, dreams }) => {
   const dispatch = useDispatch();
@@ -9,58 +18,58 @@ const DreamDetailsModal = ({ date, dreams }) => {
   const [isDreamDetailsExpanded, setIsDreamDetailsExpanded] = useState(true);
   const [isDreamscapeExpanded, setIsDreamscapeExpanded] = useState(false);
   const [isInterpretationsExpanded, setIsInterpretationsExpanded] = useState(false);
+  const [selectedType, setSelectedType] = useState(InterpretationType.ACTIONABLE);
+  
+  const interpretations = useSelector(state => state.interpretations.byType);
+  const isLoading = useSelector(state => state.interpretations.isLoading);
 
-  const handlePreviousDay = () => {
-    const newDate = new Date(date);
-    newDate.setDate(date.getDate() - 1);
-    // Update dreams for new date - implement this after checking your preferences
+  const handleGenerateInterpretation = async () => {
+    if (dreams.length === 0) return;
+
+    const dreamIds = dreams.map(dream => dream.id);
+    const result = await dispatch(generateInterpretation(dreamIds, selectedType));
+    
+    if (result?.interpretation) {
+      dispatch(setTypeInterpretation(selectedType, result.interpretation));
+    }
   };
 
-  const handleNextDay = () => {
-    const newDate = new Date(date);
-    newDate.setDate(date.getDate() + 1);
-    // Update dreams for new date - implement this after checking your preferences
+  const getCurrentInterpretation = () => interpretations[selectedType];
+
+  const typeColors = {
+    [InterpretationType.SPIRITUAL]: '#9b59b6',
+    [InterpretationType.PRACTICAL]: '#3498db',
+    [InterpretationType.EMOTIONAL]: '#e74c3c',
+    [InterpretationType.ACTIONABLE]: '#2ecc71',
+    [InterpretationType.LUCID]: '#f1c40f'
   };
 
   return (
     <div className="dream-details-modal">
       <div className="stars-background">
         {[...Array(50)].map((_, i) => (
-          <div
-            key={i}
-            className="star"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 2}s`,
-            }}
-          />
+          <div key={i} className="star" style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 2}s`,
+          }} />
         ))}
       </div>
 
       <div className="modal-content">
         {/* Date Navigation */}
         <div className="date-navigation">
-          <button onClick={handlePreviousDay}>
-            <i className="fas fa-chevron-left" />
-          </button>
           <h2>{date.toLocaleDateString('en-US', { 
             weekday: 'long',
             year: 'numeric', 
             month: 'long', 
             day: 'numeric' 
           })}</h2>
-          <button onClick={handleNextDay}>
-            <i className="fas fa-chevron-right" />
-          </button>
         </div>
 
         {/* Dream Details Section */}
         <div className="collapsible-section">
-          <div 
-            className="section-header"
-            onClick={() => setIsDreamDetailsExpanded(!isDreamDetailsExpanded)}
-          >
+          <div className="section-header" onClick={() => setIsDreamDetailsExpanded(!isDreamDetailsExpanded)}>
             <h3>Dream Details</h3>
             <i className={`fas fa-chevron-${isDreamDetailsExpanded ? 'up' : 'down'}`} />
           </div>
@@ -84,38 +93,44 @@ const DreamDetailsModal = ({ date, dreams }) => {
           )}
         </div>
 
-        {/* Dreamscape Section */}
-        <div className="collapsible-section">
-          <div 
-            className="section-header"
-            onClick={() => setIsDreamscapeExpanded(!isDreamscapeExpanded)}
-          >
-            <h3>Dreamscape</h3>
-            <i className={`fas fa-chevron-${isDreamscapeExpanded ? 'up' : 'down'}`} />
-          </div>
-          {isDreamscapeExpanded && (
-            <div className="section-content dreamscape-section">
-              <button className="generate-button">
-                Generate Dreamscape
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* Interpretations Section */}
         <div className="collapsible-section">
-          <div 
-            className="section-header"
-            onClick={() => setIsInterpretationsExpanded(!isInterpretationsExpanded)}
-          >
+          <div className="section-header" onClick={() => setIsInterpretationsExpanded(!isInterpretationsExpanded)}>
             <h3>Interpretations</h3>
             <i className={`fas fa-chevron-${isInterpretationsExpanded ? 'up' : 'down'}`} />
           </div>
           {isInterpretationsExpanded && (
             <div className="section-content interpretations-section">
-              <button className="generate-button">
-                Generate Interpretation
-              </button>
+              <div className="interpretation-types">
+                {Object.values(InterpretationType).map(type => (
+                  <button
+                    key={type}
+                    className={`type-button ${selectedType === type ? 'selected' : ''}`}
+                    style={{ 
+                      '--type-color': typeColors[type],
+                      opacity: selectedType === type ? 1 : 0.6 
+                    }}
+                    onClick={() => setSelectedType(type)}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </button>
+                ))}
+              </div>
+
+              {isLoading ? (
+                <div className="loading">Generating {selectedType} interpretation...</div>
+              ) : getCurrentInterpretation() ? (
+                <div className="interpretation-content">
+                  <p>{getCurrentInterpretation().interpretation_text}</p>
+                </div>
+              ) : (
+                <button 
+                  className="generate-button"
+                  onClick={handleGenerateInterpretation}
+                >
+                  Generate {selectedType} Interpretation
+                </button>
+              )}
             </div>
           )}
         </div>

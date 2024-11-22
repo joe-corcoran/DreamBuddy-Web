@@ -11,14 +11,16 @@ import sessionReducer from "./session";
 import dreamsReducer from "./dreams";
 import characterReducer from "./character";
 import dreamscapesReducer from "./dreamscapes";
-import insightsReducer from "./insights";
+import insightsReducer from "./interpretations";
+import interpretationsReducer from "./interpretations";
 
 const rootReducer = combineReducers({
   session: sessionReducer,
   dreams: dreamsReducer,
   character: characterReducer,
   dreamscapes: dreamscapesReducer,
-  insights: insightsReducer
+  insights: insightsReducer,
+  interpretations: interpretationsReducer,
 });
 
 let enhancer;
