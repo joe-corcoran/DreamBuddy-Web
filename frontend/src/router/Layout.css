@@ -1,0 +1,16 @@
+/* frontend/src/router/Layout.css */
+.app-layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    flex: 1;
+    padding-top: 60px; 
+    padding-bottom: 80px; /
+}
+
+#modal {
+    z-index: 1001;
+}

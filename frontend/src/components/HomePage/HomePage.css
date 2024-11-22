@@ -1,11 +1,11 @@
 /* frontend/src/components/HomePage/HomePage.css */
 
 .home-container {
-    min-height: 100vh;
-    background: linear-gradient(180deg, #000000 0%, #1a1a2e 100%);
-    position: relative;
-    overflow: hidden;
-  }
+  min-height: 100vh;
+  background: linear-gradient(180deg, #663399 0%, #1a1a2e 100%);
+  position: relative;
+  overflow: hidden;
+}
   
   .stars-background {
     position: fixed;
@@ -117,6 +117,10 @@
     padding: 20px;
   }
 
+  .text-area.dream-textarea {
+    z-index: 9999;
+    color: black;
+  }
 
 .auth-prompt {
     background: rgba(0, 0, 0, 0.3);
@@ -166,7 +170,6 @@
     transform: translateY(-2px);
   }
   
-  /* Update modal styles to match the theme */
   #modal-content {
     background-color: #1a1a2e;
     border-radius: 20px;
@@ -174,7 +177,32 @@
     color: white;
   }
   
-  /* Mobile responsiveness */
+  /*Homepage quickdream cloud container*/
+
+  .quick-dream-container {
+    position: relative;
+    background-image: url('../../assets/images/homePage_quickDreamEntry_cloud.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: bottom right;
+    min-height: 800px; 
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+  }
+  
+  .quick-dream-container {
+    width: 100%;
+  }
+
+  .quick-dream-entry {
+margin-bottom: 100;
+  }
+  
+
+  /* Mobile @600px */
   @media (max-width: 600px) {
     .content-container {
       padding: 10px;
@@ -188,4 +216,10 @@
       margin: 10px;
       padding: 15px;
     }
+
+      .quick-dream-container {
+    background-size: cover;
+    padding: 10px;
+  }
+
   }

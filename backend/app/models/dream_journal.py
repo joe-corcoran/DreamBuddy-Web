@@ -1,7 +1,7 @@
 # backend/app/models/dream_journal.py
 
 from .db import db
-from datetime import datetime  # Ensure this import is present
+from datetime import datetime  
 
 class DreamJournal(db.Model):
     __tablename__ = 'dream_journals'

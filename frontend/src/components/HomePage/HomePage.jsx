@@ -5,39 +5,17 @@ import { useModal } from "../../context/Modal";
 import LoginFormModal from "../LoginFormModal";
 import SignupFormModal from "../SignupFormModal";
 import QuickDreamEntry from "../QuickDreamEntry/QuickDreamEntry";
-import { useDispatch } from "react-redux";
-import { thunkLogout } from "../../redux/session";
 import "./HomePage.css";
 
 const HomePage = () => {
   const sessionUser = useSelector((state) => state.session.user);
   const [isLoading, setIsLoading] = useState(false);
-  const { setModalContent } = useModal();
-  const dispatch = useDispatch();
+  const { setModalContent } = useModal(); 
 
-  // Character stats (we'll implement these later)
   const characterStats = {
     happiness: 50,
     health: 50,
     streakDays: 0,
-  };
-
-  const openLoginModal = () => {
-    setModalContent(<LoginFormModal />);
-  };
-
-  const openSignupModal = () => {
-    setModalContent(<SignupFormModal />);
-  };
-
-  const handleProfileClick = () => {
-    if (sessionUser) {
-      if (confirm("Are you sure you want to log out?")) {
-        dispatch(thunkLogout());
-      }
-    } else {
-      openLoginModal();
-    }
   };
 
   return (
@@ -58,25 +36,6 @@ const HomePage = () => {
       </div>
 
       <div className="content-container">
-        {/* Header Section */}
-        <div className="header-section">
-          <div
-            className="profile-icon"
-            onClick={handleProfileClick}
-            title={
-              sessionUser ? `Logged in as ${sessionUser.username}` : "Log In"
-            }
-          >
-            <i
-              className={`fas fa-user-circle ${sessionUser ? "logged-in" : ""}`}
-            ></i>
-          </div>
-          <h1 className="app-title">DreamBuddy</h1>
-          <div className="reality-check-icon">
-            <i className="fas fa-eye"></i>
-          </div>
-        </div>
-
         <div className="main-content">
           {isLoading ? (
             <div className="loading-spinner">Loading...</div>
@@ -112,10 +71,16 @@ const HomePage = () => {
               <h2>Welcome to DreamBuddy</h2>
               <p>Please log in or sign up to start journaling your dreams</p>
               <div className="auth-buttons">
-                <button onClick={openLoginModal} className="auth-button">
+                <button
+                  className="auth-button"
+                  onClick={() => setModalContent(<LoginFormModal />)}
+                >
                   Log In
                 </button>
-                <button onClick={openSignupModal} className="auth-button">
+                <button
+                  className="auth-button"
+                  onClick={() => setModalContent(<SignupFormModal />)}
+                >
                   Sign Up
                 </button>
               </div>

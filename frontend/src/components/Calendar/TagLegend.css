@@ -1,0 +1,46 @@
+/* frontend/src/components/Calendar/TagLegend.css */
+.tag-legend {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.tag-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tag-color-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.tag-name {
+    color: white;
+    font-size: 0.9rem;
+}
+
+.show-more-tags {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 5px 10px;
+    margin-top: 10px;
+    transition: color 0.2s ease;
+}
+
+.show-more-tags:hover {
+    color: white;
+}

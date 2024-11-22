@@ -1,0 +1,64 @@
+/* frontend/src/components/Navigation/BottomNavigation.css */
+.bottom-navigation {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(102, 51, 153, 0.95);
+    display: flex;
+    justify-content: space-around;
+    padding: 12px 0;
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.bottom-nav-item {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    flex: 1;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.bottom-nav-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.bottom-nav-item i {
+    font-size: 1.5rem;
+}
+
+.bottom-nav-item span {
+    font-size: 0.8rem;
+}
+
+.bottom-nav-item:hover {
+    color: white;
+    transform: translateY(-2px);
+}
+
+.bottom-nav-item.active {
+    color: white;
+}
+
+.bottom-nav-item.active .bottom-nav-content {
+    transform: scale(1.1);
+}
+
+.content-container {
+    padding-bottom: 80px;
+}
+
+@media (max-width: 480px) {
+    .bottom-nav-item span {
+        font-size: 0.7rem;
+    }
+    
+    .bottom-nav-item i {
+        font-size: 1.2rem;
+    }
+}

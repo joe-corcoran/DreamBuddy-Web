@@ -78,8 +78,8 @@ export const thunkSignup = (user) => async (dispatch) => {
 export const thunkLogout = () => async (dispatch) => {
   await fetch("/api/auth/logout");
   dispatch(removeUser());
+  dispatch(clearDreams());
 };
-
 const initialState = { user: null };
 
 function sessionReducer(state = initialState, action) {
