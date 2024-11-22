@@ -104,9 +104,6 @@ def quick_dream():
 @dream_routes.route('/<int:dream_id>', methods=['PUT'])
 @login_required
 def update_dream(dream_id):
-    """
-    Update a dream entry
-    """
     dream = DreamJournal.query.get_or_404(dream_id)
     if dream.user_id != current_user.id:
         return {'errors': {'unauthorized': 'Dream not found'}}, 404
@@ -120,6 +117,7 @@ def update_dream(dream_id):
             dream.content = form.content.data
             dream.is_lucid = form.is_lucid.data
             dream.updated_at = datetime.utcnow()
+            # Don't update dream.date - keep original date
 
             # Update tags
             DreamTags.query.filter_by(dream_id=dream_id).delete()

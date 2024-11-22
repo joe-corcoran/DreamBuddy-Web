@@ -1,0 +1,168 @@
+/* DreamDetailsModal.css */
+.dream-details-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .modal-content {
+    background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    border-radius: 20px;
+    padding: 20px;
+    overflow-y: auto;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  }
+  
+  .date-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .date-navigation h2 {
+    color: white;
+    margin: 0;
+    font-size: 1.5rem;
+  }
+  
+  .date-navigation button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+  }
+  
+  .date-navigation button:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .collapsible-section {
+    margin-bottom: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .section-header:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .section-header h3 {
+    color: white;
+    margin: 0;
+  }
+  
+  .section-content {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .dream-entry {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .dream-entry h4 {
+    color: white;
+    margin: 0 0 10px 0;
+  }
+  
+  .dream-entry p {
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0 0 10px 0;
+    line-height: 1.5;
+  }
+  
+  .lucid-badge {
+    background: linear-gradient(to right, #ffd700, #ffa500);
+    color: black;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-right: 8px;
+  }
+  
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  
+  .tag {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+  }
+  
+  .generate-button {
+    background: linear-gradient(135deg, #4a90e2, #357abd);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    font-weight: 500;
+    width: 100%;
+  }
+  
+  .generate-button:hover {
+    transform: translateY(-2px);
+  }
+  
+  .close-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .close-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  @media (max-width: 768px) {
+    .modal-content {
+      width: 95%;
+      max-height: 95vh;
+    }
+  }

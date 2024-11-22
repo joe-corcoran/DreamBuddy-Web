@@ -6,13 +6,15 @@ import {
   thunkGetDreamsByMonth,
   thunkGetPopularTags,
 } from '../../redux/dreams';
+import { useModal } from '../../context/Modal'; 
+import DreamDetailsModal from '../Dreams/DreamDetailsModal/DreamDetailsModal';
 import CalendarHeader from './CalendarHeader';
 import DayView from './DayView';
-// import DreamPopover from './DreamPopover';
 import TagLegend from './TagLegend';
 import './DreamCalendar.css';
 
 const DreamCalendar = () => {
+  const { setModalContent } = useModal();
   const dispatch = useDispatch();
   const dreams = useSelector((state) =>
     Object.values(state.dreams.allDreams)
@@ -111,7 +113,12 @@ const DreamCalendar = () => {
     const dreamsForDate = getDreamsForDate(date);
     setSelectedDate(date);
     setSelectedDreams(dreamsForDate);
-    // setShowDreamPopover(true);
+    setModalContent(
+      <DreamDetailsModal 
+        date={date}
+        dreams={dreamsForDate}
+      />
+    );
   };
 
   return (
