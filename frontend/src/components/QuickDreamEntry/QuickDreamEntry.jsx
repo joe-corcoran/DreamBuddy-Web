@@ -7,7 +7,7 @@ import './QuickDreamEntry.css';
 const QuickDreamEntry = () => {
   const dispatch = useDispatch();
   const todayDream = useSelector(state => state.dreams.todayDream);
-  const user = useSelector(state => state.session.user); 
+  const user = useSelector(state => state.session.user);
   const [content, setContent] = useState('');
   const [isLucid, setIsLucid] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -15,34 +15,35 @@ const QuickDreamEntry = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState(null);
 
-
+  // Reset form and check for today's dream when user changes
   useEffect(() => {
-    if (!user) {
-      setContent('');
-      setIsLucid(false);
-    }
-  }, [user]);
-
-   useEffect(() => {
-    const checkTodayDream = async () => {
-      if (user) {
+    setContent('');
+    setIsLucid(false);
+    
+    if (user) {
+      const checkTodayDream = async () => {
         setIsLoading(true);
-        await dispatch(thunkCheckTodayDream());
+        const response = await dispatch(thunkCheckTodayDream());
+        if (!response || response.errors) {
+          setContent('');
+          setIsLucid(false);
+        }
         setIsLoading(false);
-      }
-    };
-    checkTodayDream();
+      };
+      checkTodayDream();
+    }
   }, [dispatch, user]);
 
+  // Update form with today's dream only if user exists
   useEffect(() => {
-    if (todayDream) {
+    if (user && todayDream) {
       setContent(todayDream.content);
       setIsLucid(todayDream.is_lucid);
     } else {
       setContent('');
       setIsLucid(false);
     }
-  }, [todayDream]);
+  }, [todayDream, user]);
 
   const generateTitle = () => {
     const formattedDate = new Date().toLocaleDateString('en-US', { 
@@ -61,7 +62,7 @@ const QuickDreamEntry = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (!content.trim() || !user) return;
 
     setIsLoading(true);
     setError(null);
@@ -97,6 +98,8 @@ const QuickDreamEntry = () => {
       setIsLoading(false);
     }
   };
+
+  if (!user) return null; // Don't render anything if no user
 
   return (
     <div className="quick-dream-entry">

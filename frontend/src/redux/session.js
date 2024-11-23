@@ -75,10 +75,16 @@ export const thunkSignup = (user) => async (dispatch) => {
   }
 };
 
+import { clearAllState } from './store';
+
 export const thunkLogout = () => async (dispatch) => {
-  await fetch("/api/auth/logout");
-  dispatch(removeUser());
-  dispatch(clearDreams());
+  try {
+    await fetch("/api/auth/logout");
+    dispatch(clearAllState());
+    window.location.href = '/';
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
 };
 const initialState = { user: null };
 

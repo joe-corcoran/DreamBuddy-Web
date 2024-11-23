@@ -1,7 +1,7 @@
 // frontend/src/router/Layout.jsx
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import { ModalProvider, Modal } from "../context/Modal";
 import { thunkAuthenticate } from "../redux/session";
 import Navigation from "../components/Navigation/Navigation";
@@ -10,11 +10,19 @@ import "./Layout.css";
 
 export default function Layout() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [isLoaded, setIsLoaded] = useState(false);
+  const user = useSelector(state => state.session.user);
 
   useEffect(() => {
     dispatch(thunkAuthenticate()).then(() => setIsLoaded(true));
   }, [dispatch]);
+
+  useEffect(() => {
+    if (isLoaded && !user && window.location.pathname !== '/') {
+      navigate('/');
+    }
+  }, [user, isLoaded, navigate]);
 
   return (
     <ModalProvider>
@@ -24,7 +32,7 @@ export default function Layout() {
           <main className="main-content">
             <Outlet />
           </main>
-          <BottomNavigation />
+          {user && <BottomNavigation />}
         </div>
       )}
       <Modal />

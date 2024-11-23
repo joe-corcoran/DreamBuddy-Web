@@ -186,6 +186,12 @@ export const thunkGetPopularTags = () => async (dispatch) => {
   }
 };
 
+export const thunkLogout = () => async (dispatch) => {
+  await fetch("/api/auth/logout");
+  dispatch(removeUser());
+  dispatch(clearDreams()); 
+};
+
 // Initial State
 const initialState = {
   allDreams: {},

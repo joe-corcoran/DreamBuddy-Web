@@ -1,10 +1,9 @@
-// frontend/src/router/index.jsx
 import { createBrowserRouter } from 'react-router-dom';
 import Layout from './Layout';
 import HomePage from '../components/HomePage/HomePage';
 import DreamJournal from '../components/Dreams/DreamJournal/DreamJournal';
 import DreamCalendar from '../components/Calendar/DreamCalendar';
-
+import ProtectedRoute from '../components/ProtectedRoute';
 export const router = createBrowserRouter([
   {
     element: <Layout />,
@@ -15,11 +14,19 @@ export const router = createBrowserRouter([
       },
       {
         path: "/journal",
-        element: <DreamJournal />,
+        element: (
+          <ProtectedRoute>
+            <DreamJournal />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "/calendar",
-        element: <DreamCalendar/>,
+        element: (
+          <ProtectedRoute>
+            <DreamCalendar />
+          </ProtectedRoute>
+        ),
       },
     ],
   },

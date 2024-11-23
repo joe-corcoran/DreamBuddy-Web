@@ -15,6 +15,9 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(255), nullable=False, unique=True)
     hashed_password = db.Column(db.String(255), nullable=False)
     dreams = db.relationship('DreamJournal', back_populates='user', cascade='all, delete-orphan')
+    interpretations = db.relationship('DreamInterpretation', 
+                                    back_populates='user',
+                                    cascade='all, delete-orphan')
 
     @property
     def password(self):
