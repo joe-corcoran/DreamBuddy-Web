@@ -14,8 +14,13 @@ from .config import Config
 from .api.dream_routes import dream_routes
 from .api.interpretation_routes import interpretation_routes
 from .api.dreamscape_routes import dreamscape_routes
+import logging 
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+csrf = CSRFProtect(app)
 
 # Setup login manager
 login = LoginManager(app)
@@ -38,36 +43,71 @@ app.register_blueprint(dreamscape_routes, url_prefix='/api/dreamscapes')
 db.init_app(app)
 Migrate(app, db)
 
+
+
 # Application Security
 CORS(app, supports_credentials=True, resources={
     r"/api/*": {
         "origins": ["https://dreambuddy-frontend.onrender.com", "http://localhost:5173"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "X-CSRF-Token", "Authorization", "XSRF-TOKEN"],
+        "allow_headers": ["Content-Type", "X-CSRF-Token", "Authorization"],
         "expose_headers": ["Content-Type", "X-CSRF-Token"],
         "supports_credentials": True
     }
 })
-# HTTPS redirect
-@app.before_request
-def https_redirect():
-    if os.environ.get('FLASK_ENV') == 'production':
-        if request.headers.get('X-Forwarded-Proto') == 'http':
-            url = request.url.replace('http://', 'https://', 1)
-            code = 301
-            return redirect(url, code=code)
 
-# CSRF Token
-@app.after_request
-def inject_csrf_token(response):
+# HTTPS redirect
+@app.route("/api/debug/config")
+def debug_config():
+    """Debug endpoint to check configuration"""
+    if os.environ.get('FLASK_ENV') != 'production':
+        return {
+            "CORS_origins": app.config.get('CORS_ORIGINS'),
+            "cookie_settings": {
+                "secure": os.environ.get('FLASK_ENV') == 'production',
+                "samesite": 'Lax',
+                "domain": ".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None
+            },
+            "environment": os.environ.get('FLASK_ENV'),
+            "database_url_prefix": app.config.get('SQLALCHEMY_DATABASE_URI', 'not-set')[:10] + '...',
+        }
+    return {"message": "Debug endpoint disabled in production"}, 403
+
+@app.route("/api/csrf/refresh", methods=["GET"])
+def refresh_csrf():
+    """Endpoint to get a new CSRF token"""
+    token = generate_csrf()
+    logger.debug(f"Generated new CSRF token")
+    
+    response = jsonify({"status": "success", "csrf_token": token})
     response.set_cookie(
         'csrf_token',
-        generate_csrf(),
+        token,
         secure=True if os.environ.get('FLASK_ENV') == 'production' else False,
-        samesite='Lax' if os.environ.get('FLASK_ENV') == 'production' else None,  # Changed from 'Strict' to 'Lax'
+        samesite='Lax',
         httponly=True,
-        domain=".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None  # Add this line
+        domain=".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None
     )
+    return response
+
+@app.before_request
+def log_request_info():
+    """Log details about each request"""
+    logger.debug('Headers: %s', dict(request.headers))
+    logger.debug('Body: %s', request.get_data())
+    logger.debug('Cookies: %s', dict(request.cookies))
+
+@app.after_request
+def after_request(response):
+    """Log response info and add security headers"""
+    logger.debug('Response Headers: %s', dict(response.headers))
+    logger.debug('Response Status: %s', response.status)
+    
+    # Add security headers
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    
     return response
 
 # API documentation route

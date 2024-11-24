@@ -10,41 +10,46 @@ function LoginFormModal() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
   const { closeModal } = useModal();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setErrors({});
 
-    const serverResponse = await dispatch(
-      thunkLogin({
-        email,
-        password,
-      })
-    );
+    try {
+      const serverResponse = await dispatch(
+        thunkLogin({
+          email,
+          password,
+        })
+      );
 
-    if (serverResponse) {
-      setErrors(serverResponse);
-    } else {
-      closeModal();
+      if (serverResponse) {
+        setErrors(serverResponse);
+      } else {
+        closeModal();
+      }
+    } catch (error) {
+      setErrors({ server: 'An unexpected error occurred. Please try again.' });
+      console.error('Login error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleDemoLogin = async () => {
-    const serverResponse = await dispatch(
-      thunkLogin({
-        email: "demo@aa.io",
-        password: "password",
-      })
-    );
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
-    if (!serverResponse) {
-      closeModal();
-    }
-  };
 
   return (
     <div className="login-form">
       <h1>Log In</h1>
+      {errors.server && (
+        <div className="error-message server-error">{errors.server}</div>
+      )}
       <form onSubmit={handleSubmit}>
         <label>
           Email
