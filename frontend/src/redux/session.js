@@ -20,45 +20,40 @@ const getCookie = (name) => {
 };
 
 const makeRequest = async (url, method = 'GET', body = null) => {
-  const csrfToken = getCookie('csrf_token');
-  
+  // Get CSRF token from cookies
+  const csrfToken = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('csrf_token='))
+    ?.split('=')[1];
+    
+  if (!csrfToken && !url.endsWith('/api/auth/csrf/refresh')) {
+    // Get new CSRF token if missing
+    await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/csrf/refresh`, {
+      credentials: 'include'
+    });
+  }
+
   const options = {
     method,
     headers: {
       'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken
     },
     credentials: 'include',
     body: body ? JSON.stringify(body) : undefined
   };
 
-  // Only add CSRF token if we have one and this is not the initial auth check
-  if (csrfToken && !url.endsWith('/api/auth/')) {
-    options.headers['X-CSRF-Token'] = csrfToken;
-  }
-
-  try {
-    console.log('Making request:', { 
-      url, 
-      method, 
-      headers: options.headers,
-    });
-    
-    const response = await fetch(url, options);
-    
-    if (!response.ok) {
-      // Don't throw for 401 on initial auth check
-      if (response.status === 401 && url.endsWith('/api/auth/')) {
-        return null;
-      }
-      const errorData = await response.json();
-      throw errorData;
+  const response = await fetch(url, options);
+  
+  if (!response.ok) {
+    if (response.status === 401 && url.endsWith('/api/auth/')) {
+      return null;
     }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Request error:', error);
-    throw error;
+    const errorData = await response.json();
+    throw errorData;
   }
+  
+  return await response.json();
 };
 
 export const thunkAuthenticate = () => async (dispatch) => {

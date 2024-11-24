@@ -18,13 +18,14 @@ class Config:
     SQLALCHEMY_ECHO = True
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
     
-    # CSRF Configuration
+     # CSRF Configuration
     WTF_CSRF_ENABLED = True
-    WTF_CSRF_CHECK_DEFAULT = True  # Changed to True
+    WTF_CSRF_CHECK_DEFAULT = True
     WTF_CSRF_TIME_LIMIT = None
+    WTF_CSRF_SSL_STRICT = False  # Add this if using HTTP in development
     
     # Session/Cookie Configuration
-    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production'  # Only require HTTPS in production
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SAMESITE = 'Lax'  # Changed from Strict
-    SESSION_COOKIE_DOMAIN = ".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production'
