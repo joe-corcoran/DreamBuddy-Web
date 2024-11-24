@@ -7,7 +7,6 @@ from app.forms import LoginForm
 from app.forms import SignUpForm
 from flask_login import current_user, login_user, logout_user, login_required
 
-# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -131,7 +130,7 @@ def unauthorized():
    logger.info("Unauthorized access attempt")
    return {'errors': {'message': 'Unauthorized'}}, 401
 
-# Add error handlers
+#error handlers
 @auth_routes.errorhandler(500)
 def internal_server_error(e):
    logger.error(f"Internal server error: {str(e)}")

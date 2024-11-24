@@ -1,79 +1,98 @@
 // frontend/src/redux/dreamscapes.js
+import { OpenAIService } from '../services/openai';
 
 // Action Types
-const SET_DREAMSCAPES = 'dreamscapes/SET_DREAMSCAPES';
-const ADD_DREAMSCAPE = 'dreamscapes/ADD_DREAMSCAPE';
-const REMOVE_DREAMSCAPE = 'dreamscapes/REMOVE_DREAMSCAPE';
+const SET_DREAMSCAPE = "dreamscapes/SET_DREAMSCAPE";
+const SET_LOADING = "dreamscapes/SET_LOADING";
+const SET_ERROR = "dreamscapes/SET_ERROR";
 
 // Action Creators
-const setDreamscapes = (dreamscapes) => ({
-    type: SET_DREAMSCAPES,
-    payload: dreamscapes
+const setDreamscape = (dreamId, imageUrl, prompt) => ({
+  type: SET_DREAMSCAPE,
+  payload: { dreamId, imageUrl, prompt }
 });
 
-const addDreamscape = (dreamscape) => ({
-    type: ADD_DREAMSCAPE,
-    payload: dreamscape
+const setLoading = (isLoading) => ({
+  type: SET_LOADING,
+  payload: isLoading
 });
 
-const removeDreamscape = (id) => ({
-    type: REMOVE_DREAMSCAPE,
-    payload: id
+const setError = (error) => ({
+  type: SET_ERROR,
+  payload: error
 });
 
-// Thunks
-export const thunkGenerateDreamscape = (dreamId, prompt) => async (dispatch) => {
-    const response = await fetch('/api/dreamscapes/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dream_id: dreamId, prompt })
-    });
+// Thunk
+export const generateDreamscape = (dreamId, dreamContent) => async (dispatch) => {
+  dispatch(setLoading(true));
+  dispatch(setError(null));
+
+  try {
+
+    const optimizedPrompt = await OpenAIService.generateDreamscapePrompt(dreamContent);
     
-    if (response.ok) {
-        const newDreamscape = await response.json();
-        dispatch(addDreamscape(newDreamscape));
-        return newDreamscape;
-    }
-};
+    const imageUrl = await OpenAIService.generateDreamscapeImage(optimizedPrompt);
+    
+    const response = await fetch(`/api/dreamscapes/${dreamId}`, {
+        method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        imageUrl,
+        optimizedPrompt
+      })
+    });
 
-export const thunkLoadDreamscapes = () => async (dispatch) => {
-    const response = await fetch('/api/dreamscapes/');
-    if (response.ok) {
-        const dreamscapes = await response.json();
-        dispatch(setDreamscapes(dreamscapes));
+    if (!response.ok) {
+      throw new Error('Failed to save dreamscape');
     }
+
+    dispatch(setDreamscape(dreamId, imageUrl, optimizedPrompt));
+    return { success: true, imageUrl, prompt: optimizedPrompt };
+  } catch (error) {
+    dispatch(setError(error.message));
+    return { errors: { server: error.message } };
+  } finally {
+    dispatch(setLoading(false));
+  }
 };
 
 // Initial State
 const initialState = {
-    allDreamscapes: {},
-    currentDreamscape: null
+  byDreamId: {},
+  isLoading: false,
+  error: null
 };
 
 // Reducer
 export default function dreamscapesReducer(state = initialState, action) {
-    switch (action.type) {
-        case SET_DREAMSCAPES: {
-            const allDreamscapes = {};
-            action.payload.forEach(dreamscape => {
-                allDreamscapes[dreamscape.id] = dreamscape;
-            });
-            return { ...state, allDreamscapes };
+  switch (action.type) {
+    case SET_DREAMSCAPE:
+      return {
+        ...state,
+        byDreamId: {
+          ...state.byDreamId,
+          [action.payload.dreamId]: {
+            imageUrl: action.payload.imageUrl,
+            prompt: action.payload.prompt
+          }
         }
-        case ADD_DREAMSCAPE:
-            return {
-                ...state,
-                allDreamscapes: {
-                    ...state.allDreamscapes,
-                    [action.payload.id]: action.payload
-                }
-            };
-        case REMOVE_DREAMSCAPE: {
-            const newState = { ...state };
-            delete newState.allDreamscapes[action.payload];
-            return newState;
-        }
-        default:
-            return state;
-    }
+      };
+
+    case SET_LOADING:
+      return {
+        ...state,
+        isLoading: action.payload
+      };
+
+    case SET_ERROR:
+      return {
+        ...state,
+        error: action.payload
+      };
+
+    default:
+      return state;
+  }
 }

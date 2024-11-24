@@ -14,8 +14,29 @@ const QuickDreamEntry = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState(null);
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
-  // Reset form and check for today's dream when user changes
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatDateTime = (date) => {
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: userTimeZone,
+      timeZoneName: 'short'
+    });
+  };
+
   useEffect(() => {
     setContent('');
     setIsLucid(false);
@@ -23,18 +44,24 @@ const QuickDreamEntry = () => {
     if (user) {
       const checkTodayDream = async () => {
         setIsLoading(true);
-        const response = await dispatch(thunkCheckTodayDream());
-        if (!response || response.errors) {
-          setContent('');
-          setIsLucid(false);
+        try {
+          const clientDate = new Date().toISOString();
+          const response = await dispatch(thunkCheckTodayDream(clientDate));
+          
+          if (!response || response.errors) {
+            setContent('');
+            setIsLucid(false);
+          }
+        } catch (err) {
+          console.error('Error checking today\'s dream:', err);
+        } finally {
+          setIsLoading(false);
         }
-        setIsLoading(false);
       };
       checkTodayDream();
     }
   }, [dispatch, user]);
 
-  // Update form with today's dream only if user exists
   useEffect(() => {
     if (user && todayDream) {
       setContent(todayDream.content);
@@ -46,12 +73,7 @@ const QuickDreamEntry = () => {
   }, [todayDream, user]);
 
   const generateTitle = () => {
-    const formattedDate = new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-    return `Dream on ${formattedDate}`;
+    return formatDateTime(currentDateTime);
   };
 
   const showSuccessNotification = (message) => {
@@ -68,43 +90,68 @@ const QuickDreamEntry = () => {
     setError(null);
 
     try {
+      const clientDate = new Date().toISOString();
       const dreamData = {
-        title: generateTitle(),
+        title: `Dream on ${generateTitle()}`,
         content: content.trim(),
         is_lucid: isLucid,
+        clientDate,
         tags: []
       };
 
+      let result;
       if (todayDream) {
-        // Update existing dream
-        const result = await dispatch(thunkUpdateDream(todayDream.id, dreamData));
-        if (result.errors) {
-          setError(result.errors);
-        } else {
-          showSuccessNotification('Dream updated successfully!');
+        const dreamDate = new Date(todayDream.date);
+        const today = new Date();
+        const isDreamFromToday = 
+          dreamDate.getFullYear() === today.getFullYear() &&
+          dreamDate.getMonth() === today.getMonth() &&
+          dreamDate.getDate() === today.getDate();
+
+        if (!isDreamFromToday) {
+          setError('Can only update dreams from the current day');
+          setIsLoading(false);
+          return;
         }
+
+        result = await dispatch(thunkUpdateDream(todayDream.id, dreamData));
       } else {
-        // Create new dream
-        const result = await dispatch(thunkQuickDream(dreamData));
-        if (result.errors) {
-          setError(result.errors);
-        } else {
-          showSuccessNotification('Dream saved successfully!');
+        result = await dispatch(thunkQuickDream(dreamData));
+      }
+
+      if (result.errors) {
+        setError(
+          typeof result.errors === 'string' 
+            ? result.errors 
+            : Object.values(result.errors)[0]
+        );
+      } else {
+        showSuccessNotification(
+          todayDream 
+            ? 'Dream updated successfully!' 
+            : 'Dream saved successfully!'
+        );
+        if (!todayDream) {
+          setContent('');
+          setIsLucid(false);
         }
       }
     } catch (err) {
+      console.error('Error saving dream:', err);
       setError('Failed to save dream. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!user) return null; // Don't render anything if no user
+  if (!user) return null;
 
   return (
     <div className="quick-dream-entry">
       <h3 className="quick-dream-title">
-        {todayDream ? 'Today\'s Dream Entry' : 'Quick Journal'}
+        {todayDream 
+          ? `Dream on ${formatDateTime(new Date(todayDream.date))}` 
+          : `Dream on ${formatDateTime(currentDateTime)}`}
       </h3>
       
       <form onSubmit={handleSubmit} className="quick-dream-form">

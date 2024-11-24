@@ -70,23 +70,26 @@ export const thunkLoadDreams = () => async (dispatch) => {
   }
 };
 
-export const thunkCheckTodayDream = () => async (dispatch) => {
-  const response = await fetch("/api/dreams/today");
+export const thunkCheckTodayDream = (clientDate) => async (dispatch) => {
+  try {
+    const response = await fetch(`/api/dreams/today?clientDate=${encodeURIComponent(clientDate)}`);
 
-  if (response.ok) {
-    const dream = await response.json();
-    if (dream) {
-      dispatch(setTodayDream(dream));
+    if (response.ok) {
+      const dream = await response.json();
+      if (dream) {
+        dispatch(setTodayDream(dream));
+      }
+      return dream;
+    } else {
+      const errors = await response.json();
+      return { errors };
     }
-    return dream;
-  } else {
-    const errors = await response.json();
-    return { errors };
+  } catch (error) {
+    return { errors: { server: "Failed to check today's dream" } };
   }
 };
 
 export const thunkQuickDream = (dreamData) => async (dispatch) => {
-  //check if there's already a dream today
   const todayDream = await dispatch(thunkCheckTodayDream());
   if (todayDream && !todayDream.errors) {
     return { errors: { date: "You have already logged a dream today" } };
@@ -123,7 +126,6 @@ export const thunkUpdateDream = (dreamId, dreamData) => async (dispatch) => {
   if (response.ok) {
     const updatedDream = await response.json();
     dispatch(updateDream(updatedDream));
-    // If this was today's dream, update that as well
     const today = new Date().toDateString();
     const dreamDate = new Date(updatedDream.date).toDateString();
     if (today === dreamDate) {
@@ -143,7 +145,6 @@ export const thunkDeleteDream = (dreamId) => async (dispatch) => {
 
   if (response.ok) {
     dispatch(removeDream(dreamId));
-    // If this was today's dream, clear it
     dispatch(setTodayDream(null));
     return { success: true };
   } else {

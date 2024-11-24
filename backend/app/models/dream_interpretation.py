@@ -12,7 +12,6 @@ class DreamInterpretation(db.Model):
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    # Updated relationships
     user = db.relationship('User', back_populates='interpretations')
     dreams = db.relationship(
         'DreamJournal',
@@ -30,7 +29,6 @@ class DreamInterpretation(db.Model):
             'date': self.date.isoformat()
         }
 
-# Association table with CASCADE deletions
 dream_interpretations_dreams = db.Table('dream_interpretations_dreams',
     db.Column('interpretation_id', db.Integer, 
               db.ForeignKey('dream_interpretations.id', ondelete='CASCADE'), 

@@ -13,6 +13,9 @@ from .seeds import seed_commands
 from .config import Config
 from .api.dream_routes import dream_routes
 from .api.interpretation_routes import interpretation_routes
+from .api.dreamscape_routes import dreamscape_routes
+
+
 
 
 app = Flask(__name__, static_folder='../react-vite/dist', static_url_path='/')
@@ -35,6 +38,11 @@ app.register_blueprint(user_routes, url_prefix='/api/users')
 app.register_blueprint(auth_routes, url_prefix='/api/auth')
 app.register_blueprint(dream_routes, url_prefix='/api/dreams')
 app.register_blueprint(interpretation_routes, url_prefix='/api/interpretations')
+app.register_blueprint(dreamscape_routes, url_prefix='/api/dreamscapes')
+
+
+
+
 
 db.init_app(app)
 Migrate(app, db)

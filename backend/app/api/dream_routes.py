@@ -1,14 +1,22 @@
 # backend/app/api/dream_routes.py
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
-from app.models import db, DreamJournal, DreamTags
+from app.models import db, DreamJournal, DreamTags 
 from app.forms.dream_form import DreamForm
-from datetime import datetime, date
+from datetime import datetime, timezone
 from sqlalchemy import func
 import logging
+from dateutil import parser
 
 dream_routes = Blueprint('dreams', __name__)
 logger = logging.getLogger(__name__)
+
+def parse_client_date(date_str):
+    """Parse date string from client with timezone handling"""
+    try:
+        return parser.parse(date_str)
+    except:
+        return datetime.now(timezone.utc)
 
 @dream_routes.route('/')
 @login_required
@@ -16,23 +24,24 @@ def get_dreams():
     """
     Get all dreams for current user
     """
-    dreams = DreamJournal.query.filter_by(user_id=current_user.id)\
-        .order_by(DreamJournal.date.desc()).all()
-    return jsonify([dream.to_dict() for dream in dreams])
+    try:
+        dreams = DreamJournal.query\
+            .filter_by(user_id=current_user.id)\
+            .order_by(DreamJournal.dream_date.desc(), DreamJournal.created_at.desc())\
+            .all()
+        return jsonify([dream.to_dict() for dream in dreams])
+    except Exception as e:
+        logger.error(f"Error fetching dreams: {str(e)}")
+        return {'errors': {'server': 'An error occurred while fetching dreams'}}, 500
 
 @dream_routes.route('/today')
 @login_required
 def get_today_dream():
-    """
-    Check if user has already logged a dream today
-    """
-    today = datetime.utcnow().date()
-    dream = DreamJournal.query\
-        .filter(
-            DreamJournal.user_id == current_user.id,
-            func.date(DreamJournal.date) == today
-        ).first()
+    """Check if user has already logged a dream today"""
+    client_date_str = request.args.get('clientDate')
+    target_date = parse_client_date(client_date_str).date() if client_date_str else datetime.now(timezone.utc).date()
     
+    dream = DreamJournal.get_dream_for_date(current_user.id, target_date)
     return jsonify(dream.to_dict() if dream else None)
 
 @dream_routes.route('/<int:dream_id>')
@@ -49,40 +58,28 @@ def get_dream(dream_id):
 @dream_routes.route('/quick', methods=['POST'])
 @login_required
 def quick_dream():
-    """
-    Quick dream entry from home page
-    """
-    logger.info(f"Quick dream entry attempt by user {current_user.id}")
     data = request.json
+    client_date_str = data.get('clientDate')
+    target_date = parse_client_date(client_date_str)
 
     if not data.get('content'):
-        logger.error("No dream content provided")
         return {'errors': {'content': 'Dream content is required'}}, 400
 
-    # Check if dream already exists for today
-    today = datetime.utcnow().date()
-    existing_dream = DreamJournal.query\
-        .filter(
-            DreamJournal.user_id == current_user.id,
-            func.date(DreamJournal.date) == today
-        ).first()
-
+    existing_dream = DreamJournal.get_dream_for_date(current_user.id, target_date.date())
     if existing_dream:
-        return {'errors': {'date': 'You have already logged a dream today'}}, 400
+        return {'errors': {'date': 'You have already logged a dream for this date'}}, 400
 
     try:
         new_dream = DreamJournal(
             user_id=current_user.id,
-            title=data.get('title', f"Dream on {datetime.now().strftime('%B %d, %Y')}"),
+            title=data.get('title', f"Dream on {target_date.strftime('%B %d, %Y')}"),
             content=data['content'],
             is_lucid=data.get('is_lucid', False),
-            date=datetime.utcnow()
+            date=target_date
         )
-
         db.session.add(new_dream)
         db.session.commit()
-
-        # Add tags if provided
+             
         if data.get('tags'):
             for tag in data['tags']:
                 new_tag = DreamTags(
@@ -93,9 +90,7 @@ def quick_dream():
                 db.session.add(new_tag)
             db.session.commit()
 
-        logger.info(f"Dream {new_dream.id} saved successfully")
         return new_dream.to_dict()
-
     except Exception as e:
         logger.error(f"Error saving dream: {str(e)}")
         db.session.rollback()
@@ -108,6 +103,13 @@ def update_dream(dream_id):
     if dream.user_id != current_user.id:
         return {'errors': {'unauthorized': 'Dream not found'}}, 404
 
+    client_date_str = request.json.get('clientDate')
+    client_date = parse_client_date(client_date_str).date()
+    dream_date = dream.date.date()
+
+    if dream_date != client_date:
+        return {'errors': {'date': 'Can only update dreams from the current day'}}, 400
+
     form = DreamForm()
     form['csrf_token'].data = request.cookies['csrf_token']
     
@@ -116,8 +118,7 @@ def update_dream(dream_id):
             dream.title = form.title.data
             dream.content = form.content.data
             dream.is_lucid = form.is_lucid.data
-            dream.updated_at = datetime.utcnow()
-            # Don't update dream.date - keep original date
+            dream.updated_at = datetime.now(timezone.utc)
 
             # Update tags
             DreamTags.query.filter_by(dream_id=dream_id).delete()
@@ -169,19 +170,21 @@ def get_dreams_by_month(year, month):
     Get all dreams for a specific month
     """
     try:
-        # Get the first and last day of the month
-        start_date = date(year, month, 1)
-        # Handle December
+        # Get the first and last day of the month in user's timezone
+        client_date_str = request.args.get('clientDate')
+        client_timezone = parse_client_date(client_date_str).tzinfo if client_date_str else timezone.utc
+
+        start_date = datetime(year, month, 1, tzinfo=client_timezone)
         if month == 12:
-            next_month = date(year + 1, 1, 1)
+            end_date = datetime(year + 1, 1, 1, tzinfo=client_timezone)
         else:
-            next_month = date(year, month + 1, 1)
+            end_date = datetime(year, month + 1, 1, tzinfo=client_timezone)
 
         dreams = DreamJournal.query.filter(
             DreamJournal.user_id == current_user.id,
-            func.date(DreamJournal.date) >= start_date,
-            func.date(DreamJournal.date) < next_month
-        ).all()
+            DreamJournal.date >= start_date,
+            DreamJournal.date < end_date
+        ).order_by(DreamJournal.date.desc()).all()
 
         return jsonify([dream.to_dict() for dream in dreams])
     except Exception as e:
@@ -195,13 +198,8 @@ def get_popular_tags():
     Get most frequently used words in dreams as tags
     """
     try:
-        # Get all dreams for the user
         dreams = DreamJournal.query.filter_by(user_id=current_user.id).all()
-        
-        # Combine all dream content
         all_content = ' '.join(dream.content for dream in dreams)
-        
-        # Simple word frequency analysis
         words = all_content.lower().split()
         word_freq = {}
         
@@ -209,7 +207,6 @@ def get_popular_tags():
             if len(word) > 3:  # Only count words longer than 3 characters
                 word_freq[word] = word_freq.get(word, 0) + 1
         
-        # Sort by frequency and get top 10
         popular_tags = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:10]
         
         return jsonify([{'tag': tag, 'count': count} for tag, count in popular_tags])
