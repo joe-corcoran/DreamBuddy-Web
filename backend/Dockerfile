@@ -1,24 +1,29 @@
 FROM python:3.9.18-alpine3.18
 
-RUN apk add build-base
+# Install system dependencies
+RUN apk add --no-cache \
+    postgresql-dev \
+    gcc \
+    python3-dev \
+    musl-dev \
+    build-base
 
-RUN apk add postgresql-dev gcc python3-dev musl-dev
+# Set working directory
+WORKDIR /app
 
-ARG FLASK_APP
-ARG FLASK_ENV
-ARG DATABASE_URL
-ARG SCHEMA
-ARG SECRET_KEY
-
-WORKDIR /var/www
-
+# Copy requirements first for better cache utilization
 COPY requirements.txt .
 
-RUN pip install -r requirements.txt
-RUN pip install psycopg2
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir psycopg2-binary gunicorn
 
+# Copy application code
 COPY . .
 
-RUN flask db upgrade
-RUN flask seed all
-CMD gunicorn app:app
+# Set production environment variables
+ENV FLASK_APP=app
+ENV FLASK_ENV=production
+
+# Run migrations and start the application
+CMD flask db upgrade && gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
