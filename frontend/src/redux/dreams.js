@@ -1,5 +1,3 @@
-import { removeUser } from './session';
-
 // Action Types
 const SET_DREAMS = "dreams/SET_DREAMS";
 const ADD_DREAM = "dreams/ADD_DREAM";
@@ -188,9 +186,12 @@ export const thunkGetPopularTags = () => async (dispatch) => {
 };
 
 export const thunkLogout = () => async (dispatch) => {
-  await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/logout`);
-  dispatch(removeUser());
-  dispatch(clearDreams());
+  try {
+    await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/logout`);
+    dispatch(clearAllState());
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
 };
 
 // Initial State
