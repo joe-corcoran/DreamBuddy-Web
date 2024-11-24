@@ -5,6 +5,12 @@ import { useDispatch } from "react-redux";
 import { useModal } from "../../context/Modal";
 import "./LoginForm.css";
 
+import { useState } from "react";
+import { thunkLogin } from "../../redux/session";
+import { useDispatch } from "react-redux";
+import { useModal } from "../../context/Modal";
+import "./LoginForm.css";
+
 function LoginFormModal() {
   const dispatch = useDispatch();
   const [email, setEmail] = useState("");
@@ -12,6 +18,32 @@ function LoginFormModal() {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const { closeModal } = useModal();
+
+  const handleDemoLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      const serverResponse = await dispatch(
+        thunkLogin({
+          email: "demo@aa.io",
+          password: "password",
+        })
+      );
+
+      if (serverResponse) {
+        setErrors(serverResponse);
+      } else {
+        closeModal();
+      }
+    } catch (error) {
+      setErrors({ server: 'An unexpected error occurred. Please try again.' });
+      console.error('Demo login error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
