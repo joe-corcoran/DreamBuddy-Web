@@ -40,12 +40,20 @@ export const thunkAuthenticate = () => async (dispatch) => {
 
 const refreshCSRFToken = async () => {
   try {
+    console.log('Attempting to refresh CSRF token...');
     const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/csrf/refresh`, {
       credentials: 'include'
     });
-    if (!response.ok) throw new Error('Failed to refresh CSRF token');
+    console.log('CSRF refresh response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Failed to refresh CSRF token:', errorText);
+      throw new Error('Failed to refresh CSRF token');
+    }
+    
     const data = await response.json();
-    debugLog('CSRF token refreshed', data);
+    console.log('CSRF token refreshed successfully');
     return data.csrf_token;
   } catch (error) {
     console.error('Error refreshing CSRF token:', error);

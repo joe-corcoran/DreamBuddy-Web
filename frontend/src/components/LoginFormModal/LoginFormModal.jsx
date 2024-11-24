@@ -41,8 +41,8 @@ function LoginFormModal() {
 
   const handleDemoUser = (e) => {
     e.preventDefault();
-    return dispatch(sessionActions.login({ credential: 'demo@user.io', password: 'password' }))
-      .then(closeModal);
+    return dispatch(thunkLogin({ email: 'demo@user.io', password: 'password' }))
+    .then(closeModal);
   };
 
   if (isLoading) {
