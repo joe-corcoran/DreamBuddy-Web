@@ -1,6 +1,5 @@
 const SET_USER = 'session/setUser';
 const REMOVE_USER = 'session/removeUser';
-const CLEAR_ALL_STATE = 'CLEAR_ALL_STATE';
 
 const setUser = (user) => ({
   type: SET_USER,
@@ -11,122 +10,82 @@ const removeUser = () => ({
   type: REMOVE_USER
 });
 
-export const clearAllState = () => ({
-  type: CLEAR_ALL_STATE
-});
-
-const debugLog = (message, data) => {
-  if (import.meta.env.MODE !== 'production') {
-    console.log(`[Debug] ${message}`, data);
+const getCookie = (name) => {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [cookieName, cookieValue] = cookie.trim().split('=');
+    if (cookieName === name) return cookieValue;
   }
-};
-
-const refreshCSRFToken = async () => {
-  try {
-    debugLog('Refreshing CSRF token');
-    const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/csrf/refresh`, {
-      method: 'GET',
-      credentials: 'include'
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to refresh CSRF token: ${response.status}`);
-    }
-
-    const data = await response.json();
-    debugLog('CSRF token refreshed successfully');
-    return data.csrf_token;
-  } catch (error) {
-    console.error('CSRF refresh failed:', error);
-    throw error;
-  }
-};
-
-const makeAuthenticatedRequest = async (url, method, body = null) => {
-  try {
-    // Always refresh CSRF token before making authenticated requests
-    const csrfToken = await refreshCSRFToken();
-
-    const options = {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': csrfToken
-      },
-      credentials: 'include',
-      body: body ? JSON.stringify(body) : undefined
-    };
-
-    debugLog('Making authenticated request', { url, method });
-    const response = await fetch(url, options);
-
-    if (!response.ok) {
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const errorData = await response.json();
-        throw new Error(JSON.stringify(errorData));
-      } else {
-        const text = await response.text();
-        throw new Error(`Request failed: ${response.status} - ${text}`);
-      }
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Request failed:', error);
-    throw error;
-  }
-};
-
-export const thunkAuthenticate = () => async (dispatch) => {
-  try {
-    const data = await makeAuthenticatedRequest(
-      `${import.meta.env.VITE_APP_API_URL}/api/auth/`,
-      'GET'
-    );
-    dispatch(setUser(data));
-  } catch (error) {
-    dispatch(removeUser());
-  }
+  return null;
 };
 
 export const thunkLogin = (credentials) => async dispatch => {
-  try {
-    const data = await makeAuthenticatedRequest(
-      `${import.meta.env.VITE_APP_API_URL}/api/auth/login`,
-      'POST',
-      credentials
-    );
+  const csrfToken = getCookie('csrf_token');
+  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken
+    },
+    body: JSON.stringify(credentials),
+    credentials: 'include'
+  });
+
+  if (response.ok) {
+    const data = await response.json();
     dispatch(setUser(data));
     return null;
-  } catch (error) {
-    return { errors: error.message };
+  } else {
+    const data = await response.json();
+    return data;
   }
 };
 
 export const thunkSignup = (userData) => async dispatch => {
-  try {
-    const data = await makeAuthenticatedRequest(
-      `${import.meta.env.VITE_APP_API_URL}/api/auth/signup`,
-      'POST',
-      userData
-    );
+  const csrfToken = getCookie('csrf_token');
+  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/signup`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': csrfToken
+    },
+    body: JSON.stringify(userData),
+    credentials: 'include'
+  });
+  
+  if (response.ok) {
+    const data = await response.json();
     dispatch(setUser(data));
     return null;
-  } catch (error) {
-    return { errors: error.message };
+  } else {
+    const data = await response.json();
+    return data;
+  }
+};
+
+export const thunkAuthenticate = () => async (dispatch) => {
+  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/`, {
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    credentials: 'include'
+  });
+  if (response.ok) {
+    const data = await response.json();
+    if (data.errors) {
+      return;
+    }
+    dispatch(setUser(data));
   }
 };
 
 export const thunkLogout = () => async (dispatch) => {
-  try {
-    await makeAuthenticatedRequest(
-      `${import.meta.env.VITE_APP_API_URL}/api/auth/logout`,
-      'GET'
-    );
-    dispatch(clearAllState());
-  } catch (error) {
-    console.error('Logout failed:', error);
+  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/logout`, {
+    credentials: 'include'
+  });
+
+  if (response.ok) {
+    dispatch(removeUser());
   }
 };
 
@@ -138,8 +97,6 @@ function sessionReducer(state = initialState, action) {
       return { ...state, user: action.payload };
     case REMOVE_USER:
       return { ...state, user: null };
-    case CLEAR_ALL_STATE:
-      return initialState;
     default:
       return state;
   }

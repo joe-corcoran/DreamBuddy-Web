@@ -2,7 +2,7 @@ import os
 from flask import Flask, request, redirect, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
-from flask_wtf.csrf import CSRFProtect, generate_csrf, CSRFError
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 from flask_login import LoginManager
 from .models import db, User
 from .api.user_routes import user_routes
@@ -28,7 +28,6 @@ login.login_view = 'auth.unauthorized'
 def load_user(id):
     return User.query.get(int(id))
 
-# Tell flask about our seed commands
 app.cli.add_command(seed_commands)
 
 app.config.from_object(Config)
@@ -42,89 +41,26 @@ db.init_app(app)
 Migrate(app, db)
 
 # Application Security
-CORS(app, supports_credentials=True, resources={
-    r"/api/*": {
+CORS(app, resources={
+    r"/*": {
         "origins": ["https://dreambuddy-frontend.onrender.com", "http://localhost:5173"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "X-CSRF-Token", "Authorization"],
+        "allow_headers": ["Content-Type", "X-CSRF-Token"],
         "expose_headers": ["Content-Type", "X-CSRF-Token"],
         "supports_credentials": True
     }
 })
 
-@app.before_request
-def https_redirect():
-    if os.environ.get('FLASK_ENV') == 'production':
-        if request.headers.get('X-Forwarded-Proto') == 'http':
-            url = request.url.replace('http://', 'https://', 1)
-            return redirect(url, code=301)
-
 @app.after_request
 def after_request(response):
-    # CSRF Token
-    if request.path.startswith('/api/'):
-        token = generate_csrf()
+    # Only attach CSRF token if it's not already in the response
+    if 'csrf_token' not in response.cookies:
         response.set_cookie(
             'csrf_token',
-            token,
+            generate_csrf(),
             secure=True if os.environ.get('FLASK_ENV') == 'production' else False,
             samesite='Lax',
-            httponly=False,  # Allow JavaScript access
+            httponly=True,
             domain=".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None
         )
-        response.headers['X-CSRF-Token'] = token
-
-    # Security headers
-    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
-    
     return response
-
-@app.route("/api/csrf/refresh", methods=["GET"])
-def refresh_csrf():
-    """Endpoint to get a new CSRF token"""
-    token = generate_csrf()
-    response = jsonify({"status": "success", "csrf_token": token})
-    response.set_cookie(
-        'csrf_token',
-        token,
-        secure=True if os.environ.get('FLASK_ENV') == 'production' else False,
-        samesite='Lax',
-        httponly=False,  # Allow JavaScript access
-        domain=".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None
-    )
-    return response
-
-# Error handlers
-@app.errorhandler(404)
-def not_found(e):
-    return jsonify({"error": "Not found"}), 404
-
-@app.errorhandler(500)
-def server_error(e):
-    return jsonify({"error": "Internal server error"}), 500
-
-@app.errorhandler(CSRFError)
-def handle_csrf_error(e):
-    return jsonify({"error": "CSRF token missing or invalid"}), 400
-
-# API documentation route
-@app.route("/api/docs")
-def api_help():
-    """
-    Returns all API routes and their doc strings
-    """
-    acceptable_methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
-    route_list = { rule.rule: [[ method for method in rule.methods if method in acceptable_methods ],
-                    app.view_functions[rule.endpoint].__doc__ ]
-                    for rule in app.url_map.iter_rules() if rule.endpoint != 'static' }
-    return route_list
-
-# Health check endpoint
-@app.route("/api/health")
-def health_check():
-    """
-    Health check endpoint for the API
-    """
-    return jsonify({"status": "healthy"}), 200
