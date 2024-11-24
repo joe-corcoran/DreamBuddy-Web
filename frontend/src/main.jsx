@@ -1,6 +1,6 @@
 //frontend/src/main.jsx
 
-import React from "react";
+import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { Provider as ReduxProvider } from "react-redux";
 import { RouterProvider } from "react-router-dom";
@@ -12,7 +12,7 @@ import "./index.css";
 const store = configureStore();
 
 // Initialize authentication state
-store.dispatch(thunkAuthenticate()).catch(console.error);
+store.dispatch(thunkAuthenticate());
 
 // Debug logging for API URL in production
 if (import.meta.env.MODE === "production") {
@@ -46,6 +46,8 @@ const Root = () => {
     </React.StrictMode>
   );
 };
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Root />);
 
 // Mount application
 try {

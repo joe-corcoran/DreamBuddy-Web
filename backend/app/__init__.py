@@ -58,24 +58,24 @@ CORS(app,
 
 @app.after_request
 def after_request(response):
-    # Only add CORS headers if not already present
-    if "Access-Control-Allow-Origin" not in response.headers:
+    # Only add CORS headers for API routes
+    if request.path.startswith('/api/'):
         response.headers["Access-Control-Allow-Origin"] = "https://dreambuddy-frontend.onrender.com"
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-CSRF-Token"
 
-    # Always set a CSRF token
-    if "csrf_token" not in request.cookies:
-        token = generate_csrf()
-        response.set_cookie(
-            "csrf_token",
-            token,
-            secure=True,
-            samesite='Lax',
-            httponly=False,  # Allow JavaScript access
-            domain=".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None
-        )
+        # Set CSRF token only if not present AND this is not a preflight request
+        if request.method != 'OPTIONS' and 'csrf_token' not in request.cookies:
+            token = generate_csrf()
+            response.set_cookie(
+                "csrf_token",
+                token,
+                secure=True,
+                samesite='Lax',
+                httponly=False,  # Allow JavaScript access
+                domain=".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None
+            )
     
     return response
 

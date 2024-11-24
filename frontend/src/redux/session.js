@@ -22,51 +22,39 @@ const getCookie = (name) => {
 const makeRequest = async (url, method = 'GET', body = null) => {
   const csrfToken = getCookie('csrf_token');
   
-  if (!csrfToken) {
-    console.error('No CSRF token found in cookies');
-    // Try to refresh the page to get a new CSRF token
-    window.location.reload();
-    return;
-  }
-
   const options = {
     method,
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-Token': csrfToken
     },
     credentials: 'include',
     body: body ? JSON.stringify(body) : undefined
   };
+
+  // Only add CSRF token if we have one and this is not the initial auth check
+  if (csrfToken && !url.endsWith('/api/auth/')) {
+    options.headers['X-CSRF-Token'] = csrfToken;
+  }
 
   try {
     console.log('Making request:', { 
       url, 
       method, 
       headers: options.headers,
-      credentials: options.credentials 
     });
     
     const response = await fetch(url, options);
-    const contentType = response.headers.get('content-type');
     
     if (!response.ok) {
-      if (contentType && contentType.includes('application/json')) {
-        const errorData = await response.json();
-        console.error('Request failed:', errorData);
-        throw errorData;
-      } else {
-        const text = await response.text();
-        console.error('Request failed:', text);
-        throw new Error(text);
+      // Don't throw for 401 on initial auth check
+      if (response.status === 401 && url.endsWith('/api/auth/')) {
+        return null;
       }
+      const errorData = await response.json();
+      throw errorData;
     }
     
-    if (contentType && contentType.includes('application/json')) {
-      return await response.json();
-    }
-    
-    return null;
+    return await response.json();
   } catch (error) {
     console.error('Request error:', error);
     throw error;
@@ -76,7 +64,7 @@ const makeRequest = async (url, method = 'GET', body = null) => {
 export const thunkAuthenticate = () => async (dispatch) => {
   try {
     const data = await makeRequest(`${import.meta.env.VITE_APP_API_URL}/api/auth/`);
-    if (data && !data.errors) {
+    if (data) {
       dispatch(setUser(data));
     } else {
       dispatch(removeUser());
