@@ -6,34 +6,51 @@ import { Provider as ReduxProvider } from "react-redux";
 import { RouterProvider } from "react-router-dom";
 import configureStore from "./redux/store";
 import { router } from "./router";
-import * as sessionActions from "./redux/session";
+import { thunkAuthenticate } from "./redux/session";
 import "./index.css";
 
+const store = configureStore();
 
+// Initialize authentication state
+store.dispatch(thunkAuthenticate()).catch(console.error);
+
+// Debug logging for API URL in production
 if (import.meta.env.MODE === "production") {
-  console.log("API URL:", import.meta.env.VITE_APP_API_URL); 
+  console.log("API URL:", import.meta.env.VITE_APP_API_URL);
+  
+  // Global error handler
   window.onerror = function(msg, url, lineNo, columnNo, error) {
-    console.log('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo + '\nColumn: ' + columnNo + '\nError object: ' + JSON.stringify(error));
+    console.log('Global error:', {
+      message: msg,
+      url,
+      line: lineNo,
+      column: columnNo,
+      error: error && error.stack
+    });
     return false;
   };
 }
 
-const store = configureStore();
-
+// Development helpers
 if (import.meta.env.MODE !== "production") {
   window.store = store;
-  window.sessionActions = sessionActions;
 }
 
-
-try {
-  ReactDOM.createRoot(document.getElementById("root")).render(
+// Root component with error boundary
+const Root = () => {
+  return (
     <React.StrictMode>
       <ReduxProvider store={store}>
         <RouterProvider router={router} />
       </ReduxProvider>
     </React.StrictMode>
   );
+};
+
+// Mount application
+try {
+  const root = ReactDOM.createRoot(document.getElementById("root"));
+  root.render(<Root />);
 } catch (error) {
-  console.error("Render Error:", error);
+  console.error("Application failed to mount:", error);
 }

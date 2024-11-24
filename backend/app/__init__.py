@@ -1,5 +1,3 @@
-# backend/app/__init__.py
-
 import os
 from flask import Flask, request, redirect, jsonify
 from flask_cors import CORS
@@ -43,8 +41,6 @@ app.register_blueprint(dreamscape_routes, url_prefix='/api/dreamscapes')
 db.init_app(app)
 Migrate(app, db)
 
-
-
 # Application Security
 CORS(app, supports_credentials=True, resources={
     r"/api/*": {
@@ -56,81 +52,59 @@ CORS(app, supports_credentials=True, resources={
     }
 })
 
-# HTTPS redirect
-@app.route("/api/debug/config")
-def debug_config():
-    """Debug endpoint to check configuration"""
-    if os.environ.get('FLASK_ENV') != 'production':
-        return {
-            "CORS_origins": app.config.get('CORS_ORIGINS'),
-            "cookie_settings": {
-                "secure": os.environ.get('FLASK_ENV') == 'production',
-                "samesite": 'Lax',
-                "domain": ".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None
-            },
-            "environment": os.environ.get('FLASK_ENV'),
-            "database_url_prefix": app.config.get('SQLALCHEMY_DATABASE_URI', 'not-set')[:10] + '...',
-        }
-    return {"message": "Debug endpoint disabled in production"}, 403
-
-@app.route("/api/csrf/refresh", methods=["GET"])
-def refresh_csrf():
-    """Endpoint to get a new CSRF token"""
-    token = generate_csrf()
-    logger.debug(f"Generated new CSRF token")
-    
-    response = jsonify({"status": "success", "csrf_token": token})
-    response.set_cookie(
-        'csrf_token',
-        token,
-        secure=True if os.environ.get('FLASK_ENV') == 'production' else False,
-        samesite='Lax',
-        httponly=True,
-        domain=".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None
-    )
-    return response
-
 @app.before_request
-def log_request_info():
-    """Log details about each request"""
-    logger.debug('Headers: %s', dict(request.headers))
-    logger.debug('Body: %s', request.get_data())
-    logger.debug('Cookies: %s', dict(request.cookies))
+def https_redirect():
+    if os.environ.get('FLASK_ENV') == 'production':
+        if request.headers.get('X-Forwarded-Proto') == 'http':
+            url = request.url.replace('http://', 'https://', 1)
+            return redirect(url, code=301)
 
 @app.after_request
 def after_request(response):
-    """Log response info and add security headers"""
-    logger.debug('Response Headers: %s', dict(response.headers))
-    logger.debug('Response Status: %s', response.status)
-    
-    # Add security headers
+    # CSRF Token
+    if request.path.startswith('/api/'):
+        token = generate_csrf()
+        response.set_cookie(
+            'csrf_token',
+            token,
+            secure=True if os.environ.get('FLASK_ENV') == 'production' else False,
+            samesite='Lax',
+            httponly=False,  # Allow JavaScript access
+            domain=".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None
+        )
+        response.headers['X-CSRF-Token'] = token
+
+    # Security headers
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     
     return response
 
-# API documentation route
-@app.route("/api/docs")
-def api_help():
-    """
-    Returns all API routes and their doc strings
-    """
-    acceptable_methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
-    route_list = { rule.rule: [[ method for method in rule.methods if method in acceptable_methods ],
-                    app.view_functions[rule.endpoint].__doc__ ]
-                    for rule in app.url_map.iter_rules() if rule.endpoint != 'static' }
-    return route_list
+@app.route("/api/csrf/refresh", methods=["GET"])
+def refresh_csrf():
+    """Endpoint to get a new CSRF token"""
+    token = generate_csrf()
+    response = jsonify({"status": "success", "csrf_token": token})
+    response.set_cookie(
+        'csrf_token',
+        token,
+        secure=True if os.environ.get('FLASK_ENV') == 'production' else False,
+        samesite='Lax',
+        httponly=False,  # Allow JavaScript access
+        domain=".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None
+    )
+    return response
 
-# Health check endpoint
-@app.route("/api/health")
-def health_check():
-    """
-    Health check endpoint for the API
-    """
-    return jsonify({"status": "healthy"}), 200
-
-# Handle 404 errors with JSON response
+# Error handlers
 @app.errorhandler(404)
 def not_found(e):
     return jsonify({"error": "Not found"}), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return jsonify({"error": "Internal server error"}), 500
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    return jsonify({"error": "CSRF token missing or invalid"}), 400

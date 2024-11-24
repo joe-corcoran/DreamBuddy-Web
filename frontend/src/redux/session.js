@@ -1,20 +1,6 @@
 const SET_USER = 'session/setUser';
 const REMOVE_USER = 'session/removeUser';
-
-const debugLog = (message, data) => {
-  if (import.meta.env.MODE !== 'production') {
-    console.log(`[Debug] ${message}`, data);
-  }
-};
-
-const getCookie = (name) => {
-  const cookies = document.cookie.split(';');
-  for (let cookie of cookies) {
-    const [cookieName, cookieValue] = cookie.trim().split('=');
-    if (cookieName === name) return cookieValue;
-  }
-  return null;
-};
+const CLEAR_ALL_STATE = 'CLEAR_ALL_STATE';
 
 const setUser = (user) => ({
   type: SET_USER,
@@ -25,50 +11,41 @@ const removeUser = () => ({
   type: REMOVE_USER
 });
 
-export const thunkAuthenticate = () => async (dispatch) => {
-  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/`, {
-    credentials: 'include'  
-  });
-  if (response.ok) {
-    const data = await response.json();
-    if (data.errors) {
-      return;
-    }
-    dispatch(setUser(data));
+export const clearAllState = () => ({
+  type: CLEAR_ALL_STATE
+});
+
+const debugLog = (message, data) => {
+  if (import.meta.env.MODE !== 'production') {
+    console.log(`[Debug] ${message}`, data);
   }
 };
 
 const refreshCSRFToken = async () => {
   try {
-    console.log('Attempting to refresh CSRF token...');
+    debugLog('Refreshing CSRF token');
     const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/csrf/refresh`, {
+      method: 'GET',
       credentials: 'include'
     });
-    console.log('CSRF refresh response status:', response.status);
-    
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Failed to refresh CSRF token:', errorText);
-      throw new Error('Failed to refresh CSRF token');
+      throw new Error(`Failed to refresh CSRF token: ${response.status}`);
     }
-    
+
     const data = await response.json();
-    console.log('CSRF token refreshed successfully');
+    debugLog('CSRF token refreshed successfully');
     return data.csrf_token;
   } catch (error) {
-    console.error('Error refreshing CSRF token:', error);
-    return null;
+    console.error('CSRF refresh failed:', error);
+    throw error;
   }
 };
 
 const makeAuthenticatedRequest = async (url, method, body = null) => {
   try {
-    let csrfToken = getCookie('csrf_token');
-    if (!csrfToken) {
-      debugLog('No CSRF token found, attempting to refresh');
-      csrfToken = await refreshCSRFToken();
-      if (!csrfToken) throw new Error('Could not obtain CSRF token');
-    }
+    // Always refresh CSRF token before making authenticated requests
+    const csrfToken = await refreshCSRFToken();
 
     const options = {
       method,
@@ -80,14 +57,18 @@ const makeAuthenticatedRequest = async (url, method, body = null) => {
       body: body ? JSON.stringify(body) : undefined
     };
 
-    debugLog('Making request', { url, options });
+    debugLog('Making authenticated request', { url, method });
     const response = await fetch(url, options);
-    debugLog('Response received', { status: response.status });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      debugLog('Error response', errorData);
-      throw new Error(JSON.stringify(errorData));
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        throw new Error(JSON.stringify(errorData));
+      } else {
+        const text = await response.text();
+        throw new Error(`Request failed: ${response.status} - ${text}`);
+      }
     }
 
     return await response.json();
@@ -97,9 +78,20 @@ const makeAuthenticatedRequest = async (url, method, body = null) => {
   }
 };
 
+export const thunkAuthenticate = () => async (dispatch) => {
+  try {
+    const data = await makeAuthenticatedRequest(
+      `${import.meta.env.VITE_APP_API_URL}/api/auth/`,
+      'GET'
+    );
+    dispatch(setUser(data));
+  } catch (error) {
+    dispatch(removeUser());
+  }
+};
+
 export const thunkLogin = (credentials) => async dispatch => {
   try {
-    debugLog('Attempting login', { email: credentials.email });
     const data = await makeAuthenticatedRequest(
       `${import.meta.env.VITE_APP_API_URL}/api/auth/login`,
       'POST',
@@ -108,18 +100,12 @@ export const thunkLogin = (credentials) => async dispatch => {
     dispatch(setUser(data));
     return null;
   } catch (error) {
-    debugLog('Login failed', error);
-    try {
-      return JSON.parse(error.message);
-    } catch {
-      return { server: 'Something went wrong. Please try again' };
-    }
+    return { errors: error.message };
   }
 };
 
 export const thunkSignup = (userData) => async dispatch => {
   try {
-    debugLog('Attempting signup', { username: userData.username, email: userData.email });
     const data = await makeAuthenticatedRequest(
       `${import.meta.env.VITE_APP_API_URL}/api/auth/signup`,
       'POST',
@@ -128,24 +114,19 @@ export const thunkSignup = (userData) => async dispatch => {
     dispatch(setUser(data));
     return null;
   } catch (error) {
-    debugLog('Signup failed', error);
-    try {
-      return JSON.parse(error.message);
-    } catch {
-      return { server: 'Something went wrong. Please try again' };
-    }
+    return { errors: error.message };
   }
 };
 
 export const thunkLogout = () => async (dispatch) => {
   try {
-    await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/logout`, {
-      credentials: 'include'  
-    });
+    await makeAuthenticatedRequest(
+      `${import.meta.env.VITE_APP_API_URL}/api/auth/logout`,
+      'GET'
+    );
     dispatch(clearAllState());
-    window.location.href = '/';
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error('Logout failed:', error);
   }
 };
 
@@ -157,6 +138,8 @@ function sessionReducer(state = initialState, action) {
       return { ...state, user: action.payload };
     case REMOVE_USER:
       return { ...state, user: null };
+    case CLEAR_ALL_STATE:
+      return initialState;
     default:
       return state;
   }
