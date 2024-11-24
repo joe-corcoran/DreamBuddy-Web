@@ -39,8 +39,18 @@ db.init_app(app)
 Migrate(app, db)
 
 # Application Security
-CORS(app)
-
+CORS(app, supports_credentials=True, resources={
+    r"/api/*": {
+        "origins": [
+            "https://dreambuddy-frontend.onrender.com",
+            "http://localhost:5173"
+        ],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "X-CSRF-Token"],
+        "expose_headers": ["Content-Type", "X-CSRF-Token"],
+        "supports_credentials": True
+    }
+})
 # HTTPS redirect
 @app.before_request
 def https_redirect():

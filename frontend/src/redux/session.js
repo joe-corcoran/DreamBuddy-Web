@@ -20,7 +20,9 @@ const removeUser = () => ({
 });
 
 export const thunkAuthenticate = () => async (dispatch) => {
-  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/`);
+  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/`, {
+    credentials: 'include'  
+  });
   if (response.ok) {
     const data = await response.json();
     if (data.errors) {
@@ -37,6 +39,7 @@ export const thunkLogin = (credentials) => async dispatch => {
       "Content-Type": "application/json",
       "XSRF-TOKEN": getCookie("XSRF-TOKEN")
     },
+    credentials: 'include', 
     body: JSON.stringify(credentials)
   });
 
@@ -58,6 +61,7 @@ export const thunkSignup = (user) => async (dispatch) => {
       "Content-Type": "application/json",
       "XSRF-TOKEN": getCookie("XSRF-TOKEN")
     },
+    credentials: 'include',  
     body: JSON.stringify(user)
   });
 
@@ -74,7 +78,9 @@ export const thunkSignup = (user) => async (dispatch) => {
 
 export const thunkLogout = () => async (dispatch) => {
   try {
-    await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/logout`);
+    await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/logout`, {
+      credentials: 'include'  
+    });
     dispatch(clearAllState());
     window.location.href = '/';
   } catch (error) {
