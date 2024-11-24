@@ -2,7 +2,7 @@ import os
 from flask import Flask, request, redirect, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
-from flask_wtf.csrf import CSRFProtect, generate_csrf
+from flask_wtf.csrf import CSRFProtect, generate_csrf, CSRFError
 from flask_login import LoginManager
 from .models import db, User
 from .api.user_routes import user_routes
@@ -108,3 +108,23 @@ def server_error(e):
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
     return jsonify({"error": "CSRF token missing or invalid"}), 400
+
+# API documentation route
+@app.route("/api/docs")
+def api_help():
+    """
+    Returns all API routes and their doc strings
+    """
+    acceptable_methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+    route_list = { rule.rule: [[ method for method in rule.methods if method in acceptable_methods ],
+                    app.view_functions[rule.endpoint].__doc__ ]
+                    for rule in app.url_map.iter_rules() if rule.endpoint != 'static' }
+    return route_list
+
+# Health check endpoint
+@app.route("/api/health")
+def health_check():
+    """
+    Health check endpoint for the API
+    """
+    return jsonify({"status": "healthy"}), 200
