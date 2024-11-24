@@ -19,73 +19,71 @@ const getCookie = (name) => {
   return null;
 };
 
-export const thunkLogin = (credentials) => async dispatch => {
+const makeRequest = async (url, method = 'GET', body = null) => {
   const csrfToken = getCookie('csrf_token');
-  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/login`, {
-    method: 'POST',
+  const options = {
+    method,
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-Token': csrfToken
+      'X-CSRF-Token': csrfToken || ''
     },
-    body: JSON.stringify(credentials),
     credentials: 'include'
-  });
+  };
 
-  if (response.ok) {
-    const data = await response.json();
-    dispatch(setUser(data));
-    return null;
-  } else {
-    const data = await response.json();
-    return data;
+  if (body) {
+    options.body = JSON.stringify(body);
   }
-};
 
-export const thunkSignup = (userData) => async dispatch => {
-  const csrfToken = getCookie('csrf_token');
-  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/signup`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': csrfToken
-    },
-    body: JSON.stringify(userData),
-    credentials: 'include'
-  });
-  
+  const response = await fetch(url, options);
   if (response.ok) {
-    const data = await response.json();
-    dispatch(setUser(data));
-    return null;
-  } else {
-    const data = await response.json();
-    return data;
+    return await response.json();
   }
+  throw await response.json();
 };
 
 export const thunkAuthenticate = () => async (dispatch) => {
-  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/`, {
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include'
-  });
-  if (response.ok) {
-    const data = await response.json();
-    if (data.errors) {
-      return;
-    }
+  try {
+    const data = await makeRequest(`${import.meta.env.VITE_APP_API_URL}/api/auth/`);
     dispatch(setUser(data));
+  } catch (err) {
+    console.error('Authentication failed:', err);
+  }
+};
+
+export const thunkLogin = (credentials) => async (dispatch) => {
+  try {
+    const data = await makeRequest(
+      `${import.meta.env.VITE_APP_API_URL}/api/auth/login`,
+      'POST',
+      credentials
+    );
+    dispatch(setUser(data));
+    return null;
+  } catch (err) {
+    return err;
+  }
+};
+
+export const thunkSignup = (userData) => async (dispatch) => {
+  try {
+    const data = await makeRequest(
+      `${import.meta.env.VITE_APP_API_URL}/api/auth/signup`,
+      'POST',
+      userData
+    );
+    dispatch(setUser(data));
+    return null;
+  } catch (err) {
+    return err;
   }
 };
 
 export const thunkLogout = () => async (dispatch) => {
-  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/logout`, {
-    credentials: 'include'
-  });
-
-  if (response.ok) {
+  try {
+    await makeRequest(`${import.meta.env.VITE_APP_API_URL}/api/auth/logout`);
     dispatch(removeUser());
+  } catch (err) {
+    console.error('Logout failed:', err);
   }
 };
 
