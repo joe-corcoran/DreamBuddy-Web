@@ -18,6 +18,8 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+app.config.from_object(Config)
+csrf = CSRFProtect(app)
 
 # Setup login manager
 login = LoginManager(app)
@@ -28,10 +30,10 @@ def load_user(id):
     return User.query.get(int(id))
 
 app.cli.add_command(seed_commands)
-app.config.from_object(Config)
+
+
 
 # Initialize CSRF protection AFTER app configuration
-csrf = CSRFProtect(app)
 
 # Register blueprints
 app.register_blueprint(user_routes, url_prefix='/api/users')
@@ -46,26 +48,50 @@ Migrate(app, db)
 
 # Setup CORS - THIS IS THE KEY CHANGE
 CORS(app, 
-     origins=["https://dreambuddy-frontend.onrender.com", "http://localhost:5173"],
-     supports_credentials=True,
-     allow_headers=["Content-Type", "X-CSRF-Token"],
-     expose_headers=["Content-Type", "X-CSRF-Token"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+     resources={r"/api/*": {
+         "origins": ["https://dreambuddy-frontend.onrender.com"],
+         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         "allow_headers": ["Content-Type", "X-CSRF-Token"],
+         "expose_headers": ["Content-Type", "X-CSRF-Token"],
+         "supports_credentials": True
+     }})
 
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'https://dreambuddy-frontend.onrender.com')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, X-CSRF-Token')
-    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    
-    # Set CSRF token
-    token = generate_csrf()
-    response.set_cookie('csrf_token',
-                       token,
-                       secure=True if os.environ.get('FLASK_ENV') == 'production' else False,
-                       samesite='Lax',
-                       httponly=True,
-                       domain=".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None)
+    # Only add CORS headers if not already present
+    if "Access-Control-Allow-Origin" not in response.headers:
+        response.headers["Access-Control-Allow-Origin"] = "https://dreambuddy-frontend.onrender.com"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-CSRF-Token"
+
+    # Always set a CSRF token
+    if "csrf_token" not in request.cookies:
+        token = generate_csrf()
+        response.set_cookie(
+            "csrf_token",
+            token,
+            secure=True,
+            samesite='Lax',
+            httponly=False,  # Allow JavaScript access
+            domain=".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None
+        )
     
     return response
+
+@app.errorhandler(401)
+def unauthorized_error(e):
+    return jsonify({"error": "Unauthorized"}), 401
+
+@app.errorhandler(404)
+def not_found_error(e):
+    return jsonify({"error": "Not found"}), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    return jsonify({"error": "Internal server error"}), 500
+
+# Health check endpoint
+@app.route("/api/health")
+def health_check():
+    return jsonify({"status": "healthy"}), 200

@@ -21,32 +21,69 @@ const getCookie = (name) => {
 
 const makeRequest = async (url, method = 'GET', body = null) => {
   const csrfToken = getCookie('csrf_token');
+  
+  if (!csrfToken) {
+    console.error('No CSRF token found in cookies');
+    // Try to refresh the page to get a new CSRF token
+    window.location.reload();
+    return;
+  }
+
   const options = {
     method,
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-Token': csrfToken || ''
+      'X-CSRF-Token': csrfToken
     },
-    credentials: 'include'
+    credentials: 'include',
+    body: body ? JSON.stringify(body) : undefined
   };
 
-  if (body) {
-    options.body = JSON.stringify(body);
+  try {
+    console.log('Making request:', { 
+      url, 
+      method, 
+      headers: options.headers,
+      credentials: options.credentials 
+    });
+    
+    const response = await fetch(url, options);
+    const contentType = response.headers.get('content-type');
+    
+    if (!response.ok) {
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        console.error('Request failed:', errorData);
+        throw errorData;
+      } else {
+        const text = await response.text();
+        console.error('Request failed:', text);
+        throw new Error(text);
+      }
+    }
+    
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Request error:', error);
+    throw error;
   }
-
-  const response = await fetch(url, options);
-  if (response.ok) {
-    return await response.json();
-  }
-  throw await response.json();
 };
 
 export const thunkAuthenticate = () => async (dispatch) => {
   try {
     const data = await makeRequest(`${import.meta.env.VITE_APP_API_URL}/api/auth/`);
-    dispatch(setUser(data));
+    if (data && !data.errors) {
+      dispatch(setUser(data));
+    } else {
+      dispatch(removeUser());
+    }
   } catch (err) {
     console.error('Authentication failed:', err);
+    dispatch(removeUser());
   }
 };
 

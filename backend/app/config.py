@@ -6,7 +6,6 @@ load_dotenv()
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    WTF_CSRF_CHECK_DEFAULT = False 
     
     # Enhanced database URL handling
     if os.environ.get("FLASK_ENV") == "production":
@@ -19,9 +18,13 @@ class Config:
     SQLALCHEMY_ECHO = True
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
     
-    # Production-specific configs
-    if os.environ.get("FLASK_ENV") == "production":
-        SQLALCHEMY_ECHO = False
-        SESSION_COOKIE_SECURE = True
-        SESSION_COOKIE_HTTPONLY = True
-        SESSION_COOKIE_SAMESITE = 'Strict'
+    # CSRF Configuration
+    WTF_CSRF_ENABLED = True
+    WTF_CSRF_CHECK_DEFAULT = True  # Changed to True
+    WTF_CSRF_TIME_LIMIT = None
+    
+    # Session/Cookie Configuration
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'  # Changed from Strict
+    SESSION_COOKIE_DOMAIN = ".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None
