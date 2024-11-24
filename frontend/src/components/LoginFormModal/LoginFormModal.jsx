@@ -39,6 +39,12 @@ function LoginFormModal() {
     }
   };
 
+  const handleDemoUser = (e) => {
+    e.preventDefault();
+    return dispatch(sessionActions.login({ credential: 'demo@user.io', password: 'password' }))
+      .then(closeModal);
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -69,9 +75,9 @@ function LoginFormModal() {
         </label>
         {errors.password && <p>{errors.password}</p>}
         <button type="submit">Log In</button>
-        <button type="button" onClick={handleDemoLogin} className="demo-button">
-          Demo User
-        </button>
+        <div className="demo-user">
+        <button onClick={handleDemoUser}>Demo User</button>
+      </div>
       </form>
     </div>
   );
