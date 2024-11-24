@@ -41,12 +41,9 @@ Migrate(app, db)
 # Application Security
 CORS(app, supports_credentials=True, resources={
     r"/api/*": {
-        "origins": [
-            "https://dreambuddy-frontend.onrender.com",
-            "http://localhost:5173"
-        ],
+        "origins": ["https://dreambuddy-frontend.onrender.com", "http://localhost:5173"],
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "X-CSRF-Token"],
+        "allow_headers": ["Content-Type", "X-CSRF-Token", "Authorization", "XSRF-TOKEN"],
         "expose_headers": ["Content-Type", "X-CSRF-Token"],
         "supports_credentials": True
     }
@@ -67,8 +64,10 @@ def inject_csrf_token(response):
         'csrf_token',
         generate_csrf(),
         secure=True if os.environ.get('FLASK_ENV') == 'production' else False,
-        samesite='Strict' if os.environ.get('FLASK_ENV') == 'production' else None,
-        httponly=True)
+        samesite='Lax' if os.environ.get('FLASK_ENV') == 'production' else None,  # Changed from 'Strict' to 'Lax'
+        httponly=True,
+        domain=".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None  # Add this line
+    )
     return response
 
 # API documentation route

@@ -37,9 +37,9 @@ export const thunkLogin = (credentials) => async dispatch => {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
-      "XSRF-TOKEN": getCookie("XSRF-TOKEN")
+      "X-CSRF-Token": getCookie("csrf_token")  
     },
-    credentials: 'include', 
+    credentials: 'include',
     body: JSON.stringify(credentials)
   });
 
@@ -59,9 +59,9 @@ export const thunkSignup = (user) => async (dispatch) => {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
-      "XSRF-TOKEN": getCookie("XSRF-TOKEN")
+      "X-CSRF-Token": getCookie("csrf_token")  
     },
-    credentials: 'include',  
+    credentials: 'include',
     body: JSON.stringify(user)
   });
 
@@ -75,7 +75,6 @@ export const thunkSignup = (user) => async (dispatch) => {
     return { server: "Something went wrong. Please try again" }
   }
 };
-
 export const thunkLogout = () => async (dispatch) => {
   try {
     await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/logout`, {
