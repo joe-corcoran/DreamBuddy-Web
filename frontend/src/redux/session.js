@@ -1,5 +1,3 @@
-//frontend/src/redux/session.js
-
 const SET_USER = 'session/setUser';
 const REMOVE_USER = 'session/removeUser';
 
@@ -22,19 +20,18 @@ const removeUser = () => ({
 });
 
 export const thunkAuthenticate = () => async (dispatch) => {
-	const response = await fetch("/api/auth/");
-	if (response.ok) {
-		const data = await response.json();
-		if (data.errors) {
-			return;
-		}
-
-		dispatch(setUser(data));
-	}
+  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/`);
+  if (response.ok) {
+    const data = await response.json();
+    if (data.errors) {
+      return;
+    }
+    dispatch(setUser(data));
+  }
 };
 
 export const thunkLogin = (credentials) => async dispatch => {
-  const response = await fetch("/api/auth/login", {
+  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/login`, {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
@@ -55,7 +52,7 @@ export const thunkLogin = (credentials) => async dispatch => {
 };
 
 export const thunkSignup = (user) => async (dispatch) => {
-  const response = await fetch("/api/auth/signup", {
+  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/signup`, {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
@@ -75,17 +72,16 @@ export const thunkSignup = (user) => async (dispatch) => {
   }
 };
 
-import { clearAllState } from './store';
-
 export const thunkLogout = () => async (dispatch) => {
   try {
-    await fetch("/api/auth/logout");
+    await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/logout`);
     dispatch(clearAllState());
     window.location.href = '/';
   } catch (error) {
     console.error('Logout error:', error);
   }
 };
+
 const initialState = { user: null };
 
 function sessionReducer(state = initialState, action) {

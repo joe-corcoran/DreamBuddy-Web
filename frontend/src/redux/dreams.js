@@ -1,4 +1,4 @@
-// frontend/src/redux/dreams.js
+import { removeUser } from './session';
 
 // Action Types
 const SET_DREAMS = "dreams/SET_DREAMS";
@@ -53,12 +53,12 @@ const setSelectedDate = (date) => ({
 });
 
 export const clearDreams = () => ({
-    type: CLEAR_DREAMS,
-  });
+  type: CLEAR_DREAMS,
+});
 
 // Thunks
 export const thunkLoadDreams = () => async (dispatch) => {
-  const response = await fetch("/api/dreams/");
+  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/dreams/`);
 
   if (response.ok) {
     const dreams = await response.json();
@@ -72,7 +72,7 @@ export const thunkLoadDreams = () => async (dispatch) => {
 
 export const thunkCheckTodayDream = (clientDate) => async (dispatch) => {
   try {
-    const response = await fetch(`/api/dreams/today?clientDate=${encodeURIComponent(clientDate)}`);
+    const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/dreams/today?clientDate=${encodeURIComponent(clientDate)}`);
 
     if (response.ok) {
       const dream = await response.json();
@@ -95,7 +95,7 @@ export const thunkQuickDream = (dreamData) => async (dispatch) => {
     return { errors: { date: "You have already logged a dream today" } };
   }
 
-  const response = await fetch("/api/dreams/quick", {
+  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/dreams/quick`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -115,7 +115,7 @@ export const thunkQuickDream = (dreamData) => async (dispatch) => {
 };
 
 export const thunkUpdateDream = (dreamId, dreamData) => async (dispatch) => {
-  const response = await fetch(`/api/dreams/${dreamId}`, {
+  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/dreams/${dreamId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -139,7 +139,7 @@ export const thunkUpdateDream = (dreamId, dreamData) => async (dispatch) => {
 };
 
 export const thunkDeleteDream = (dreamId) => async (dispatch) => {
-  const response = await fetch(`/api/dreams/${dreamId}`, {
+  const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/dreams/${dreamId}`, {
     method: "DELETE",
   });
 
@@ -155,7 +155,7 @@ export const thunkDeleteDream = (dreamId) => async (dispatch) => {
 
 export const thunkGetDreamsByMonth = (year, month) => async (dispatch) => {
   try {
-    const response = await fetch(`/api/dreams/month/${year}/${month}`);
+    const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/dreams/month/${year}/${month}`);
 
     if (response.ok) {
       const dreams = await response.json();
@@ -172,7 +172,7 @@ export const thunkGetDreamsByMonth = (year, month) => async (dispatch) => {
 
 export const thunkGetPopularTags = () => async (dispatch) => {
   try {
-    const response = await fetch("/api/dreams/popular_tags");
+    const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/dreams/popular_tags`);
 
     if (response.ok) {
       const tags = await response.json();
@@ -188,9 +188,9 @@ export const thunkGetPopularTags = () => async (dispatch) => {
 };
 
 export const thunkLogout = () => async (dispatch) => {
-  await fetch("/api/auth/logout");
+  await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/logout`);
   dispatch(removeUser());
-  dispatch(clearDreams()); 
+  dispatch(clearDreams());
 };
 
 // Initial State
@@ -256,22 +256,19 @@ export default function dreamsReducer(state = initialState, action) {
       };
     }
     case CLEAR_DREAMS:
-        return {
-            ...initialState
-     };
-
+      return {
+        ...initialState
+      };
     case SET_POPULAR_TAGS:
       return {
         ...state,
         popularTags: action.payload,
       };
-
     case SET_SELECTED_DATE:
       return {
         ...state,
         selectedDate: action.payload,
       };
-
     default:
       return state;
   }

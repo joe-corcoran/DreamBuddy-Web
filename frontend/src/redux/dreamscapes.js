@@ -1,4 +1,3 @@
-// frontend/src/redux/dreamscapes.js
 import { OpenAIService } from '../services/openai';
 
 // Action Types
@@ -28,20 +27,18 @@ export const generateDreamscape = (dreamId, dreamContent) => async (dispatch) =>
   dispatch(setError(null));
 
   try {
-
     const optimizedPrompt = await OpenAIService.generateDreamscapePrompt(dreamContent);
-    
     const imageUrl = await OpenAIService.generateDreamscapeImage(optimizedPrompt);
     
-    const response = await fetch(`/api/dreamscapes/${dreamId}`, {
+    const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/dreamscapes/${dreamId}`, {
         method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        imageUrl,
-        optimizedPrompt
-      })
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          imageUrl,
+          optimizedPrompt
+        })
     });
 
     if (!response.ok) {
