@@ -1,7 +1,7 @@
-# backend/app/___init___.py
+# backend/app/__init__.py
 
 import os
-from flask import Flask, render_template, request, session, redirect
+from flask import Flask, request, redirect, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect, generate_csrf
@@ -15,20 +15,15 @@ from .api.dream_routes import dream_routes
 from .api.interpretation_routes import interpretation_routes
 from .api.dreamscape_routes import dreamscape_routes
 
-
-
-
-app = Flask(__name__, static_folder='../react-vite/dist', static_url_path='/')
+app = Flask(__name__)
 
 # Setup login manager
 login = LoginManager(app)
 login.login_view = 'auth.unauthorized'
 
-
 @login.user_loader
 def load_user(id):
     return User.query.get(int(id))
-
 
 # Tell flask about our seed commands
 app.cli.add_command(seed_commands)
@@ -40,22 +35,13 @@ app.register_blueprint(dream_routes, url_prefix='/api/dreams')
 app.register_blueprint(interpretation_routes, url_prefix='/api/interpretations')
 app.register_blueprint(dreamscape_routes, url_prefix='/api/dreamscapes')
 
-
-
-
-
 db.init_app(app)
 Migrate(app, db)
 
 # Application Security
 CORS(app)
 
-
-# Since we are deploying with Docker and Flask,
-# we won't be using a buildpack when we deploy to Heroku.
-# Therefore, we need to make sure that in production any
-# request made over http is redirected to https.
-# Well.........
+# HTTPS redirect
 @app.before_request
 def https_redirect():
     if os.environ.get('FLASK_ENV') == 'production':
@@ -64,19 +50,18 @@ def https_redirect():
             code = 301
             return redirect(url, code=code)
 
-
+# CSRF Token
 @app.after_request
 def inject_csrf_token(response):
     response.set_cookie(
         'csrf_token',
         generate_csrf(),
         secure=True if os.environ.get('FLASK_ENV') == 'production' else False,
-        samesite='Strict' if os.environ.get(
-            'FLASK_ENV') == 'production' else None,
+        samesite='Strict' if os.environ.get('FLASK_ENV') == 'production' else None,
         httponly=True)
     return response
 
-
+# API documentation route
 @app.route("/api/docs")
 def api_help():
     """
@@ -88,20 +73,15 @@ def api_help():
                     for rule in app.url_map.iter_rules() if rule.endpoint != 'static' }
     return route_list
 
-
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def react_root(path):
+# Health check endpoint
+@app.route("/api/health")
+def health_check():
     """
-    This route will direct to the public directory in our
-    react builds in the production environment for favicon
-    or index.html requests
+    Health check endpoint for the API
     """
-    if path == 'favicon.ico':
-        return app.send_from_directory('public', 'favicon.ico')
-    return app.send_static_file('index.html')
+    return jsonify({"status": "healthy"}), 200
 
-
+# Handle 404 errors with JSON response
 @app.errorhandler(404)
 def not_found(e):
-    return app.send_static_file('index.html')
+    return jsonify({"error": "Not found"}), 404
