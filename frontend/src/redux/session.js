@@ -21,13 +21,12 @@ const getCookie = (name) => {
 };
 
 const makeRequest = async (url, method = 'GET', body = null) => {
+  // For non-GET requests, refresh CSRF token first
   if (method !== 'GET') {
     console.log('Making CSRF refresh request...');
-    const csrfResponse = await fetch(
-      `${import.meta.env.VITE_APP_API_URL}/api/auth/csrf/refresh`, 
-      { credentials: 'include' }
-    );
-    
+    const csrfResponse = await fetch('/api/auth/csrf/refresh', {
+      credentials: 'include'
+    });
     console.log('CSRF Headers:', [...csrfResponse.headers.entries()]);
     console.log('CSRF Cookies after refresh:', document.cookie);
   }
@@ -66,16 +65,11 @@ const makeRequest = async (url, method = 'GET', body = null) => {
   
   return response.json();
 };
+
 export const thunkSignup = (userData) => async (dispatch) => {
   try {
-    const signupUrl = `${import.meta.env.VITE_APP_API_URL}/api/auth/signup`;
-    console.log('Signup URL:', signupUrl);
-    
-    await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/csrf/refresh`, {
-      credentials: 'include'
-    });
-    
-    const data = await makeRequest(signupUrl, 'POST', userData);
+    console.log('Attempting signup...');
+    const data = await makeRequest('/api/auth/signup', 'POST', userData);
     dispatch(setUser(data));
     return null;
   } catch (err) {
@@ -86,7 +80,7 @@ export const thunkSignup = (userData) => async (dispatch) => {
 
 export const thunkAuthenticate = () => async (dispatch) => {
   try {
-    const data = await makeRequest(`${import.meta.env.VITE_APP_API_URL}/api/auth/`);
+    const data = await makeRequest('/api/auth');
     if (data) {
       dispatch(setUser(data));
     } else {
@@ -100,24 +94,8 @@ export const thunkAuthenticate = () => async (dispatch) => {
 
 export const thunkLogin = (credentials) => async (dispatch) => {
   try {
-    console.log('Fetching CSRF token before login...');
-    const csrfResponse = await fetch(
-      `${import.meta.env.VITE_APP_API_URL}/api/auth/csrf/refresh`,
-      { credentials: 'include' }
-    );
-    console.log('CSRF Response:', csrfResponse);
-    console.log('CSRF Response Headers:', [...csrfResponse.headers.entries()]);
-    console.log('Cookies after CSRF:', document.cookie);
-
     console.log('Attempting login with credentials:', credentials);
-    const csrfToken = getCookie('csrf_token');
-    console.log('CSRF Token before login:', csrfToken);
-
-    const data = await makeRequest(
-      `${import.meta.env.VITE_APP_API_URL}/api/auth/login`,
-      'POST',
-      credentials
-    );
+    const data = await makeRequest('/api/auth/login', 'POST', credentials);
     dispatch(setUser(data));
     return null;
   } catch (err) {
@@ -128,7 +106,7 @@ export const thunkLogin = (credentials) => async (dispatch) => {
 
 export const thunkLogout = () => async (dispatch) => {
   try {
-    await makeRequest(`${import.meta.env.VITE_APP_API_URL}/api/auth/logout`);
+    await makeRequest('/api/auth/logout');
     dispatch(removeUser());
   } catch (err) {
     console.error('Logout failed:', err);
