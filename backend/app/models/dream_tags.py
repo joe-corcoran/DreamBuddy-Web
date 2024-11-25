@@ -1,18 +1,18 @@
-# backend/app/models/dream_tags.py
-
-from .db import db
-from datetime import datetime  
+from .db import db, environment, SCHEMA, add_prefix_for_prod
+from datetime import datetime
 
 class DreamTags(db.Model):
     __tablename__ = 'dream_tags'
 
+    if environment == "production":
+        __table_args__ = {'schema': SCHEMA}
+
     id = db.Column(db.Integer, primary_key=True)
-    dream_id = db.Column(db.Integer, db.ForeignKey('dream_journals.id'), nullable=False)
+    dream_id = db.Column(db.Integer, db.ForeignKey(add_prefix_for_prod('dream_journals.id')), nullable=False)
     tag = db.Column(db.String(255), nullable=False)
     is_auto_generated = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    # Relationships
     dream = db.relationship('DreamJournal', back_populates='tags')
 
     def to_dict(self):

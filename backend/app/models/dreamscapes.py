@@ -1,18 +1,19 @@
-# backend/app/models/dreamscapes.py
-from .db import db
+from .db import db, environment, SCHEMA, add_prefix_for_prod
 from datetime import datetime
 
 class Dreamscape(db.Model):
     __tablename__ = 'dreamscapes'
 
+    if environment == "production":
+        __table_args__ = {'schema': SCHEMA}
+
     id = db.Column(db.Integer, primary_key=True)
-    dream_id = db.Column(db.Integer, db.ForeignKey('dream_journals.id', ondelete='CASCADE'), nullable=False)
+    dream_id = db.Column(db.Integer, db.ForeignKey(add_prefix_for_prod('dream_journals.id'), ondelete='CASCADE'), nullable=False)
     image_url = db.Column(db.String(500))
     optimized_prompt = db.Column(db.Text)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    # Relationships
     dream = db.relationship('DreamJournal', back_populates='dreamscape')
 
     def to_dict(self):

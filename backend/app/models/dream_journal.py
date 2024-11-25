@@ -1,4 +1,4 @@
-from .db import db
+from .db import db, environment, SCHEMA, add_prefix_for_prod
 from datetime import datetime
 from sqlalchemy import func
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -6,8 +6,11 @@ from sqlalchemy.ext.hybrid import hybrid_property
 class DreamJournal(db.Model):
     __tablename__ = 'dream_journals'
 
+    if environment == "production":
+        __table_args__ = {'schema': SCHEMA}
+
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey(add_prefix_for_prod('users.id')), nullable=False)
     content = db.Column(db.Text, nullable=False)
     title = db.Column(db.String(255), nullable=False)
     is_lucid = db.Column(db.Boolean, default=False)
@@ -20,11 +23,9 @@ class DreamJournal(db.Model):
         onupdate=datetime.utcnow
     )
 
-    # Relationships
     user = db.relationship('User', back_populates='dreams')
     tags = db.relationship('DreamTags', back_populates='dream', cascade='all, delete-orphan')
     dreamscape = db.relationship('Dreamscape', back_populates='dream', uselist=False, cascade='all, delete-orphan')
-
 
     @hybrid_property
     def dream_date(self):
