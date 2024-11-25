@@ -21,25 +21,35 @@ const getCookie = (name) => {
 };
 
 const makeRequest = async (url, method = 'GET', body = null) => {
+
+  if (method !== 'GET' && !getCookie('csrf_token')) {
+    console.log('No CSRF token found, fetching new one...');
+    await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/csrf/refresh`, {
+      credentials: 'include'
+    });
+  }
+  
   const csrfToken = getCookie('csrf_token');
+  console.log('Using CSRF Token:', csrfToken);
   
   const options = {
     method,
     headers: {
       'Content-Type': 'application/json',
-      ...(csrfToken && { 'X-CSRF-Token': csrfToken })
+      'X-CSRF-Token': csrfToken  
     },
-    credentials: 'include'
+    credentials: 'include',
+    body: body ? JSON.stringify(body) : null
   };
 
-  if (body) {
-    options.body = JSON.stringify(body);
-  }
+  console.log('Making request to:', url, 'with options:', options);
 
   const response = await fetch(url, options);
   
   if (!response.ok) {
-    throw new Error(await response.text());
+    const text = await response.text();
+    console.error('Request failed:', text);
+    throw new Error(text);
   }
   
   return response.json();
@@ -47,11 +57,9 @@ const makeRequest = async (url, method = 'GET', body = null) => {
 
 export const thunkSignup = (userData) => async (dispatch) => {
   try {
-    // Debug log the complete URL
     const signupUrl = `${import.meta.env.VITE_APP_API_URL}/api/auth/signup`;
     console.log('Signup URL:', signupUrl);
     
-    // First ensure we have a CSRF token
     await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/csrf/refresh`, {
       credentials: 'include'
     });
@@ -81,6 +89,19 @@ export const thunkAuthenticate = () => async (dispatch) => {
 
 export const thunkLogin = (credentials) => async (dispatch) => {
   try {
+    console.log('Fetching CSRF token before login...');
+    const csrfResponse = await fetch(
+      `${import.meta.env.VITE_APP_API_URL}/api/auth/csrf/refresh`,
+      { credentials: 'include' }
+    );
+    console.log('CSRF Response:', csrfResponse);
+    console.log('CSRF Response Headers:', [...csrfResponse.headers.entries()]);
+    console.log('Cookies after CSRF:', document.cookie);
+
+    console.log('Attempting login with credentials:', credentials);
+    const csrfToken = getCookie('csrf_token');
+    console.log('CSRF Token before login:', csrfToken);
+
     const data = await makeRequest(
       `${import.meta.env.VITE_APP_API_URL}/api/auth/login`,
       'POST',
@@ -89,6 +110,7 @@ export const thunkLogin = (credentials) => async (dispatch) => {
     dispatch(setUser(data));
     return null;
   } catch (err) {
+    console.error('Login error:', err);
     return err;
   }
 };

@@ -8,7 +8,7 @@ from app.forms import SignUpForm
 from flask_login import current_user, login_user, logout_user, login_required
 from flask_wtf.csrf import generate_csrf
 
-logging.basicConfig(level=logging.DEBUG)  # Changed to DEBUG for more info
+logging.basicConfig(level=logging.DEBUG) 
 logger = logging.getLogger(__name__)
 
 auth_routes = Blueprint('auth', __name__)
@@ -30,18 +30,19 @@ def login():
     """
     Logs a user in
     """
-    logger.debug(f"Login attempt with data: {request.json}")
-    logger.debug(f"Request headers: {dict(request.headers)}")
-    logger.debug(f"Request cookies: {dict(request.cookies)}")
+    logger.debug("=== Login Request Received ===")
+    logger.debug(f"Request Headers: {dict(request.headers)}")
+    logger.debug(f"Request Cookies: {dict(request.cookies)}")
+    logger.debug(f"Request JSON Data: {request.json}")
     
-    form = LoginForm()
-    
-    # Get CSRF token from either cookies or headers
     csrf_token = request.headers.get('X-CSRF-Token') or request.cookies.get('csrf_token')
+    logger.debug(f"Found CSRF token: {csrf_token}")
+    
     if not csrf_token:
-        logger.error("No CSRF token found")
+        logger.error("No CSRF token found in either headers or cookies")
         return {'errors': {'csrf': 'CSRF token missing'}}, 400
-        
+
+    form = LoginForm()
     form['csrf_token'].data = csrf_token
     
     if form.validate_on_submit():
@@ -161,7 +162,7 @@ def refresh_csrf():
         token,
         secure=True if request.is_secure else False,
         samesite='Lax',
-        httponly=True
+        httponly=False
     )
     return response
 
