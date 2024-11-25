@@ -19,11 +19,10 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 allowed_origins = [
-    "https://dreambuddy-frontend.onrender.com", 
-    "http://localhost:5173",                    
-    "http://localhost:3000"                      
+    "https://dreambuddy-web.onrender.com",
+    "http://localhost:5173",
+    "http://localhost:3000"
 ]
-
 
 app = Flask(__name__, static_folder='../../frontend/dist', static_url_path='')
 app.config.from_object(Config)
@@ -102,6 +101,8 @@ def after_request(response):
             logger.debug("Set CSRF cookie in response")
     
     return response
+
+
 
 # Health check endpoint
 @app.route("/api/health")
