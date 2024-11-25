@@ -6,6 +6,9 @@ load_dotenv()
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    CORS_HEADERS = 'Content-Type'
+    CORS_SUPPORTS_CREDENTIALS = True
+    CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRF-Token"]
     
     # Enhanced database URL handling
     if os.environ.get("FLASK_ENV") == "production":
@@ -25,7 +28,10 @@ class Config:
     WTF_CSRF_SSL_STRICT = False  # Add this if using HTTP in development
     
     # Session/Cookie Configuration
+    
     SESSION_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production'  # Only require HTTPS in production
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     REMEMBER_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production'
+    if os.environ.get('FLASK_ENV') == 'production':
+        SESSION_COOKIE_DOMAIN = '.onrender.com'

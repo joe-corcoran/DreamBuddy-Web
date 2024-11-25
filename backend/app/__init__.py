@@ -19,11 +19,28 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config.from_object(Config)
-csrf = CSRFProtect(app)
+
+
+CORS(app, 
+    resources={r"/api/*": {
+        "origins": [
+            "https://dreambuddy-web.onrender.com",  # Your frontend production URL
+            "http://localhost:5173",                # Your frontend development URL
+            "http://localhost:3000"                 # Add any other development URLs
+        ],
+        "supports_credentials": True,
+        "allow_headers": ["Content-Type", "X-CSRF-Token"],
+        "expose_headers": ["Content-Type", "X-CSRF-Token"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    }},
+    expose_headers=["Content-Type", "X-CSRF-Token"],
+    supports_credentials=True
+)
 
 # Setup login manager
 login = LoginManager(app)
 login.login_view = 'auth.unauthorized'
+csrf = CSRFProtect(app)
 
 @login.user_loader
 def load_user(id):
@@ -31,7 +48,8 @@ def load_user(id):
 
 app.cli.add_command(seed_commands)
 
-
+db.init_app(app)
+Migrate(app, db)
 
 # Initialize CSRF protection AFTER app configuration
 
@@ -43,24 +61,13 @@ app.register_blueprint(interpretation_routes, url_prefix='/api/interpretations')
 app.register_blueprint(dreamscape_routes, url_prefix='/api/dreamscapes')
 
 # Initialize database
-db.init_app(app)
-Migrate(app, db)
 
-# Setup CORS - THIS IS THE KEY CHANGE
-CORS(app, 
-     resources={r"/api/*": {
-         "origins": ["https://dreambuddy-frontend.onrender.com"],
-         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-         "allow_headers": ["Content-Type", "X-CSRF-Token"],
-         "expose_headers": ["Content-Type", "X-CSRF-Token"],
-         "supports_credentials": True
-     }})
 
 @app.after_request
 def after_request(response):
     # Only add CORS headers for API routes
     if request.path.startswith('/api/'):
-        response.headers["Access-Control-Allow-Origin"] = "https://dreambuddy-frontend.onrender.com"
+        response.headers["Access-Control-Allow-Origin"] = "https://dreambuddy-web.onrender.com"
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-CSRF-Token"
