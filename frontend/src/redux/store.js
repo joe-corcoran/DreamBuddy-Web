@@ -14,6 +14,16 @@ import interpretationsReducer from "./interpretations";
 
 export const CLEAR_STATE = 'app/CLEAR_STATE';
 
+// Error handling middleware
+const errorHandlingMiddleware = store => next => action => {
+  // Check if the action has an error property that's an object
+  if (action.payload && typeof action.payload.error === 'object') {
+    // Convert error object to string
+    action.payload.error = action.payload.error.message || 'An error occurred';
+  }
+  return next(action);
+};
+
 const combinedReducer = combineReducers({
   session: sessionReducer,
   dreams: dreamsReducer,
@@ -33,11 +43,11 @@ let enhancer;
 
 const configureStore = (preloadedState) => {
   if (import.meta.env.MODE === "production") {
-    enhancer = applyMiddleware(thunk);
+    enhancer = applyMiddleware(thunk, errorHandlingMiddleware);
   } else {
     const composeEnhancers =
       window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-    enhancer = composeEnhancers(applyMiddleware(thunk, logger));
+    enhancer = composeEnhancers(applyMiddleware(thunk, errorHandlingMiddleware, logger));
   }
   
   const store = createStore(rootReducer, preloadedState, enhancer);

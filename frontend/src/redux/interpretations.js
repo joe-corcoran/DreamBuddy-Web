@@ -1,3 +1,5 @@
+import { getApiUrl } from '../config';
+
 // Interpretation Types Definition
 export const interpretationTypes = {
   SPIRITUAL: 'spiritual',
@@ -40,21 +42,22 @@ export const setLoading = (isLoading) => ({
 
 export const setError = (error) => ({
   type: SET_ERROR,
-  payload: error
+  payload: typeof error === 'string' ? error : 'An error occurred'
 });
 
 // Thunks
 export const generateInterpretation = (dreamIds, type) => async (dispatch) => {
   if (!Object.values(interpretationTypes).includes(type)) {
-    dispatch(setError({ validation: 'Invalid interpretation type' }));
-    return { errors: { validation: 'Invalid interpretation type' } };
+    const errorMessage = 'Invalid interpretation type';
+    dispatch(setError(errorMessage));
+    return { error: errorMessage };
   }
 
   dispatch(setLoading(true));
   dispatch(setError(null));
 
   try {
-    const response = await fetch('/api/interpretations/generate', {
+    const response = await fetch(getApiUrl('/api/interpretations/generate'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -65,75 +68,51 @@ export const generateInterpretation = (dreamIds, type) => async (dispatch) => {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.errors?.server || 'Failed to generate interpretation');
+      const errorData = await response.json();
+      throw new Error(errorData.errors?.server || 'Failed to generate interpretation');
     }
 
     const interpretation = await response.json();
     dispatch(setTypeInterpretation(type, interpretation));
-    return { interpretation };
+    return { success: true, interpretation };
   } catch (error) {
-    const errors = { server: error.message || 'Failed to generate interpretation' };
-    dispatch(setError(errors));
-    return { errors };
+    const errorMessage = error.message || 'Failed to generate interpretation';
+    dispatch(setError(errorMessage));
+    return { error: errorMessage };
   } finally {
     dispatch(setLoading(false));
   }
 };
 
-// Get all interpretation types for a dream
 export const getDreamInterpretations = (dreamId) => async (dispatch) => {
   dispatch(setLoading(true));
   dispatch(setError(null));
 
   try {
-    const response = await fetch(`/api/interpretations/dream/${dreamId}`, {
+    const response = await fetch(getApiUrl(`/api/interpretations/dream/${dreamId}`), {
       credentials: 'include'
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.errors?.server || 'Failed to fetch interpretations');
+      const errorData = await response.json();
+      throw new Error(errorData.errors?.server || 'Failed to fetch interpretations');
     }
 
     const interpretations = await response.json();
-    // Clear existing interpretations for this dream
     Object.values(interpretationTypes).forEach(type => {
       dispatch(setTypeInterpretation(type, null));
     });
-    // Set received interpretations
     interpretations.forEach(interpretation => {
       dispatch(setTypeInterpretation(interpretation.interpretation_type, interpretation));
     });
-    return { interpretations };
+    return { success: true, interpretations };
   } catch (error) {
-    const errors = { server: error.message || 'Failed to fetch interpretations' };
-    dispatch(setError(errors));
-    return { errors };
+    const errorMessage = error.message || 'Failed to fetch interpretations';
+    dispatch(setError(errorMessage));
+    return { error: errorMessage };
   } finally {
     dispatch(setLoading(false));
   }
-};
-
-// Generate all interpretation types for a dream
-export const generateAllInterpretations = (dreamIds) => async (dispatch) => {
-  const results = {};
-  let hasError = false;
-
-  for (const type of Object.values(interpretationTypes)) {
-    const result = await dispatch(generateInterpretation(dreamIds, type));
-    if (result.errors) {
-      hasError = true;
-      results[type] = { error: result.errors };
-    } else {
-      results[type] = result.interpretation;
-    }
-  }
-
-  return {
-    success: !hasError,
-    results
-  };
 };
 
 // Reducer

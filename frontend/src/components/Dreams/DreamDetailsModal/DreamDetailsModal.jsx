@@ -25,6 +25,7 @@ const DreamDetailsModal = ({ date, dreams }) => {
   const [isDreamscapeExpanded, setIsDreamscapeExpanded] = useState(false);
   const [isInterpretationsExpanded, setIsInterpretationsExpanded] = useState(false);
   const [selectedType, setSelectedType] = useState(InterpretationType.ACTIONABLE);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const interpretations = useSelector((state) => state.interpretations.byType);
   const interpretationsLoading = useSelector((state) => state.interpretations.isLoading);
@@ -34,35 +35,34 @@ const DreamDetailsModal = ({ date, dreams }) => {
   const dreamscapesLoading = useSelector((state) => state.dreamscapes.isLoading);
   const dreamscapesError = useSelector((state) => state.dreamscapes.error);
 
-  const dream = dreams[0]; 
+  const dream = dreams[0];
 
   const handleGenerateInterpretation = async () => {
     if (!dream) return;
+    setErrorMessage('');
 
     const dreamIds = [dream.id];
     const result = await dispatch(generateInterpretation(dreamIds, selectedType));
 
-    if (result?.interpretation) {
-      dispatch(setTypeInterpretation(selectedType, result.interpretation));
+    if (result.error) {
+      setErrorMessage(result.error);
     }
   };
 
   const handleGenerateDreamscape = async () => {
     if (!dream) return;
+    setErrorMessage('');
   
     try {
       const result = await dispatch(generateDreamscape(dream.id, dream.content));
-      if (result.errors) {
-        console.error('Failed to generate dreamscape:', result.errors);
-      } else {
-        console.log('Dreamscape generated:', result);
+      if (result.error) {
+        setErrorMessage(result.error);
       }
     } catch (error) {
-      console.error('Error in handleGenerateDreamscape:', error);
+      setErrorMessage(error.message || 'Failed to generate dreamscape');
     }
   };
 
-  
   const getCurrentInterpretation = () => interpretations[selectedType];
 
   const typeColors = {
@@ -174,9 +174,10 @@ const DreamDetailsModal = ({ date, dreams }) => {
               </button>
             )}
             {dreamscapesError && (
-              <div className="error">Error: {dreamscapesError}</div>
-            )}
-          </div>
+          <div className="error">{typeof dreamscapesError === 'string' ? dreamscapesError : 'Failed to generate dreamscape'}</div>
+        )}
+        {errorMessage && <div className="error">{errorMessage}</div>}
+      </div>
         )}
       </div>
 
@@ -221,8 +222,11 @@ const DreamDetailsModal = ({ date, dreams }) => {
                   Generate {selectedType} Interpretation
                 </button>
               )}
-              {interpretationsError && <div className="error">{interpretationsError}</div>}
-            </div>
+         {interpretationsError && (
+          <div className="error">{typeof interpretationsError === 'string' ? interpretationsError : 'Failed to generate interpretation'}</div>
+        )}
+        {errorMessage && <div className="error">{errorMessage}</div>}
+      </div>
           )}
         </div>
 

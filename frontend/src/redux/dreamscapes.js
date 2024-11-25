@@ -1,3 +1,5 @@
+import { getApiUrl } from '../config';
+
 // Action Types
 const SET_DREAMSCAPE = "dreamscapes/SET_DREAMSCAPE";
 const SET_LOADING = "dreamscapes/SET_LOADING";
@@ -16,7 +18,7 @@ const setLoading = (isLoading) => ({
 
 const setError = (error) => ({
   type: SET_ERROR,
-  payload: error
+  payload: typeof error === 'string' ? error : 'An error occurred'
 });
 
 // Thunks
@@ -25,7 +27,7 @@ export const generateDreamscape = (dreamId, dreamContent) => async (dispatch) =>
   dispatch(setError(null));
 
   try {
-    const response = await fetch(`/api/dreamscapes/generate/${dreamId}`, {
+    const response = await fetch(getApiUrl(`/api/dreamscapes/generate/${dreamId}`), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -35,17 +37,17 @@ export const generateDreamscape = (dreamId, dreamContent) => async (dispatch) =>
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.errors?.server || 'Failed to generate dreamscape');
+      const errorData = await response.json();
+      throw new Error(errorData.errors?.server || 'Failed to generate dreamscape');
     }
 
     const result = await response.json();
     dispatch(setDreamscape(dreamId, result.image_url, result.optimized_prompt));
     return { success: true, imageUrl: result.image_url, prompt: result.optimized_prompt };
   } catch (error) {
-    const errors = { server: error.message || 'Failed to generate dreamscape' };
-    dispatch(setError(errors));
-    return { errors };
+    const errorMessage = error.message || 'Failed to generate dreamscape';
+    dispatch(setError(errorMessage));
+    return { error: errorMessage };
   } finally {
     dispatch(setLoading(false));
   }
@@ -56,7 +58,7 @@ export const regenerateDreamscape = (dreamId) => async (dispatch) => {
   dispatch(setError(null));
 
   try {
-    const response = await fetch(`/api/dreamscapes/regenerate/${dreamId}`, {
+    const response = await fetch(getApiUrl(`/api/dreamscapes/regenerate/${dreamId}`), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -66,17 +68,17 @@ export const regenerateDreamscape = (dreamId) => async (dispatch) => {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.errors?.server || 'Failed to regenerate dreamscape');
+      const errorData = await response.json();
+      throw new Error(errorData.errors?.server || 'Failed to regenerate dreamscape');
     }
 
     const result = await response.json();
     dispatch(setDreamscape(dreamId, result.image_url, result.optimized_prompt));
     return { success: true, imageUrl: result.image_url, prompt: result.optimized_prompt };
   } catch (error) {
-    const errors = { server: error.message || 'Failed to regenerate dreamscape' };
-    dispatch(setError(errors));
-    return { errors };
+    const errorMessage = error.message || 'Failed to regenerate dreamscape';
+    dispatch(setError(errorMessage));
+    return { error: errorMessage };
   } finally {
     dispatch(setLoading(false));
   }
@@ -87,7 +89,7 @@ export const getDreamscape = (dreamId) => async (dispatch) => {
   dispatch(setError(null));
 
   try {
-    const response = await fetch(`/api/dreamscapes/dream/${dreamId}`, {
+    const response = await fetch(getApiUrl(`/api/dreamscapes/dream/${dreamId}`), {
       credentials: 'include'
     });
 
@@ -95,17 +97,17 @@ export const getDreamscape = (dreamId) => async (dispatch) => {
       if (response.status === 404) {
         return { notFound: true };
       }
-      const error = await response.json();
-      throw new Error(error.errors?.server || 'Failed to fetch dreamscape');
+      const errorData = await response.json();
+      throw new Error(errorData.errors?.server || 'Failed to fetch dreamscape');
     }
 
     const result = await response.json();
     dispatch(setDreamscape(dreamId, result.image_url, result.optimized_prompt));
     return { success: true, imageUrl: result.image_url, prompt: result.optimized_prompt };
   } catch (error) {
-    const errors = { server: error.message || 'Failed to fetch dreamscape' };
-    dispatch(setError(errors));
-    return { errors };
+    const errorMessage = error.message || 'Failed to fetch dreamscape';
+    dispatch(setError(errorMessage));
+    return { error: errorMessage };
   } finally {
     dispatch(setLoading(false));
   }

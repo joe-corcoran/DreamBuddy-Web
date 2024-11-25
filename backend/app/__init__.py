@@ -56,26 +56,32 @@ app.register_blueprint(dreamscape_routes, url_prefix='/api/dreamscapes')
 
 @app.after_request
 def after_request(response):
-    logger.debug("=== Processing After Request ===")
-    logger.debug(f"Request Path: {request.path}")
-    logger.debug(f"Request Method: {request.method}")
-    
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-CSRF-Token')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    
-    # Only set CSRF token if it's an API request and token doesn't exist
-    if request.path.startswith('/api/') and 'csrf_token' not in request.cookies:
-        token = generate_csrf()
+    # Set CSRF cookie for all requests
+    if 'csrf_token' not in request.cookies:
         response.set_cookie(
             'csrf_token',
-            token,
+            generate_csrf(),
             secure=True,
             samesite='Lax',
             httponly=False,
             path='/'
         )
-        
+    
+    # Handle CORS
+    if request.path.startswith('/api/'):
+        response.headers.add('Access-Control-Allow-Origin', request.headers.get('Origin', '*'))
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authentication,X-CSRF-Token')
+        response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+        response.headers.add('Access-Control-Allow-Credentials', 'true')
+    
+    return response
+
+# Add OPTIONS handling for CSRF
+@app.route('/api/csrf/token', methods=['GET'])
+def get_csrf():
+    token = generate_csrf()
+    response = jsonify({'csrf_token': token})
+    response.set_cookie('csrf_token', token, secure=True, samesite='Lax', httponly=False)
     return response
 
 # Serve React App
