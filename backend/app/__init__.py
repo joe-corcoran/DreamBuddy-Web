@@ -125,4 +125,5 @@ def internal_error(e):
 def serve(path):
     if path != "" and os.path.exists(f"{app.static_folder}/{path}"):
         return send_from_directory(app.static_folder, path)
-        return send_from_directory(app.static_folder, 'index.html')
+    # Remove the duplicate return and fix indentation
+    return send_from_directory(app.static_folder, 'index.html')
