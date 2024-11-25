@@ -30,11 +30,13 @@ export const generateDreamscape = (dreamId, dreamContent) => async (dispatch) =>
     const optimizedPrompt = await OpenAIService.generateDreamscapePrompt(dreamContent);
     const imageUrl = await OpenAIService.generateDreamscapeImage(optimizedPrompt);
     
-    const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/dreamscapes/${dreamId}`, {
+    const response = await fetch(`/api/dreamscapes/${dreamId}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.cookie.split('csrf_token=')[1]
         },
+        credentials: 'include',
         body: JSON.stringify({
           imageUrl,
           optimizedPrompt
@@ -42,14 +44,17 @@ export const generateDreamscape = (dreamId, dreamContent) => async (dispatch) =>
     });
 
     if (!response.ok) {
-      throw new Error('Failed to save dreamscape');
+      const error = await response.json();
+      throw new Error(error.errors?.server || 'Failed to save dreamscape');
     }
 
-    dispatch(setDreamscape(dreamId, imageUrl, optimizedPrompt));
-    return { success: true, imageUrl, prompt: optimizedPrompt };
+    const result = await response.json();
+    dispatch(setDreamscape(dreamId, result.image_url, result.optimized_prompt));
+    return { success: true, imageUrl: result.image_url, prompt: result.optimized_prompt };
   } catch (error) {
-    dispatch(setError(error.message));
-    return { errors: { server: error.message } };
+    const errors = { server: error.message || 'Failed to generate dreamscape' };
+    dispatch(setError(errors));
+    return { errors };
   } finally {
     dispatch(setLoading(false));
   }

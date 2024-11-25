@@ -46,9 +46,13 @@ export const setError = (error) => ({
 export const generateInterpretation = (dreamIds, type) => async (dispatch) => {
   dispatch(setLoading(true));
   try {
-    const response = await fetch(`${import.meta.env.VITE_APP_API_URL}/api/interpretations/generate`, {
+    const response = await fetch('/api/interpretations/generate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.cookie.split('csrf_token=')[1]
+      },
+      credentials: 'include',
       body: JSON.stringify({ dreamIds, type })
     });
 
@@ -58,12 +62,40 @@ export const generateInterpretation = (dreamIds, type) => async (dispatch) => {
       return { interpretation };
     } else {
       const error = await response.json();
-      dispatch(setError(error.message));
-      return null;
+      dispatch(setError(error.errors));
+      return { errors: error.errors };
     }
   } catch (error) {
-    dispatch(setError(error.message));
-    return null;
+    const errors = { server: 'Failed to generate interpretation' };
+    dispatch(setError(errors));
+    return { errors };
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
+export const getDreamInterpretations = (dreamId) => async (dispatch) => {
+  dispatch(setLoading(true));
+  try {
+    const response = await fetch(`/api/interpretations/dream/${dreamId}`, {
+      credentials: 'include'
+    });
+
+    if (response.ok) {
+      const interpretations = await response.json();
+      interpretations.forEach(interpretation => {
+        dispatch(setTypeInterpretation(interpretation.interpretation_type, interpretation));
+      });
+      return { interpretations };
+    } else {
+      const error = await response.json();
+      dispatch(setError(error.errors));
+      return { errors: error.errors };
+    }
+  } catch (error) {
+    const errors = { server: 'Failed to fetch interpretations' };
+    dispatch(setError(errors));
+    return { errors };
   } finally {
     dispatch(setLoading(false));
   }

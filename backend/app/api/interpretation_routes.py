@@ -1,13 +1,24 @@
-# backend/app/api/interpretation_routes.py
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.models import db, DreamInterpretation, DreamJournal
 from datetime import datetime
 from openai import OpenAI
 import os
+import logging
 
 interpretation_routes = Blueprint('interpretations', __name__)
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+logger = logging.getLogger(__name__)
+
+def validate_csrf_token():
+    try:
+        csrf_token = request.cookies.get('csrf_token')
+        if not csrf_token:
+            return False, {'errors': {'csrf': 'Missing CSRF token'}}, 400
+        return True, None, None
+    except Exception as e:
+        logger.error(f"CSRF validation error: {str(e)}")
+        return False, {'errors': {'csrf': 'Invalid CSRF token'}}, 400
 
 def get_interpretation_prompt(type):
     prompts = {
@@ -22,13 +33,18 @@ def get_interpretation_prompt(type):
 @interpretation_routes.route('/generate', methods=['POST'])
 @login_required
 def generate_interpretation():
+    # Validate CSRF token
+    is_valid, error_response, error_code = validate_csrf_token()
+    if not is_valid:
+        return error_response, error_code
+        
     try:
         data = request.get_json()
         dream_ids = data.get('dreamIds')
         interp_type = data.get('type')
 
         if not dream_ids:
-            return jsonify({'error': 'No dreams provided'}), 400
+            return jsonify({'errors': {'validation': 'No dreams provided'}}), 400
 
         # Verify dreams belong to current user
         dreams = DreamJournal.query.filter(
@@ -37,10 +53,10 @@ def generate_interpretation():
         ).all()
 
         if len(dreams) != len(dream_ids):
-            return jsonify({'error': 'Unauthorized access to dreams'}), 403
+            return jsonify({'errors': {'auth': 'Unauthorized access to dreams'}}), 403
 
         if not dreams:
-            return jsonify({'error': 'Dreams not found'}), 404
+            return jsonify({'errors': {'validation': 'Dreams not found'}}), 404
 
         # Check for existing interpretation
         existing_interpretation = DreamInterpretation.query.filter(
@@ -77,19 +93,17 @@ def generate_interpretation():
         return jsonify(interpretation.to_dict())
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        logger.error(f"Error generating interpretation: {str(e)}")
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'errors': {'server': str(e)}}), 500
 
-# Add route to get interpretations for a dream
 @interpretation_routes.route('/dream/<int:dream_id>', methods=['GET'])
 @login_required
 def get_dream_interpretations(dream_id):
     try:
-        # Verify dream belongs to current user
         dream = DreamJournal.query.get_or_404(dream_id)
         if dream.user_id != current_user.id:
-            return jsonify({'error': 'Unauthorized'}), 403
+            return jsonify({'errors': {'auth': 'Unauthorized'}}), 403
 
         interpretations = DreamInterpretation.query.filter(
             DreamInterpretation.user_id == current_user.id,
@@ -99,5 +113,5 @@ def get_dream_interpretations(dream_id):
         return jsonify([interp.to_dict() for interp in interpretations])
 
     except Exception as e:
-        print(f"Error: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Error fetching interpretations: {str(e)}")
+        return jsonify({'errors': {'server': str(e)}}), 500

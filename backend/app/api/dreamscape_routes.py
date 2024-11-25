@@ -1,4 +1,3 @@
-#backend/app/api/dreamscape_routes.py
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.models import db, DreamJournal, Dreamscape
@@ -8,20 +7,34 @@ import logging
 dreamscape_routes = Blueprint('dreamscapes', __name__)
 logger = logging.getLogger(__name__)
 
+def validate_csrf_token():
+    try:
+        csrf_token = request.cookies.get('csrf_token')
+        if not csrf_token:
+            return False, {'errors': {'csrf': 'Missing CSRF token'}}, 400
+        return True, None, None
+    except Exception as e:
+        logger.error(f"CSRF validation error: {str(e)}")
+        return False, {'errors': {'csrf': 'Invalid CSRF token'}}, 400
+
 @dreamscape_routes.route('/<int:dream_id>', methods=['POST'])
 @login_required
 def create_dreamscape(dream_id):
     """Create a new dreamscape for a dream"""
-    dream = DreamJournal.query.get_or_404(dream_id)
-    if dream.user_id != current_user.id:
-        return {'errors': {'unauthorized': 'Dream not found'}}, 404
-
-    data = request.json
-    if not data or 'imageUrl' not in data or 'optimizedPrompt' not in data:
-        return {'errors': {'validation': 'Image URL and optimized prompt required'}}, 400
+    # Validate CSRF token
+    is_valid, error_response, error_code = validate_csrf_token()
+    if not is_valid:
+        return error_response, error_code
 
     try:
-        # Check if dreamscape already exists
+        dream = DreamJournal.query.get_or_404(dream_id)
+        if dream.user_id != current_user.id:
+            return {'errors': {'auth': 'Unauthorized access'}}, 403
+
+        data = request.json
+        if not data or 'imageUrl' not in data or 'optimizedPrompt' not in data:
+            return {'errors': {'validation': 'Image URL and optimized prompt required'}}, 400
+
         existing_dreamscape = Dreamscape.query.filter_by(dream_id=dream_id).first()
         if existing_dreamscape:
             existing_dreamscape.image_url = data['imageUrl']
