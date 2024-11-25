@@ -1,6 +1,6 @@
-# backend/app/models/dream_interpretation.py
 from .db import db, environment, SCHEMA, add_prefix_for_prod
 from datetime import datetime
+from .associations import dream_interpretations_dreams
 
 class DreamInterpretation(db.Model):
     __tablename__ = 'dream_interpretations'
@@ -18,7 +18,7 @@ class DreamInterpretation(db.Model):
     user = db.relationship('User', back_populates='interpretations')
     dreams = db.relationship(
         'DreamJournal',
-        secondary=add_prefix_for_prod('dream_interpretations_dreams'),
+        secondary=dream_interpretations_dreams,
         primaryjoin='DreamInterpretation.id==dream_interpretations_dreams.c.interpretation_id',
         secondaryjoin='and_(DreamJournal.id==dream_interpretations_dreams.c.dream_id, DreamJournal.user_id==DreamInterpretation.user_id)',
         viewonly=True
@@ -31,13 +31,3 @@ class DreamInterpretation(db.Model):
             'interpretation_type': self.interpretation_type,
             'date': self.date.isoformat()
         }
-
-dream_interpretations_dreams = db.Table('dream_interpretations_dreams',
-    db.Column('interpretation_id', db.Integer, 
-              db.ForeignKey(add_prefix_for_prod('dream_interpretations.id'), ondelete='CASCADE'), 
-              primary_key=True),
-    db.Column('dream_id', db.Integer, 
-              db.ForeignKey(add_prefix_for_prod('dream_journals.id'), ondelete='CASCADE'), 
-              primary_key=True),
-    schema=SCHEMA if environment == "production" else None
-)
