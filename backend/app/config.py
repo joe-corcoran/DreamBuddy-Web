@@ -1,3 +1,4 @@
+#backend/app/config.py
 import os
 from dotenv import load_dotenv
 
@@ -33,5 +34,3 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     REMEMBER_COOKIE_SECURE = os.environ.get('FLASK_ENV') == 'production'
-    if os.environ.get('FLASK_ENV') == 'production':
-        SESSION_COOKIE_DOMAIN = '.onrender.com'

@@ -1,3 +1,4 @@
+//frontend/src/redux/session.js
 const SET_USER = 'session/setUser';
 const REMOVE_USER = 'session/removeUser';
 
@@ -20,52 +21,28 @@ const getCookie = (name) => {
 };
 
 const makeRequest = async (url, method = 'GET', body = null) => {
-  const csrfToken = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('csrf_token='))
-    ?.split('=')[1];
-    
-  // Debug logging
-  console.log('API URL:', import.meta.env.VITE_APP_API_URL);
-  console.log('Complete URL:', url);
-  console.log('CSRF Token:', csrfToken);
-  console.log('Cookies:', document.cookie);
-
+  const csrfToken = getCookie('csrf_token');
+  
   const options = {
     method,
     headers: {
       'Content-Type': 'application/json',
+      ...(csrfToken && { 'X-CSRF-Token': csrfToken })
     },
     credentials: 'include'
   };
-
-  // Only add CSRF token if we have one
-  if (csrfToken) {
-    options.headers['X-CSRF-Token'] = csrfToken;
-  }
 
   if (body) {
     options.body = JSON.stringify(body);
   }
 
-  try {
-    const response = await fetch(url, options);
-    
-    // Debug response
-    console.log('Response status:', response.status);
-    console.log('Response headers:', [...response.headers.entries()]);
-    
-    if (!response.ok) {
-      const errorData = await response.text(); // Use text() instead of json() to see raw response
-      console.error('Error response:', errorData);
-      throw new Error(errorData);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Request error:', error);
-    throw error;
+  const response = await fetch(url, options);
+  
+  if (!response.ok) {
+    throw new Error(await response.text());
   }
+  
+  return response.json();
 };
 
 export const thunkSignup = (userData) => async (dispatch) => {

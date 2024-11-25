@@ -1,3 +1,4 @@
+#backend/app/___init___.py
 import os
 from flask import Flask, request, redirect, jsonify
 from flask_cors import CORS
@@ -24,7 +25,7 @@ app.config.from_object(Config)
 CORS(app, 
     resources={r"/api/*": {
         "origins": [
-            "https://dreambuddy-web.onrender.com",  # Your frontend production URL
+            "https://dreambuddy-frontend.onrender.com",  # Your frontend production URL
             "http://localhost:5173",                # Your frontend development URL
             "http://localhost:3000"                 # Add any other development URLs
         ],
@@ -62,17 +63,14 @@ app.register_blueprint(dreamscape_routes, url_prefix='/api/dreamscapes')
 
 # Initialize database
 
-
 @app.after_request
 def after_request(response):
-    # Only add CORS headers for API routes
     if request.path.startswith('/api/'):
-        response.headers["Access-Control-Allow-Origin"] = "https://dreambuddy-web.onrender.com"
+        response.headers["Access-Control-Allow-Origin"] = "https://dreambuddy-frontend.onrender.com"  # CHANGED
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, X-CSRF-Token"
 
-        # Set CSRF token only if not present AND this is not a preflight request
         if request.method != 'OPTIONS' and 'csrf_token' not in request.cookies:
             token = generate_csrf()
             response.set_cookie(
@@ -80,10 +78,8 @@ def after_request(response):
                 token,
                 secure=True,
                 samesite='Lax',
-                httponly=False,  # Allow JavaScript access
-                domain=".onrender.com" if os.environ.get('FLASK_ENV') == 'production' else None
+                httponly=False,
             )
-    
     return response
 
 @app.errorhandler(401)
