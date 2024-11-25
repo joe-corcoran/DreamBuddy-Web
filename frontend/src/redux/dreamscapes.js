@@ -1,5 +1,3 @@
-import { OpenAIService } from '../services/openai';
-
 // Action Types
 const SET_DREAMSCAPE = "dreamscapes/SET_DREAMSCAPE";
 const SET_LOADING = "dreamscapes/SET_LOADING";
@@ -21,31 +19,24 @@ const setError = (error) => ({
   payload: error
 });
 
-// Thunk
+// Thunks
 export const generateDreamscape = (dreamId, dreamContent) => async (dispatch) => {
   dispatch(setLoading(true));
   dispatch(setError(null));
 
   try {
-    const optimizedPrompt = await OpenAIService.generateDreamscapePrompt(dreamContent);
-    const imageUrl = await OpenAIService.generateDreamscapeImage(optimizedPrompt);
-    
-    const response = await fetch(`/api/dreamscapes/${dreamId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': document.cookie.split('csrf_token=')[1]
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          imageUrl,
-          optimizedPrompt
-        })
+    const response = await fetch(`/api/dreamscapes/generate/${dreamId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.cookie.split('csrf_token=')[1]?.split(';')[0]
+      },
+      credentials: 'include'
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.errors?.server || 'Failed to save dreamscape');
+      throw new Error(error.errors?.server || 'Failed to generate dreamscape');
     }
 
     const result = await response.json();
@@ -53,6 +44,66 @@ export const generateDreamscape = (dreamId, dreamContent) => async (dispatch) =>
     return { success: true, imageUrl: result.image_url, prompt: result.optimized_prompt };
   } catch (error) {
     const errors = { server: error.message || 'Failed to generate dreamscape' };
+    dispatch(setError(errors));
+    return { errors };
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
+export const regenerateDreamscape = (dreamId) => async (dispatch) => {
+  dispatch(setLoading(true));
+  dispatch(setError(null));
+
+  try {
+    const response = await fetch(`/api/dreamscapes/regenerate/${dreamId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.cookie.split('csrf_token=')[1]?.split(';')[0]
+      },
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.errors?.server || 'Failed to regenerate dreamscape');
+    }
+
+    const result = await response.json();
+    dispatch(setDreamscape(dreamId, result.image_url, result.optimized_prompt));
+    return { success: true, imageUrl: result.image_url, prompt: result.optimized_prompt };
+  } catch (error) {
+    const errors = { server: error.message || 'Failed to regenerate dreamscape' };
+    dispatch(setError(errors));
+    return { errors };
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
+export const getDreamscape = (dreamId) => async (dispatch) => {
+  dispatch(setLoading(true));
+  dispatch(setError(null));
+
+  try {
+    const response = await fetch(`/api/dreamscapes/dream/${dreamId}`, {
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        return { notFound: true };
+      }
+      const error = await response.json();
+      throw new Error(error.errors?.server || 'Failed to fetch dreamscape');
+    }
+
+    const result = await response.json();
+    dispatch(setDreamscape(dreamId, result.image_url, result.optimized_prompt));
+    return { success: true, imageUrl: result.image_url, prompt: result.optimized_prompt };
+  } catch (error) {
+    const errors = { server: error.message || 'Failed to fetch dreamscape' };
     dispatch(setError(errors));
     return { errors };
   } finally {
@@ -81,19 +132,16 @@ export default function dreamscapesReducer(state = initialState, action) {
           }
         }
       };
-
     case SET_LOADING:
       return {
         ...state,
         isLoading: action.payload
       };
-
     case SET_ERROR:
       return {
         ...state,
         error: action.payload
       };
-
     default:
       return state;
   }

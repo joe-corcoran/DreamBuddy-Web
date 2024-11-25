@@ -1,13 +1,12 @@
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.models import db, DreamInterpretation, DreamJournal
+from app.services.openai_service import OpenAIService
 from datetime import datetime
-from openai import OpenAI
 import os
 import logging
 
 interpretation_routes = Blueprint('interpretations', __name__)
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 logger = logging.getLogger(__name__)
 
 def validate_csrf_token():
@@ -69,19 +68,17 @@ def generate_interpretation():
             return jsonify(existing_interpretation.to_dict())
 
         dream_content = " ".join(dream.content for dream in dreams)
-        prompt = get_interpretation_prompt(interp_type)
-
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a skilled dream interpreter."},
-                {"role": "user", "content": f"{prompt}\n\n{dream_content}"}
-            ]
-        )
+        
+        # Use OpenAIService instead of direct client call
+        try:
+            interpretation_text = OpenAIService.generate_interpretation(dream_content, interp_type)
+        except Exception as e:
+            logger.error(f"OpenAI interpretation generation error: {str(e)}")
+            return jsonify({'errors': {'server': 'Failed to generate interpretation'}}), 500
 
         interpretation = DreamInterpretation(
             user_id=current_user.id,
-            interpretation_text=response.choices[0].message.content,
+            interpretation_text=interpretation_text,
             interpretation_type=interp_type,
             date=datetime.utcnow()
         )
