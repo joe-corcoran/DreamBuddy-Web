@@ -1,5 +1,6 @@
 from .db import db, environment, SCHEMA, add_prefix_for_prod
 from datetime import datetime
+from .associations import dream_interpretations_dreams
 
 class DreamInterpretation(db.Model):
     __tablename__ = 'dream_interpretations'
@@ -14,6 +15,11 @@ class DreamInterpretation(db.Model):
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
+    dreams = db.relationship(
+        'DreamJournal',
+        secondary=dream_interpretations_dreams,
+        back_populates='interpretations'
+    )
     user = db.relationship('User', back_populates='interpretations')
 
     def to_dict(self):
@@ -21,5 +27,6 @@ class DreamInterpretation(db.Model):
             'id': self.id,
             'interpretation_text': self.interpretation_text,
             'interpretation_type': self.interpretation_type,
-            'date': self.date.isoformat()
+            'date': self.date.isoformat(),
+            'dream_ids': [dream.id for dream in self.dreams]
         }

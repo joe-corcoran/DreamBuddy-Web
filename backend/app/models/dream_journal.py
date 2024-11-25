@@ -2,6 +2,7 @@ from .db import db, environment, SCHEMA, add_prefix_for_prod
 from datetime import datetime
 from sqlalchemy import func
 from sqlalchemy.ext.hybrid import hybrid_property
+from .associations import dream_interpretations_dreams
 
 class DreamJournal(db.Model):
     __tablename__ = 'dream_journals'
@@ -26,6 +27,11 @@ class DreamJournal(db.Model):
     user = db.relationship('User', back_populates='dreams')
     tags = db.relationship('DreamTags', back_populates='dream', cascade='all, delete-orphan')
     dreamscape = db.relationship('Dreamscape', back_populates='dream', uselist=False, cascade='all, delete-orphan')
+    interpretations = db.relationship(
+        'DreamInterpretation',
+        secondary=dream_interpretations_dreams,
+        back_populates='dreams'
+    )
 
     @hybrid_property
     def dream_date(self):

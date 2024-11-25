@@ -39,27 +39,25 @@ const DreamDetailsModal = ({ date, dreams }) => {
 
   const handleGenerateInterpretation = async () => {
     if (!dream) return;
-    setErrorMessage('');
-
+  
     const dreamIds = [dream.id];
     const result = await dispatch(generateInterpretation(dreamIds, selectedType));
-
+  
     if (result.error) {
-      setErrorMessage(result.error);
+      console.error('Interpretation error:', result.error);
     }
   };
 
   const handleGenerateDreamscape = async () => {
     if (!dream) return;
-    setErrorMessage('');
   
     try {
       const result = await dispatch(generateDreamscape(dream.id, dream.content));
       if (result.error) {
-        setErrorMessage(result.error);
+        console.error('Dreamscape error:', result.error);
       }
     } catch (error) {
-      setErrorMessage(error.message || 'Failed to generate dreamscape');
+      console.error('Error in handleGenerateDreamscape:', error);
     }
   };
 
@@ -78,6 +76,20 @@ const DreamDetailsModal = ({ date, dreams }) => {
       console.log('Current dreamscape:', dreamscapes[dream.id]);
     }
   }, [dream, dreamscapes]);
+
+  useEffect(() => {
+    const fetchExistingData = async () => {
+      if (dream?.id) {
+        // Fetch existing dreamscape
+        await dispatch(getDreamscape(dream.id));
+        // Fetch existing interpretations
+        await dispatch(getDreamInterpretations(dream.id));
+      }
+    };
+  
+    fetchExistingData();
+  }, [dream, dispatch]);
+  
 
 
   return (
