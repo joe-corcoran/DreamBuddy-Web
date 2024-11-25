@@ -1,3 +1,5 @@
+import { csrfFetch } from './csrf';
+
 // Action Types
 const SET_DREAMS = "dreams/SET_DREAMS";
 const ADD_DREAM = "dreams/ADD_DREAM";
@@ -56,72 +58,57 @@ export const clearDreams = () => ({
 
 // Thunks
 export const thunkLoadDreams = () => async (dispatch) => {
-  const response = await fetch(`/api/dreams/`);
-
-  if (response.ok) {
+  try {
+    const response = await csrfFetch('/api/dreams');
     const dreams = await response.json();
     dispatch(setDreams(dreams));
     return dreams;
-  } else {
-    const errors = await response.json();
-    return { errors };
+  } catch (error) {
+    return { errors: await error.json() };
   }
 };
 
 export const thunkCheckTodayDream = (clientDate) => async (dispatch) => {
   try {
-    const response = await fetch(`/api/dreams/today?clientDate=${encodeURIComponent(clientDate)}`);
-
-    if (response.ok) {
-      const dream = await response.json();
-      if (dream) {
-        dispatch(setTodayDream(dream));
-      }
-      return dream;
-    } else {
-      const errors = await response.json();
-      return { errors };
+    const response = await csrfFetch(`/api/dreams/today?clientDate=${encodeURIComponent(clientDate)}`);
+    const dream = await response.json();
+    if (dream) {
+      dispatch(setTodayDream(dream));
     }
+    return dream;
   } catch (error) {
     return { errors: { server: "Failed to check today's dream" } };
   }
 };
 
 export const thunkQuickDream = (dreamData) => async (dispatch) => {
-  const todayDream = await dispatch(thunkCheckTodayDream());
-  if (todayDream && !todayDream.errors) {
-    return { errors: { date: "You have already logged a dream today" } };
-  }
+  try {
+    const todayDream = await dispatch(thunkCheckTodayDream());
+    if (todayDream && !todayDream.errors) {
+      return { errors: { date: "You have already logged a dream today" } };
+    }
 
-  const response = await fetch(`/api/dreams/quick`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(dreamData),
-  });
+    const response = await csrfFetch('/api/dreams/quick', {
+      method: "POST",
+      body: JSON.stringify(dreamData)
+    });
 
-  if (response.ok) {
     const newDream = await response.json();
     dispatch(addDream(newDream));
     dispatch(setTodayDream(newDream));
     return { dream: newDream };
-  } else {
-    const errors = await response.json();
-    return { errors };
+  } catch (error) {
+    return { errors: await error.json() };
   }
 };
 
 export const thunkUpdateDream = (dreamId, dreamData) => async (dispatch) => {
-  const response = await fetch(`/api/dreams/${dreamId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(dreamData),
-  });
+  try {
+    const response = await csrfFetch(`/api/dreams/${dreamId}`, {
+      method: "PUT",
+      body: JSON.stringify(dreamData)
+    });
 
-  if (response.ok) {
     const updatedDream = await response.json();
     dispatch(updateDream(updatedDream));
     const today = new Date().toDateString();
@@ -130,39 +117,31 @@ export const thunkUpdateDream = (dreamId, dreamData) => async (dispatch) => {
       dispatch(setTodayDream(updatedDream));
     }
     return { dream: updatedDream };
-  } else {
-    const errors = await response.json();
-    return { errors };
+  } catch (error) {
+    return { errors: await error.json() };
   }
 };
 
 export const thunkDeleteDream = (dreamId) => async (dispatch) => {
-  const response = await fetch(`/api/dreams/${dreamId}`, {
-    method: "DELETE",
-  });
-
-  if (response.ok) {
+  try {
+    await csrfFetch(`/api/dreams/${dreamId}`, {
+      method: "DELETE"
+    });
+    
     dispatch(removeDream(dreamId));
     dispatch(setTodayDream(null));
     return { success: true };
-  } else {
-    const errors = await response.json();
-    return { errors };
+  } catch (error) {
+    return { errors: await error.json() };
   }
 };
 
 export const thunkGetDreamsByMonth = (year, month) => async (dispatch) => {
   try {
-    const response = await fetch(`/api/dreams/month/${year}/${month}`);
-
-    if (response.ok) {
-      const dreams = await response.json();
-      dispatch(setMonthDreams(dreams));
-      return dreams;
-    } else {
-      const errors = await response.json();
-      return { errors };
-    }
+    const response = await csrfFetch(`/api/dreams/month/${year}/${month}`);
+    const dreams = await response.json();
+    dispatch(setMonthDreams(dreams));
+    return dreams;
   } catch (error) {
     return { errors: { server: "Failed to fetch dreams" } };
   }
@@ -170,21 +149,14 @@ export const thunkGetDreamsByMonth = (year, month) => async (dispatch) => {
 
 export const thunkGetPopularTags = () => async (dispatch) => {
   try {
-    const response = await fetch(`/api/dreams/popular_tags`);
-
-    if (response.ok) {
-      const tags = await response.json();
-      dispatch(setPopularTags(tags));
-      return tags;
-    } else {
-      const errors = await response.json();
-      return { errors };
-    }
+    const response = await csrfFetch('/api/dreams/popular_tags');
+    const tags = await response.json();
+    dispatch(setPopularTags(tags));
+    return tags;
   } catch (error) {
     return { errors: { server: "Failed to fetch popular tags" } };
   }
 };
-
 export const thunkLogout = () => async (dispatch) => {
   try {
     await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/logout`);

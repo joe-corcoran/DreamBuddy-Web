@@ -1,6 +1,7 @@
 # backend/app/api/dream_routes.py
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
+from flask_wtf.csrf import validate_csrf
 from app.models import db, DreamJournal, DreamTags 
 from app.forms.dream_form import DreamForm
 from datetime import datetime, timezone
@@ -10,6 +11,16 @@ from dateutil import parser
 
 dream_routes = Blueprint('dreams', __name__)
 logger = logging.getLogger(__name__)
+
+def validate_csrf_token():
+    try:
+        csrf_token = request.cookies.get('csrf_token')
+        if not csrf_token:
+            return False, {'errors': {'csrf': 'Missing CSRF token'}}, 400
+        return True, None, None
+    except Exception as e:
+        logger.error(f"CSRF validation error: {str(e)}")
+        return False, {'errors': {'csrf': 'Invalid CSRF token'}}, 400
 
 def parse_client_date(date_str):
     """Parse date string from client with timezone handling"""
@@ -21,9 +32,7 @@ def parse_client_date(date_str):
 @dream_routes.route('/')
 @login_required
 def get_dreams():
-    """
-    Get all dreams for current user
-    """
+    """Get all dreams for current user"""
     try:
         dreams = DreamJournal.query\
             .filter_by(user_id=current_user.id)\
@@ -38,38 +47,50 @@ def get_dreams():
 @login_required
 def get_today_dream():
     """Check if user has already logged a dream today"""
-    client_date_str = request.args.get('clientDate')
-    target_date = parse_client_date(client_date_str).date() if client_date_str else datetime.now(timezone.utc).date()
-    
-    dream = DreamJournal.get_dream_for_date(current_user.id, target_date)
-    return jsonify(dream.to_dict() if dream else None)
+    try:
+        client_date_str = request.args.get('clientDate')
+        target_date = parse_client_date(client_date_str).date() if client_date_str else datetime.now(timezone.utc).date()
+        
+        dream = DreamJournal.get_dream_for_date(current_user.id, target_date)
+        return jsonify(dream.to_dict() if dream else None)
+    except Exception as e:
+        logger.error(f"Error getting today's dream: {str(e)}")
+        return {'errors': {'server': 'An error occurred'}}, 500
 
 @dream_routes.route('/<int:dream_id>')
 @login_required
 def get_dream(dream_id):
-    """
-    Get a specific dream
-    """
-    dream = DreamJournal.query.get_or_404(dream_id)
-    if dream.user_id != current_user.id:
-        return {'errors': {'unauthorized': 'Dream not found'}}, 404
-    return dream.to_dict()
+    """Get a specific dream"""
+    try:
+        dream = DreamJournal.query.get_or_404(dream_id)
+        if dream.user_id != current_user.id:
+            return {'errors': {'unauthorized': 'Dream not found'}}, 404
+        return dream.to_dict()
+    except Exception as e:
+        logger.error(f"Error fetching dream {dream_id}: {str(e)}")
+        return {'errors': {'server': 'An error occurred'}}, 500
 
 @dream_routes.route('/quick', methods=['POST'])
 @login_required
 def quick_dream():
-    data = request.json
-    client_date_str = data.get('clientDate')
-    target_date = parse_client_date(client_date_str)
-
-    if not data.get('content'):
-        return {'errors': {'content': 'Dream content is required'}}, 400
-
-    existing_dream = DreamJournal.get_dream_for_date(current_user.id, target_date.date())
-    if existing_dream:
-        return {'errors': {'date': 'You have already logged a dream for this date'}}, 400
+    """Create a quick dream entry"""
+    # Validate CSRF token
+    is_valid, error_response, error_code = validate_csrf_token()
+    if not is_valid:
+        return error_response, error_code
 
     try:
+        data = request.json
+        client_date_str = data.get('clientDate')
+        target_date = parse_client_date(client_date_str)
+
+        if not data.get('content'):
+            return {'errors': {'content': 'Dream content is required'}}, 400
+
+        existing_dream = DreamJournal.get_dream_for_date(current_user.id, target_date.date())
+        if existing_dream:
+            return {'errors': {'date': 'You have already logged a dream for this date'}}, 400
+
         new_dream = DreamJournal(
             user_id=current_user.id,
             title=data.get('title', f"Dream on {target_date.strftime('%B %d, %Y')}"),
@@ -99,61 +120,62 @@ def quick_dream():
 @dream_routes.route('/<int:dream_id>', methods=['PUT'])
 @login_required
 def update_dream(dream_id):
-    dream = DreamJournal.query.get_or_404(dream_id)
-    if dream.user_id != current_user.id:
-        return {'errors': {'unauthorized': 'Dream not found'}}, 404
+    """Update an existing dream"""
+    # Validate CSRF token
+    is_valid, error_response, error_code = validate_csrf_token()
+    if not is_valid:
+        return error_response, error_code
 
-    client_date_str = request.json.get('clientDate')
-    client_date = parse_client_date(client_date_str).date()
-    dream_date = dream.date.date()
+    try:
+        dream = DreamJournal.query.get_or_404(dream_id)
+        if dream.user_id != current_user.id:
+            return {'errors': {'unauthorized': 'Dream not found'}}, 404
 
-    if dream_date != client_date:
-        return {'errors': {'date': 'Can only update dreams from the current day'}}, 400
+        data = request.json
+        client_date_str = data.get('clientDate')
+        client_date = parse_client_date(client_date_str).date()
+        dream_date = dream.date.date()
 
-    form = DreamForm()
-    form['csrf_token'].data = request.cookies['csrf_token']
-    
-    if form.validate_on_submit():
-        try:
-            dream.title = form.title.data
-            dream.content = form.content.data
-            dream.is_lucid = form.is_lucid.data
-            dream.updated_at = datetime.now(timezone.utc)
+        if dream_date != client_date:
+            return {'errors': {'date': 'Can only update dreams from the current day'}}, 400
 
-            # Update tags
+        dream.title = data.get('title', dream.title)
+        dream.content = data.get('content', dream.content)
+        dream.is_lucid = data.get('is_lucid', dream.is_lucid)
+        dream.updated_at = datetime.now(timezone.utc)
+
+        # Update tags
+        if 'tags' in data:
             DreamTags.query.filter_by(dream_id=dream_id).delete()
-            
-            if form.tags.data:
-                tags = [tag.strip() for tag in form.tags.data.split(',')]
-                for tag in tags:
-                    new_tag = DreamTags(
-                        dream_id=dream_id,
-                        tag=tag,
-                        is_auto_generated=False
-                    )
-                    db.session.add(new_tag)
+            for tag in data['tags']:
+                new_tag = DreamTags(
+                    dream_id=dream_id,
+                    tag=tag,
+                    is_auto_generated=False
+                )
+                db.session.add(new_tag)
 
-            db.session.commit()
-            return dream.to_dict()
-
-        except Exception as e:
-            logger.error(f"Error updating dream: {str(e)}")
-            db.session.rollback()
-            return {'errors': {'server': 'An error occurred while updating the dream'}}, 500
-    
-    return {'errors': form.errors}, 400
+        db.session.commit()
+        return dream.to_dict()
+    except Exception as e:
+        logger.error(f"Error updating dream: {str(e)}")
+        db.session.rollback()
+        return {'errors': {'server': 'An error occurred while updating the dream'}}, 500
 
 @dream_routes.route('/<int:dream_id>', methods=['DELETE'])
 @login_required
 def delete_dream(dream_id):
-    """
-    Delete a dream entry
-    """
-    dream = DreamJournal.query.get_or_404(dream_id)
-    if dream.user_id != current_user.id:
-        return {'errors': {'unauthorized': 'Dream not found'}}, 404
+    """Delete a dream entry"""
+    # Validate CSRF token
+    is_valid, error_response, error_code = validate_csrf_token()
+    if not is_valid:
+        return error_response, error_code
 
     try:
+        dream = DreamJournal.query.get_or_404(dream_id)
+        if dream.user_id != current_user.id:
+            return {'errors': {'unauthorized': 'Dream not found'}}, 404
+
         DreamTags.query.filter_by(dream_id=dream_id).delete()
         db.session.delete(dream)
         db.session.commit()
@@ -166,11 +188,8 @@ def delete_dream(dream_id):
 @dream_routes.route('/month/<int:year>/<int:month>')
 @login_required
 def get_dreams_by_month(year, month):
-    """
-    Get all dreams for a specific month
-    """
+    """Get all dreams for a specific month"""
     try:
-        # Get the first and last day of the month in user's timezone
         client_date_str = request.args.get('clientDate')
         client_timezone = parse_client_date(client_date_str).tzinfo if client_date_str else timezone.utc
 
@@ -194,9 +213,7 @@ def get_dreams_by_month(year, month):
 @dream_routes.route('/popular_tags')
 @login_required
 def get_popular_tags():
-    """
-    Get most frequently used words in dreams as tags
-    """
+    """Get most frequently used words in dreams as tags"""
     try:
         dreams = DreamJournal.query.filter_by(user_id=current_user.id).all()
         all_content = ' '.join(dream.content for dream in dreams)
