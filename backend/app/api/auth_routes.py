@@ -1,6 +1,6 @@
 # backend/app/api/auth_routes.py
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 import logging
 from app.models import User, db
 from app.forms import LoginForm
@@ -30,38 +30,27 @@ def login():
     """
     Logs a user in
     """
-    logger.debug("=== Login Request Received ===")
+    logger.debug("=== Login Request ===")
     logger.debug(f"Request Headers: {dict(request.headers)}")
     logger.debug(f"Request Cookies: {dict(request.cookies)}")
-    logger.debug(f"Request JSON Data: {request.json}")
     
+    form = LoginForm()
+    
+    # Get CSRF token from either cookies or headers
     csrf_token = request.headers.get('X-CSRF-Token') or request.cookies.get('csrf_token')
     logger.debug(f"Found CSRF token: {csrf_token}")
     
     if not csrf_token:
-        logger.error("No CSRF token found in either headers or cookies")
+        logger.error("No CSRF token found")
         return {'errors': {'csrf': 'CSRF token missing'}}, 400
 
-    form = LoginForm()
     form['csrf_token'].data = csrf_token
     
     if form.validate_on_submit():
-        logger.info(f"Form validated successfully for email: {form.data['email']}")
         user = User.query.filter(User.email == form.data['email']).first()
-        
-        if not user:
-            logger.error(f"No user found with email: {form.data['email']}")
-            return {'errors': {'email': 'Email not found'}}, 401
-            
-        if not user.check_password(form.data['password']):
-            logger.error("Invalid password provided")
-            return {'errors': {'password': 'Invalid password'}}, 401
-            
         login_user(user)
-        logger.info(f"User {user.id} logged in successfully")
         return user.to_dict()
-    
-    logger.error(f"Form validation failed with errors: {form.errors}")
+        
     return form.errors, 401
 
 @auth_routes.route('/logout')
@@ -148,25 +137,31 @@ def unauthorized():
     logger.info("Unauthorized access attempt")
     return {'errors': {'message': 'Unauthorized'}}, 401
 
-# CSRF token refresh route
 @auth_routes.route('/csrf/refresh', methods=['GET'])
 def refresh_csrf():
     """
     Generates a new CSRF token
     """
     token = generate_csrf()
-    logger.debug(f"Generated new CSRF token")
-    response = jsonify({"status": "success"})
+    logger.debug(f"Generated fresh CSRF token: {token}")
+    
+    response = jsonify({
+        "status": "success",
+        "token": token
+    })
+    
     response.set_cookie(
         'csrf_token',
-        token,
-        secure=True if request.is_secure else False,
+        value=token,
+        secure=True,
+        httponly=False,
         samesite='Lax',
-        httponly=False
+        domain=None
     )
+    
+    logger.debug(f"Response cookies: {response.headers.get('Set-Cookie')}")
     return response
 
-#error handlers
 @auth_routes.errorhandler(500)
 def internal_server_error(e):
     logger.error(f"Internal server error: {str(e)}")
@@ -176,3 +171,28 @@ def internal_server_error(e):
 def not_found_error(e):
     logger.error(f"Route not found: {request.url}")
     return {'errors': {'server': 'Route not found'}}, 404
+
+# @auth_routes.route('/test-csrf', methods=['POST'])
+# def test_csrf():
+#     """
+#     Test endpoint for CSRF validation
+#     """
+#     logger.debug("=== CSRF Test Endpoint ===")
+#     logger.debug(f"Headers: {dict(request.headers)}")
+#     logger.debug(f"Cookies: {dict(request.cookies)}")
+
+#     header_token = request.headers.get('X-CSRF-Token')
+#     cookie_token = request.cookies.get('csrf_token')
+    
+#     logger.debug(f"Header CSRF token: {header_token}")
+#     logger.debug(f"Cookie CSRF token: {cookie_token}")
+    
+#     # Check if we have any token
+#     if not header_token:
+#         return jsonify({
+#             "error": "No CSRF token in headers",
+#             "header_token": header_token,
+#             "cookie_token": cookie_token
+#         }), 400
+
+#     return jsonify({"success": True, "message": "CSRF token validated"})

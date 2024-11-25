@@ -21,40 +21,51 @@ const getCookie = (name) => {
 };
 
 const makeRequest = async (url, method = 'GET', body = null) => {
-
-  if (method !== 'GET' && !getCookie('csrf_token')) {
-    console.log('No CSRF token found, fetching new one...');
-    await fetch(`${import.meta.env.VITE_APP_API_URL}/api/auth/csrf/refresh`, {
-      credentials: 'include'
-    });
+  if (method !== 'GET') {
+    console.log('Making CSRF refresh request...');
+    const csrfResponse = await fetch(
+      `${import.meta.env.VITE_APP_API_URL}/api/auth/csrf/refresh`, 
+      { credentials: 'include' }
+    );
+    
+    console.log('CSRF Headers:', [...csrfResponse.headers.entries()]);
+    console.log('CSRF Cookies after refresh:', document.cookie);
   }
-  
+
   const csrfToken = getCookie('csrf_token');
-  console.log('Using CSRF Token:', csrfToken);
-  
+  console.log('CSRF Token for request:', csrfToken);
+
   const options = {
     method,
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-Token': csrfToken  
+      ...(csrfToken && { 'X-CSRF-Token': csrfToken })
     },
     credentials: 'include',
     body: body ? JSON.stringify(body) : null
   };
 
-  console.log('Making request to:', url, 'with options:', options);
+  console.log('Request Options:', {
+    url,
+    method,
+    headers: options.headers,
+    credentials: options.credentials
+  });
 
   const response = await fetch(url, options);
   
   if (!response.ok) {
     const text = await response.text();
-    console.error('Request failed:', text);
+    console.error('Request failed:', {
+      status: response.status,
+      text,
+      responseHeaders: [...response.headers.entries()]
+    });
     throw new Error(text);
   }
   
   return response.json();
 };
-
 export const thunkSignup = (userData) => async (dispatch) => {
   try {
     const signupUrl = `${import.meta.env.VITE_APP_API_URL}/api/auth/signup`;

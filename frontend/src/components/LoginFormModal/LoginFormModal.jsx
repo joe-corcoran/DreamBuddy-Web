@@ -41,8 +41,12 @@ function LoginFormModal() {
 
   const handleDemoUser = (e) => {
     e.preventDefault();
-    return dispatch(thunkLogin({ email: 'demo@user.io', password: 'password' }))
-    .then(closeModal);
+    return dispatch(
+      thunkLogin({ 
+        email: 'tester11@email.com',  
+        password: 'password' 
+      })
+    ).then(closeModal);
   };
 
   if (isLoading) {
