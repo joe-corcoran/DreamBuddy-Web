@@ -1,24 +1,21 @@
 // frontend/src/components/Dreams/DreamDetailsModal/DreamDetailsModal.jsx
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useModal } from '../../../context/Modal';
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useModal } from "../../../context/Modal";
 import {
   generateInterpretation,
   getDreamInterpretations,
   setTypeInterpretation,
-} from '../../../redux/interpretations';
-import { 
-  generateDreamscape,
-  getDreamscape
-} from '../../../redux/dreamscapes';
-import './DreamDetailsModal.css';
+} from "../../../redux/interpretations";
+import { generateDreamscape, getDreamscape } from "../../../redux/dreamscapes";
+import "./DreamDetailsModal.css";
 
 const InterpretationType = {
-  SPIRITUAL: 'spiritual',
-  PRACTICAL: 'practical',
-  EMOTIONAL: 'emotional',
-  ACTIONABLE: 'actionable',
-  LUCID: 'lucid',
+  SPIRITUAL: "spiritual",
+  PRACTICAL: "practical",
+  EMOTIONAL: "emotional",
+  ACTIONABLE: "actionable",
+  LUCID: "lucid",
 };
 
 const DreamDetailsModal = ({ date, dreams }) => {
@@ -26,19 +23,27 @@ const DreamDetailsModal = ({ date, dreams }) => {
   const { closeModal } = useModal();
   const [isDreamDetailsExpanded, setIsDreamDetailsExpanded] = useState(true);
   const [isDreamscapeExpanded, setIsDreamscapeExpanded] = useState(false);
-  const [isInterpretationsExpanded, setIsInterpretationsExpanded] = useState(false);
-  const [selectedType, setSelectedType] = useState(InterpretationType.ACTIONABLE);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [isInterpretationsExpanded, setIsInterpretationsExpanded] =
+    useState(false);
+  const [selectedType, setSelectedType] = useState(
+    InterpretationType.ACTIONABLE
+  );
+  const [errorMessage, setErrorMessage] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
   const [initialFetchAttempted, setInitialFetchAttempted] = useState(false);
 
-
   const interpretations = useSelector((state) => state.interpretations.byType);
-  const interpretationsLoading = useSelector((state) => state.interpretations.isLoading);
-  const interpretationsError = useSelector((state) => state.interpretations.error);
+  const interpretationsLoading = useSelector(
+    (state) => state.interpretations.isLoading
+  );
+  const interpretationsError = useSelector(
+    (state) => state.interpretations.error
+  );
 
   const dreamscapes = useSelector((state) => state.dreamscapes.byDreamId);
-  const dreamscapesLoading = useSelector((state) => state.dreamscapes.isLoading);
+  const dreamscapesLoading = useSelector(
+    (state) => state.dreamscapes.isLoading
+  );
   const dreamscapesError = useSelector((state) => state.dreamscapes.error);
 
   const dream = dreams[0];
@@ -49,17 +54,20 @@ const DreamDetailsModal = ({ date, dreams }) => {
         try {
           const [dreamscapeResult, interpretationsResult] = await Promise.all([
             dispatch(getDreamscape(dream.id)),
-            dispatch(getDreamInterpretations(dream.id))
+            dispatch(getDreamInterpretations(dream.id)),
           ]);
-          
+
           if (dreamscapeResult?.error) {
-            console.error('Error fetching dreamscape:', dreamscapeResult.error);
+            console.error("Error fetching dreamscape:", dreamscapeResult.error);
           }
           if (interpretationsResult?.error) {
-            console.error('Error fetching interpretations:', interpretationsResult.error);
+            console.error(
+              "Error fetching interpretations:",
+              interpretationsResult.error
+            );
           }
         } catch (error) {
-          console.error('Error in fetchExistingData:', error);
+          console.error("Error in fetchExistingData:", error);
         } finally {
           setInitialFetchAttempted(true);
         }
@@ -71,10 +79,12 @@ const DreamDetailsModal = ({ date, dreams }) => {
 
   const handleGenerateInterpretation = async () => {
     if (!dream) return;
-    setErrorMessage('');
+    setErrorMessage("");
 
     const dreamIds = [dream.id];
-    const result = await dispatch(generateInterpretation(dreamIds, selectedType));
+    const result = await dispatch(
+      generateInterpretation(dreamIds, selectedType)
+    );
 
     if (result.error) {
       setErrorMessage(result.error);
@@ -82,34 +92,35 @@ const DreamDetailsModal = ({ date, dreams }) => {
       await dispatch(getDreamInterpretations(dream.id));
     }
   };
-  
 
   const handleGenerateDreamscape = async () => {
     if (!dream) return;
-    setErrorMessage('');
-  
+    setErrorMessage("");
+
     try {
-      const result = await dispatch(generateDreamscape(dream.id, dream.content));
+      const result = await dispatch(
+        generateDreamscape(dream.id, dream.content)
+      );
       if (result.error) {
         setErrorMessage(result.error);
       }
     } catch (error) {
-      setErrorMessage(error.message || 'Failed to generate dreamscape. Please try again.');
-      console.error('Error in handleGenerateDreamscape:', error);
+      setErrorMessage(
+        error.message || "Failed to generate dreamscape. Please try again."
+      );
+      console.error("Error in handleGenerateDreamscape:", error);
     }
   };
-
 
   const getCurrentInterpretation = () => interpretations[selectedType];
 
   const typeColors = {
-    [InterpretationType.SPIRITUAL]: '#9b59b6',
-    [InterpretationType.PRACTICAL]: '#3498db',
-    [InterpretationType.EMOTIONAL]: '#e74c3c',
-    [InterpretationType.ACTIONABLE]: '#2ecc71',
-    [InterpretationType.LUCID]: '#f1c40f',
+    [InterpretationType.SPIRITUAL]: "#9b59b6",
+    [InterpretationType.PRACTICAL]: "#3498db",
+    [InterpretationType.EMOTIONAL]: "#e74c3c",
+    [InterpretationType.ACTIONABLE]: "#2ecc71",
+    [InterpretationType.LUCID]: "#f1c40f",
   };
-
 
   return (
     <div className="dream-details-modal">
@@ -131,11 +142,11 @@ const DreamDetailsModal = ({ date, dreams }) => {
         {/* Date Navigation */}
         <div className="date-navigation">
           <h2>
-            {date.toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
+            {date.toLocaleDateString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
             })}
           </h2>
         </div>
@@ -147,7 +158,11 @@ const DreamDetailsModal = ({ date, dreams }) => {
             onClick={() => setIsDreamDetailsExpanded(!isDreamDetailsExpanded)}
           >
             <h3>Dream Details</h3>
-            <i className={`fas fa-chevron-${isDreamDetailsExpanded ? 'up' : 'down'}`} />
+            <i
+              className={`fas fa-chevron-${
+                isDreamDetailsExpanded ? "up" : "down"
+              }`}
+            />
           </div>
           {isDreamDetailsExpanded && (
             <div className="section-content">
@@ -171,56 +186,72 @@ const DreamDetailsModal = ({ date, dreams }) => {
           )}
         </div>
 
-         {/* Dreamscape Section */}
-      <div className="collapsible-section">
-        <div
-          className="section-header"
-          onClick={() => setIsDreamscapeExpanded(!isDreamscapeExpanded)}
-        >
-          <h3>Dreamscape</h3>
-          <i className={`fas fa-chevron-${isDreamscapeExpanded ? 'up' : 'down'}`} />
-        </div>
-        {isDreamscapeExpanded && dream && (
-          <div className="section-content">
-            {dreamscapesLoading ? (
-              <div className="loading">Generating dreamscape...</div>
-            ) : dreamscapes[dream.id] ? (
-              <div className="dreamscape-image-container">
-                <img 
-                  src={dreamscapes[dream.id].imageUrl} 
-                  alt="Dreamscape" 
-                  className="dreamscape-image"
-                  onError={(e) => {
-                    console.error('Image failed to load:', e);
-                    e.target.style.display = 'none';
-                  }}
-                />
-                <div className="prompt-text">
-                  <small>Prompt: {dreamscapes[dream.id].prompt}</small>
+        {/* Dreamscape Section */}
+        <div className="collapsible-section">
+          <div
+            className="section-header"
+            onClick={() => setIsDreamscapeExpanded(!isDreamscapeExpanded)}
+          >
+            <h3>Dreamscape</h3>
+            <i
+              className={`fas fa-chevron-${
+                isDreamscapeExpanded ? "up" : "down"
+              }`}
+            />
+          </div>
+          {isDreamscapeExpanded && dream && (
+            <div className="section-content">
+              {dreamscapesLoading ? (
+                <div className="loading">Generating dreamscape...</div>
+              ) : dreamscapes[dream.id] ? (
+                <div className="dreamscape-image-container">
+                  <img
+                    src={dreamscapes[dream.id].imageUrl}
+                    alt="Dreamscape"
+                    className="dreamscape-image"
+                    onError={(e) => {
+                      console.error("Image failed to load:", e);
+                      e.target.style.display = "none";
+                    }}
+                  />
+                  <div className="prompt-text">
+                    <small>Prompt: {dreamscapes[dream.id].prompt}</small>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <button className="generate-button" onClick={handleGenerateDreamscape}>
-                Generate Dreamscape
-              </button>
-            )}
-            {dreamscapesError && (
-          <div className="error">{typeof dreamscapesError === 'string' ? dreamscapesError : 'Failed to generate dreamscape'}</div>
-        )}
-        {errorMessage && <div className="error">{errorMessage}</div>}
-      </div>
-        )}
-      </div>
-
+              ) : (
+                <button
+                  className="generate-button"
+                  onClick={handleGenerateDreamscape}
+                >
+                  Generate Dreamscape
+                </button>
+              )}
+              {(dreamscapesError || errorMessage) && (
+                <div className="error">
+                  {errorMessage ||
+                    (typeof dreamscapesError === "string"
+                      ? dreamscapesError
+                      : "Failed to generate dreamscape")}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Interpretations Section */}
         <div className="collapsible-section">
           <div
             className="section-header"
-            onClick={() => setIsInterpretationsExpanded(!isInterpretationsExpanded)}
+            onClick={() =>
+              setIsInterpretationsExpanded(!isInterpretationsExpanded)
+            }
           >
             <h3>Interpretations</h3>
-            <i className={`fas fa-chevron-${isInterpretationsExpanded ? 'up' : 'down'}`} />
+            <i
+              className={`fas fa-chevron-${
+                isInterpretationsExpanded ? "up" : "down"
+              }`}
+            />
           </div>
           {isInterpretationsExpanded && (
             <div className="section-content interpretations-section">
@@ -228,9 +259,11 @@ const DreamDetailsModal = ({ date, dreams }) => {
                 {Object.values(InterpretationType).map((type) => (
                   <button
                     key={type}
-                    className={`type-button ${selectedType === type ? 'selected' : ''}`}
+                    className={`type-button ${
+                      selectedType === type ? "selected" : ""
+                    }`}
                     style={{
-                      '--type-color': typeColors[type],
+                      "--type-color": typeColors[type],
                       opacity: selectedType === type ? 1 : 0.6,
                     }}
                     onClick={() => setSelectedType(type)}
@@ -249,15 +282,22 @@ const DreamDetailsModal = ({ date, dreams }) => {
                   <p>{getCurrentInterpretation().interpretation_text}</p>
                 </div>
               ) : (
-                <button className="generate-button" onClick={handleGenerateInterpretation}>
+                <button
+                  className="generate-button"
+                  onClick={handleGenerateInterpretation}
+                >
                   Generate {selectedType} Interpretation
                 </button>
               )}
-         {interpretationsError && (
-          <div className="error">{typeof interpretationsError === 'string' ? interpretationsError : 'Failed to generate interpretation'}</div>
-        )}
-        {errorMessage && <div className="error">{errorMessage}</div>}
-      </div>
+              {(interpretationsError || errorMessage) && (
+                <div className="error">
+                  {errorMessage ||
+                    (typeof interpretationsError === "string"
+                      ? interpretationsError
+                      : "Failed to generate interpretation")}
+                </div>
+              )}
+            </div>
           )}
         </div>
 
