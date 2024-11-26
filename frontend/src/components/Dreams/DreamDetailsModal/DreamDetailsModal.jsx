@@ -31,6 +31,8 @@ const DreamDetailsModal = ({ date, dreams }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
   const [initialFetchAttempted, setInitialFetchAttempted] = useState(false);
+  const [generationStatus, setGenerationStatus] = useState(null);
+
 
   const interpretations = useSelector((state) => state.interpretations.byType);
   const interpretationsLoading = useSelector(
@@ -98,11 +100,12 @@ const DreamDetailsModal = ({ date, dreams }) => {
     setErrorMessage("");
 
     try {
-      const result = await dispatch(
-        generateDreamscape(dream.id, dream.content)
-      );
+      const result = await dispatch(generateDreamscape(dream.id, dream.content));
+      
       if (result.error) {
         setErrorMessage(result.error);
+      } else if (result.status) {
+        setGenerationStatus(result.status);
       }
     } catch (error) {
       setErrorMessage(
@@ -200,42 +203,51 @@ const DreamDetailsModal = ({ date, dreams }) => {
             />
           </div>
           {isDreamscapeExpanded && dream && (
-            <div className="section-content">
-              {dreamscapesLoading ? (
-                <div className="loading">Generating dreamscape...</div>
-              ) : dreamscapes[dream.id] ? (
-                <div className="dreamscape-image-container">
-                  <img
-                    src={dreamscapes[dream.id].imageUrl}
-                    alt="Dreamscape"
-                    className="dreamscape-image"
-                    onError={(e) => {
-                      console.error("Image failed to load:", e);
-                      e.target.style.display = "none";
-                    }}
-                  />
-                  <div className="prompt-text">
-                    <small>Prompt: {dreamscapes[dream.id].prompt}</small>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  className="generate-button"
-                  onClick={handleGenerateDreamscape}
-                >
-                  Generate Dreamscape
-                </button>
-              )}
-              {(dreamscapesError || errorMessage) && (
-                <div className="error">
-                  {errorMessage ||
-                    (typeof dreamscapesError === "string"
-                      ? dreamscapesError
-                      : "Failed to generate dreamscape")}
-                </div>
-              )}
-            </div>
-          )}
+  <div className="section-content">
+    {dreamscapesLoading ? (
+      <div className="loading">
+        <div className="loading-spinner"></div>
+        <p>
+          {dreamscapes[dream.id]?.status === 'uploading' 
+            ? 'Uploading dreamscape to storage...' 
+            : 'Generating dreamscape...'}
+        </p>
+      </div>
+    ) : dreamscapes[dream.id] ? (
+      <div className="dreamscape-image-container">
+        <img
+          src={dreamscapes[dream.id].imageUrl}
+          alt="Dreamscape"
+          className="dreamscape-image"
+          onError={(e) => {
+            console.error("Image failed to load:", e);
+            e.target.style.display = "none";
+            setErrorMessage("Failed to load dreamscape image");
+          }}
+        />
+        <div className="prompt-text">
+          <small>Prompt: {dreamscapes[dream.id].prompt}</small>
+        </div>
+      </div>
+    ) : (
+      <button
+        className="generate-button"
+        onClick={handleGenerateDreamscape}
+        disabled={dreamscapesLoading}
+      >
+        Generate Dreamscape
+      </button>
+    )}
+    {(dreamscapesError || errorMessage) && (
+      <div className="error">
+        {errorMessage ||
+          (typeof dreamscapesError === "string"
+            ? dreamscapesError
+            : "Failed to generate dreamscape")}
+      </div>
+    )}
+  </div>
+)}
         </div>
 
         {/* Interpretations Section */}

@@ -12,6 +12,8 @@ class Dreamscape(db.Model):
     dream_id = db.Column(db.Integer, db.ForeignKey(add_prefix_for_prod('dream_journals.id'), ondelete='CASCADE'), nullable=False)
     image_url = db.Column(db.String(500))
     optimized_prompt = db.Column(db.Text)
+    status = db.Column(db.String(50), nullable=False, default='pending')
+    error_message = db.Column(db.Text)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
@@ -23,6 +25,8 @@ class Dreamscape(db.Model):
             'dream_id': self.dream_id,
             'imageUrl': self.image_url,
             'optimized_prompt': self.optimized_prompt,
+            'status': self.status,
+            'error_message': self.error_message,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }

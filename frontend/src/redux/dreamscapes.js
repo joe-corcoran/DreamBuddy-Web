@@ -5,6 +5,7 @@ import { getApiUrl } from '../config';
 const SET_DREAMSCAPE = "dreamscapes/SET_DREAMSCAPE";
 const SET_LOADING = "dreamscapes/SET_LOADING";
 const SET_ERROR = "dreamscapes/SET_ERROR";
+const SET_STATUS = "dreamscapes/SET_STATUS";
 
 // Action Creators
 const setDreamscape = (dreamId, imageUrl, prompt) => ({
@@ -21,6 +22,39 @@ const setError = (error) => ({
   type: SET_ERROR,
   payload: typeof error === 'string' ? error : 'An error occurred'
 });
+
+const setStatus = (dreamId, status) => ({
+  type: SET_STATUS,
+  payload: { dreamId, status }
+});
+
+// Poll function
+const pollGenerationStatus = async (dreamId, dispatch) => {
+  try {
+    const response = await fetch(getApiUrl(`/api/dreamscapes/status/${dreamId}`), {
+      credentials: 'include'
+    });
+    
+    if (!response.ok) throw new Error('Failed to check status');
+    
+    const data = await response.json();
+    
+    if (data.status === 'completed') {
+      dispatch(setDreamscape(dreamId, data.image_url, data.optimized_prompt));
+      return true;
+    } else if (data.status === 'failed') {
+      dispatch(setError(data.error_message || 'Generation failed'));
+      return true;
+    }
+    
+    return false;
+    
+  } catch (error) {
+    dispatch(setError(error.message));
+    return true;
+  }
+};
+
 
 // Thunks
 export const generateDreamscape = (dreamId, dreamContent) => async (dispatch) => {
@@ -43,8 +77,31 @@ export const generateDreamscape = (dreamId, dreamContent) => async (dispatch) =>
     }
 
     const result = await response.json();
+    
+    // If generation is in progress, start polling
+    if (result.status === 'generating' || result.status === 'uploading') {
+      // Poll every 3 seconds
+      const pollInterval = setInterval(async () => {
+        const isDone = await pollGenerationStatus(dreamId, dispatch);
+        if (isDone) {
+          clearInterval(pollInterval);
+          dispatch(setLoading(false));
+        }
+      }, 3000);
+      
+      // Set timeout after 5 minutes
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        dispatch(setLoading(false));
+        dispatch(setError('Generation timed out. Please try again.'));
+      }, 300000);
+      
+      return { status: result.status };
+    }
+
     dispatch(setDreamscape(dreamId, result.image_url, result.optimized_prompt));
     return { success: true, imageUrl: result.image_url, prompt: result.optimized_prompt };
+    
   } catch (error) {
     const errorMessage = error.message || 'Failed to generate dreamscape';
     dispatch(setError(errorMessage));
