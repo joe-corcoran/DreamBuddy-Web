@@ -1,28 +1,43 @@
 from flask.cli import AppGroup
 from .users import seed_users, undo_users
-
 from app.models.db import db, environment, SCHEMA
+import logging
 
-# Creates a seed group to hold our commands
-# So we can type `flask seed --help`
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 seed_commands = AppGroup('seed')
 
-
-# Creates the `flask seed all` command
 @seed_commands.command('all')
 def seed():
-    if environment == 'production':
-        # Before seeding in production, you want to run the seed undo 
-        # command, which will  truncate all tables prefixed with 
-        # the schema name (see comment in users.py undo_users function).
-        # Make sure to add all your other model's undo functions below
-        undo_users()
-    seed_users()
-    # Add other seed functions here
+    logger.info(f"Starting seeding in {environment} environment...")
+    try:
+        if environment == 'production':
+            logger.info("Production environment detected. Running undo first...")
+            undo_users()
+            logger.info("Undo completed successfully.")
+        
+        logger.info("Starting to seed users...")
+        seed_users()
+        logger.info("User seeding completed successfully.")
+                
+        logger.info("All seeding completed successfully!")
+        
+    except Exception as e:
+        logger.error(f"An error occurred during seeding: {str(e)}")
+        raise e
 
-
-# Creates the `flask seed undo` command
 @seed_commands.command('undo')
 def undo():
-    undo_users()
-    # Add other undo functions here
+    logger.info(f"Starting undo in {environment} environment...")
+    try:
+        logger.info("Undoing users...")
+        undo_users()
+        logger.info("User undo completed successfully.")
+        
+        logger.info("All undo operations completed successfully!")
+        
+    except Exception as e:
+        logger.error(f"An error occurred during undo: {str(e)}")
+        raise e
