@@ -48,7 +48,7 @@ def generate_dreamscape(dream_id):
     if not is_valid:
         return error_response, error_code
 
-     try:
+    try:
         dream = DreamJournal.query.get_or_404(dream_id)
         if dream.user_id != current_user.id:
             return jsonify({'errors': {'auth': 'Unauthorized access'}}), 403
