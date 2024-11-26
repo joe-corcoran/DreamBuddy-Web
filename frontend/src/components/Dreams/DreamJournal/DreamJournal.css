@@ -1,252 +1,439 @@
-/* frontend/src/components/Dreams/DreamJournal/DreamJournal.css */
 .dream-journal-container {
     min-height: 100vh;
-    background: linear-gradient(180deg, #663399 0%, #1a1a2e 100%);
+    background: linear-gradient(180deg, #2d1b69 0%, #1a0b2e 100%);
     position: relative;
     overflow: hidden;
-}
-
-.dream-journal-layout {
-    display: grid;
-    grid-template-columns: 300px 1fr;
-    gap: 20px;
-    padding: 20px;
-}
-
-.dreams-list {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 20px;
-    padding: 20px;
-    max-height: calc(100vh - 140px);
-    overflow-y: auto;
-}
-
-.dream-item {
+    padding: 2rem;
+    font-family: 'Playfair Display', serif;
+  }
+  
+  /* Stars Background */
+  .stars-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  .star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background-color: white;
+    border-radius: 50%;
+    opacity: 0;
+    animation: twinkle 3s infinite;
+  }
+  
+  /* Book Layout */
+  .journal-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+    perspective: 2000px;
+  }
+  
+  .journal-book {
     background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 3rem;
+    position: relative;
+    transform-style: preserve-3d;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+  
+  .book-spine {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(90deg, #1a0b2e, #2d1b69);
+    border-radius: 15px 0 0 15px;
+    transform: translateX(-20px) rotateY(-20deg);
+    box-shadow: 
+      inset -5px 0 10px rgba(0, 0, 0, 0.3),
+      -2px 0 5px rgba(0, 0, 0, 0.2);
+  }
+  
+  .book-binding {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: rgba(0, 0, 0, 0.1);
+    transform: translateX(-50%);
+    box-shadow: 
+      1px 0 2px rgba(255, 255, 255, 0.1),
+      -1px 0 2px rgba(0, 0, 0, 0.2);
+  }
+  
+  .book-pages {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    position: relative;
+    min-height: 700px;
+  }
+  
+  /* Page Styling */
+  .book-page {
+    background: rgba(255, 255, 255, 0.95);
     border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.dream-item:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateY(-2px);
-}
-
-.dream-item.selected {
-    background: rgba(74, 144, 226, 0.3);
-    border: 1px solid rgba(74, 144, 226, 0.5);
-}
-
-.dream-item h3 {
-    color: white;
-    margin: 0 0 5px 0;
-    font-size: 1.1rem;
-}
-
-.dream-item p {
-    color: rgba(255, 255, 255, 0.7);
-    margin: 0;
-    font-size: 0.9rem;
-}
-
-.lucid-indicator {
-    background: linear-gradient(to right, #ffd700, #ffa500);
-    color: black;
-    padding: 2px 8px;
+    padding: 2rem;
+    position: relative;
+    color: #2c3e50;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .left-page {
+    transform: rotateY(2deg);
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.95) 90%, rgba(0, 0, 0, 0.02) 100%);
+  }
+  
+  .right-page {
+    transform: rotateY(-2deg);
+    background: linear-gradient(to left, rgba(255, 255, 255, 0.95) 90%, rgba(0, 0, 0, 0.02) 100%);
+  }
+  
+  .page-lines {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(
+      transparent 0px,
+      transparent 24px,
+      rgba(0, 0, 0, 0.1) 25px
+    );
+    margin: 50px 0;
+  }
+  
+  /* Form Styling */
+  .dream-entry-form {
+    position: relative;
+    z-index: 2;
+  }
+  
+  .dream-textarea {
+    width: 100%;
+    min-height: 300px;
+    background: transparent;
+    border: none;
+    line-height: 25px;
+    padding: 0;
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: #2c3e50;
+    resize: none;
+  }
+  
+  .dream-textarea:focus {
+    outline: none;
+  }
+  
+  .dream-input {
+    width: 100%;
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    padding: 0.5rem;
+    margin-top: 1rem;
+    font-family: inherit;
+  }
+  
+  /* Dream Display */
+  .dream-display {
+    padding: 1rem;
+  }
+  
+  .dream-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+  }
+  
+  .dream-content p {
+    line-height: 1.6;
+    color: #34495e;
+  }
+  
+  /* Dreamscape Image */
+  .dreamscape-container {
+    margin-top: 2rem;
     border-radius: 10px;
-    font-size: 0.8rem;
-    margin-top: 5px;
-    display: inline-block;
-}
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dreamscape-image {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  .dreamscape-container:hover .dreamscape-image {
+    transform: scale(1.05);
+  }
 
-.dream-editor {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 20px;
-    padding: 20px;
+  /* Continuing from dream-controls */
+.dream-controls {
+    margin-top: 2rem;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-}
-
-.dream-input, .dream-textarea {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
-    padding: 12px;
-    color: white;
-    font-size: 1rem;
-    width: 100%;
-}
-
-.dream-textarea {
-    min-height: 200px;
-    resize: vertical;
-}
-
-.dream-controls {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-
-.lucid-toggle {
+    gap: 1rem;
+  }
+  
+  .lucid-toggle {
     display: flex;
     align-items: center;
-    gap: 8px;
-    color: white;
+    gap: 0.5rem;
+    color: #2c3e50;
     cursor: pointer;
-}
-
-.save-button {
-    background: linear-gradient(to right, #4a90e2, #357abd);
+    padding: 0.5rem;
+    border-radius: 5px;
+    transition: background-color 0.2s ease;
+  }
+  
+  .lucid-toggle:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .toggle-icon {
+    padding: 0.5rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  input[type="checkbox"]:checked + .toggle-icon {
+    background: #fbbf24;
+    color: #1a0b2e;
+    border-color: #f59e0b;
+  }
+  
+  /* Save Button */
+  .save-button {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
     color: white;
     border: none;
-    padding: 12px 24px;
+    padding: 0.75rem;
     border-radius: 10px;
+    font-weight: 500;
     cursor: pointer;
-    transition: transform 0.2s;
-    font-size: 1rem;
-}
-
-.save-button:hover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  }
+  
+  .save-button:hover:not(:disabled) {
     transform: translateY(-2px);
-}
-
-.success-popup {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(72, 187, 120, 0.9);
-    color: white;
-    padding: 12px 24px;
-    border-radius: 10px;
-    animation: fadeInOut 3s ease;
-}
-
-.error-message {
-    background: rgba(245, 101, 101, 0.9);
-    color: white;
-    padding: 12px;
-    border-radius: 10px;
-    margin: 10px 0;
-}
-
-@keyframes fadeInOut {
-    0% { opacity: 0; transform: translate(-50%, 20px); }
-    15% { opacity: 1; transform: translate(-50%, 0); }
-    85% { opacity: 1; transform: translate(-50%, 0); }
-    100% { opacity: 0; transform: translate(-50%, -20px); }
-}
-
-
-.dream-item {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  }
+  
+  .save-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Tags */
+  .dream-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  
+  .tag {
+    background: rgba(99, 102, 241, 0.1);
+    color: #4f46e5;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+  }
+  
+  .tag:hover {
+    background: rgba(99, 102, 241, 0.2);
+    transform: translateY(-1px);
+  }
+  
+  /* Navigation */
+  .page-navigation {
+    position: absolute;
+    top: -3rem;
+    left: 0;
+    right: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px;
-    margin-bottom: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    transition: all 0.2s ease;
-}
-
-.dream-item-content {
-    flex: 1;
-    cursor: pointer;
-}
-
-.delete-button {
+    padding: 0 1rem;
+  }
+  
+  .nav-button {
     background: none;
     border: none;
-    color: #ff4444;
+    color: rgba(255, 255, 255, 0.7);
     cursor: pointer;
-    padding: 8px;
-    border-radius: 5px;
-    opacity: 0.7;
-    transition: all 0.2s ease;
-}
-
-.delete-button:hover {
-    opacity: 1;
-    background: rgba(255, 68, 68, 0.1);
-}
-
-.delete-confirm-modal {
-    background: rgb(26, 26, 46);
-    padding: 25px;
-    border-radius: 15px;
-    max-width: 400px;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+  }
+  
+  .nav-button:hover:not(:disabled) {
     color: white;
-}
-
-.delete-confirm-modal h2 {
-    margin: 0 0 15px 0;
-    color: #ff4444;
-}
-
-.delete-confirm-modal p {
-    margin-bottom: 20px;
-    line-height: 1.5;
-}
-
-.delete-modal-buttons {
-    display: flex;
-    gap: 15px;
-    justify-content: flex-end;
-}
-
-.confirm-delete-button {
-    background: #ff4444;
+    transform: scale(1.1);
+  }
+  
+  .nav-button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  
+  .page-title {
     color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.confirm-delete-button:hover {
-    background: #ff2222;
-}
-
-.cancel-button {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.cancel-button:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.success-popup {
+    font-size: 2rem;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Notifications */
+  .success-popup,
+  .error-message {
     position: fixed;
-    bottom: 80px;
+    bottom: 2rem;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(72, 187, 120, 0.9);
-    color: white;
-    padding: 12px 24px;
+    padding: 0.75rem 1.5rem;
     border-radius: 10px;
-    z-index: 1000;
+    color: white;
+    z-index: 100;
     animation: fadeInOut 3s ease;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .dream-journal-layout {
-        grid-template-columns: 1fr;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .success-popup {
+    background-color: rgba(34, 197, 94, 0.9);
+  }
+  
+  .error-message {
+    background-color: rgba(239, 68, 68, 0.9);
+  }
+  
+  /* Page Turn Animation */
+  @keyframes turnPage {
+    0% { transform: rotateY(0); }
+    100% { transform: rotateY(-180deg); }
+  }
+  
+  .journal-book.turning .book-pages {
+    animation: turnPage 0.5s ease;
+  }
+  
+  /* Empty Page State */
+  .empty-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #94a3b8;
+    font-style: italic;
+  }
+  
+  /* Mobile Responsiveness */
+  @media (max-width: 1024px) {
+    .journal-content {
+      padding: 1rem;
     }
-
-    .dreams-list {
-        max-height: 300px;
+    
+    .book-pages {
+      grid-template-columns: 1fr;
+      gap: 2rem;
     }
-}
+    
+    .book-spine,
+    .book-binding {
+      display: none;
+    }
+  
+    .book-page {
+      transform: none !important;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .dream-journal-container {
+      padding: 1rem;
+    }
+  
+    .journal-book {
+      padding: 1rem;
+    }
+  
+    .page-title {
+      font-size: 1.5rem;
+    }
+  
+    .dream-controls {
+      gap: 0.75rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .page-navigation {
+      position: relative;
+      top: 0;
+      margin-bottom: 1rem;
+    }
+  
+    .dream-textarea {
+      font-size: 0.875rem;
+    }
+  
+    .tag {
+      font-size: 0.75rem;
+    }
+  }
+  
+  /* Loading State */
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+  }
+  
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes fadeInOut {
+    0%, 100% { opacity: 0; transform: translate(-50%, 20px); }
+    10%, 90% { opacity: 1; transform: translate(-50%, 0); }
+  }

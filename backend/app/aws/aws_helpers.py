@@ -15,7 +15,8 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 s3 = boto3.client(
    "s3",
    aws_access_key_id=os.environ.get("S3_KEY"),
-   aws_secret_access_key=os.environ.get("S3_SECRET")
+   aws_secret_access_key=os.environ.get("S3_SECRET"),
+   region_name=os.environ.get("S3_REGION", "us-east-1") 
 )
 
 def get_unique_filename(filename):

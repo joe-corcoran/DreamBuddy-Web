@@ -1,4 +1,5 @@
 # backend/app/api/dream_routes.py
+# backend/app/api/dream_routes.py
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from flask_wtf.csrf import validate_csrf
@@ -38,7 +39,16 @@ def get_dreams():
             .filter_by(user_id=current_user.id)\
             .order_by(DreamJournal.dream_date.desc(), DreamJournal.created_at.desc())\
             .all()
-        return jsonify([dream.to_dict() for dream in dreams])
+        
+        # Include dreamscape data if available
+        dream_data = []
+        for dream in dreams:
+            dream_dict = dream.to_dict()
+            if dream.dreamscape:
+                dream_dict['dreamscape'] = dream.dreamscape.to_dict()
+            dream_data.append(dream_dict)
+            
+        return jsonify(dream_data)
     except Exception as e:
         logger.error(f"Error fetching dreams: {str(e)}")
         return {'errors': {'server': 'An error occurred while fetching dreams'}}, 500
@@ -52,7 +62,12 @@ def get_today_dream():
         target_date = parse_client_date(client_date_str).date() if client_date_str else datetime.now(timezone.utc).date()
         
         dream = DreamJournal.get_dream_for_date(current_user.id, target_date)
-        return jsonify(dream.to_dict() if dream else None)
+        if dream:
+            response = dream.to_dict()
+            if dream.dreamscape:
+                response['dreamscape'] = dream.dreamscape.to_dict()
+            return jsonify(response)
+        return jsonify(None)
     except Exception as e:
         logger.error(f"Error getting today's dream: {str(e)}")
         return {'errors': {'server': 'An error occurred'}}, 500
@@ -65,7 +80,11 @@ def get_dream(dream_id):
         dream = DreamJournal.query.get_or_404(dream_id)
         if dream.user_id != current_user.id:
             return {'errors': {'unauthorized': 'Dream not found'}}, 404
-        return dream.to_dict()
+            
+        response = dream.to_dict()
+        if dream.dreamscape:
+            response['dreamscape'] = dream.dreamscape.to_dict()
+        return response
     except Exception as e:
         logger.error(f"Error fetching dream {dream_id}: {str(e)}")
         return {'errors': {'server': 'An error occurred'}}, 500
@@ -74,7 +93,6 @@ def get_dream(dream_id):
 @login_required
 def quick_dream():
     """Create a quick dream entry"""
-    # Validate CSRF token
     is_valid, error_response, error_code = validate_csrf_token()
     if not is_valid:
         return error_response, error_code
@@ -111,7 +129,8 @@ def quick_dream():
                 db.session.add(new_tag)
             db.session.commit()
 
-        return new_dream.to_dict()
+        response = new_dream.to_dict()
+        return jsonify(response)
     except Exception as e:
         logger.error(f"Error saving dream: {str(e)}")
         db.session.rollback()
@@ -121,7 +140,6 @@ def quick_dream():
 @login_required
 def update_dream(dream_id):
     """Update an existing dream"""
-    # Validate CSRF token
     is_valid, error_response, error_code = validate_csrf_token()
     if not is_valid:
         return error_response, error_code
@@ -156,7 +174,10 @@ def update_dream(dream_id):
                 db.session.add(new_tag)
 
         db.session.commit()
-        return dream.to_dict()
+        response = dream.to_dict()
+        if dream.dreamscape:
+            response['dreamscape'] = dream.dreamscape.to_dict()
+        return jsonify(response)
     except Exception as e:
         logger.error(f"Error updating dream: {str(e)}")
         db.session.rollback()
@@ -166,7 +187,6 @@ def update_dream(dream_id):
 @login_required
 def delete_dream(dream_id):
     """Delete a dream entry"""
-    # Validate CSRF token
     is_valid, error_response, error_code = validate_csrf_token()
     if not is_valid:
         return error_response, error_code
@@ -205,7 +225,14 @@ def get_dreams_by_month(year, month):
             DreamJournal.date < end_date
         ).order_by(DreamJournal.date.desc()).all()
 
-        return jsonify([dream.to_dict() for dream in dreams])
+        dream_data = []
+        for dream in dreams:
+            dream_dict = dream.to_dict()
+            if dream.dreamscape:
+                dream_dict['dreamscape'] = dream.dreamscape.to_dict()
+            dream_data.append(dream_dict)
+
+        return jsonify(dream_data)
     except Exception as e:
         logger.error(f"Error fetching dreams for month: {str(e)}")
         return {'errors': {'server': 'An error occurred while fetching dreams'}}, 500
