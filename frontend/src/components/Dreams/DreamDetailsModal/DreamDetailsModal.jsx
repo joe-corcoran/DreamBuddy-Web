@@ -94,21 +94,21 @@ const DreamDetailsModal = ({ date, dreams }) => {
   };
 
   const handleGenerateDreamscape = async () => {
-    if (!dream) return;
-    setErrorMessage("");
-
     try {
-      const result = await dispatch(
-        generateDreamscape(dream.id, dream.content)
-      );
-      if (result.error) {
-        setErrorMessage(result.error);
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await dispatch(generateDreamscape(dream.id, dream.content));
+      
+      if (response.error) {
+        console.error("Dreamscape generation error:", response.error);
+        setError(response.error);
       }
-    } catch (error) {
-      setErrorMessage(
-        error.message || "Failed to generate dreamscape. Please try again."
-      );
-      console.error("Error in handleGenerateDreamscape:", error);
+    } catch (err) {
+      console.error("Error generating dreamscape:", err);
+      setError("Failed to generate dreamscape. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 

@@ -474,7 +474,7 @@ const DreamJournal = () => {
                   {todayDream.dreamscape && (
                     <div className="dreamscape-container">
                       <img 
-  src={todayDream.dreamscape.image_url} 
+  src={todayDream.dreamscape.imageUrl} 
   alt="Dreamscape"
   className="dreamscape-image"
   onError={(e) => console.error("Image failed to load:", e)}

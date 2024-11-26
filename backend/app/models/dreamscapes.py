@@ -21,7 +21,7 @@ class Dreamscape(db.Model):
         return {
             'id': self.id,
             'dream_id': self.dream_id,
-            'image_url': self.image_url,
+            'imageUrl': self.image_url,
             'optimized_prompt': self.optimized_prompt,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()

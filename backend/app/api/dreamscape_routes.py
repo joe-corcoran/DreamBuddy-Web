@@ -41,48 +41,61 @@ def handle_s3_upload(dreamscape, dalle_url):
         logger.error(f"Error in S3 upload handler: {str(e)}")
 
 
-@dreamscape_routes.route('/generate/<int:dream_id>', methods=['POST'])
-@login_required
-def generate_dreamscape(dream_id):
-    """Generate a new dreamscape for a dream"""
-    logger.info(f"Starting dreamscape generation for dream {dream_id}")
-    
-    is_valid, error_response, error_code = validate_csrf_token()
-    if not is_valid:
-        return error_response, error_code
+# backend/app/api/dreamscapes_routes.py
 
+@dreamscape_routes.route('/generate/<int:dream_id>', methods=['POST'])
+@login_required 
+def generate_dreamscape(dream_id):
     try:
+        # Add timeout handling
         dream = DreamJournal.query.get_or_404(dream_id)
         if dream.user_id != current_user.id:
-            return jsonify({'errors': {'auth': 'Unauthorized access'}}), 403
+            return {'errors': {'unauthorized': 'Dream not found'}}, 404
 
-        # Generate dreamscape using OpenAIService
-        dreamscape_data = OpenAIService.generate_dreamscape(dream.content)
-        
-        # Save dreamscape with temporary DALL-E URL
-        new_dreamscape = Dreamscape(
-            dream_id=dream_id,
-            image_url=dreamscape_data['image_url'],
-            optimized_prompt=dreamscape_data['optimized_prompt'],
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc)
-        )
-        db.session.add(new_dreamscape)
-        db.session.commit()
+        # Check if dreamscape already exists
+        if dream.dreamscape:
+            return dream.dreamscape.to_dict()
 
-        # Start background S3 upload
-        Thread(target=handle_s3_upload, args=(new_dreamscape, dreamscape_data['image_url'])).start()
+        # Generate optimized prompt from dream content
+        prompt = f"""Create a surreal, dream-like image based on this dream content: {dream.content}
+                    Make it dreamlike, ethereal, and fantastical with rich colors and soft lighting."""
 
-        # Return immediately with DALL-E URL
-        return jsonify({
-            'image_url': dreamscape_data['image_url'],
-            'optimized_prompt': dreamscape_data['optimized_prompt']
-        })
+        try:
+            # Add timeout to OpenAI call
+            response = openai.Image.create(
+                prompt=prompt,
+                n=1,
+                size="1024x1024",
+                timeout=30  # 30 second timeout
+            )
+            
+            image_url = response['data'][0]['url']
+            
+            # Upload to S3 with error handling
+            s3_response = upload_dalle_image_to_s3(image_url)
+            if 'errors' in s3_response:
+                return {'errors': s3_response['errors']}, 500
+                
+            # Create dreamscape with S3 URL
+            dreamscape = Dreamscape(
+                dream_id=dream_id,
+                image_url=s3_response['url'],
+                optimized_prompt=prompt
+            )
+            
+            db.session.add(dreamscape)
+            db.session.commit()
+            
+            return dreamscape.to_dict()
+
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error generating dreamscape: {str(e)}")
+            return {'errors': {'server': 'Failed to generate dreamscape'}}, 500
 
     except Exception as e:
-        logger.error(f"Error in dreamscape generation: {str(e)}")
-        db.session.rollback()
-        return jsonify({'errors': {'server': str(e)}}), 500
+        print(f"Error in generate_dreamscape: {str(e)}")
+        return {'errors': {'server': 'An error occurred'}}, 500
 
 @dreamscape_routes.route('/dream/<int:dream_id>', methods=['GET'])
 @login_required

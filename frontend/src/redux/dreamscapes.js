@@ -119,7 +119,6 @@ export const getDreamscape = (dreamId) => async (dispatch) => {
   }
 };
 
-// Initial State
 const initialState = {
   byDreamId: {},
   isLoading: false,
@@ -129,6 +128,12 @@ const initialState = {
 // Reducer
 export default function dreamscapesReducer(state = initialState, action) {
   switch (action.type) {
+      case SET_DREAMSCAPE_LOADING:
+        return {
+          ...state,
+          isLoading: true,
+          error: null
+        };
     case SET_DREAMSCAPE:
       return {
         ...state,
