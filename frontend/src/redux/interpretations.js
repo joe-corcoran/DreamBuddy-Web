@@ -1,3 +1,4 @@
+//frontend/src/reduc/interpretations.js
 import { getApiUrl } from '../config';
 
 // Interpretation Types Definition

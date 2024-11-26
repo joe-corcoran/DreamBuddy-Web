@@ -1,3 +1,4 @@
+#backend/app/models/dream_journal.py
 from .db import db, environment, SCHEMA, add_prefix_for_prod
 from datetime import datetime
 from sqlalchemy import func
@@ -52,8 +53,9 @@ class DreamJournal(db.Model):
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
             'tags': [tag.to_dict() for tag in self.tags],
-            'dreamscape': self.dreamscape.to_dict() if self.dreamscape else None
-        }
+            'dreamscape': self.dreamscape.to_dict() if self.dreamscape else None,
+            'interpretations': [interpretation.to_dict() for interpretation in self.interpretations]
+    }
 
     @classmethod
     def get_dream_for_date(cls, user_id, target_date):

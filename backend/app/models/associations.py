@@ -1,3 +1,4 @@
+#backend/app/models/associations.py
 from .db import db, environment, SCHEMA, add_prefix_for_prod
 
 dream_interpretations_dreams = db.Table(

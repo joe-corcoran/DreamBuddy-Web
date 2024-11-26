@@ -1,3 +1,4 @@
+#backend/app/models/dream_interpretation.py
 from .db import db, environment, SCHEMA, add_prefix_for_prod
 from datetime import datetime
 from .associations import dream_interpretations_dreams

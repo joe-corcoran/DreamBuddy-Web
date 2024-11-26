@@ -113,13 +113,17 @@ const DreamCalendar = () => {
     const dreamsForDate = getDreamsForDate(date);
     setSelectedDate(date);
     setSelectedDreams(dreamsForDate);
-    setModalContent(
+    
+        setModalContent(
       <DreamDetailsModal 
+        key={`dream-modal-${date.toISOString()}`} 
         date={date}
         dreams={dreamsForDate}
       />
     );
   };
+
+  
 
   return (
     <div className="dream-calendar-container">
