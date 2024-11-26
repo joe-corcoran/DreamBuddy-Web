@@ -1,3 +1,4 @@
+//frontend/src/redux/store.js
 import {
   legacy_createStore as createStore,
   applyMiddleware,
@@ -16,9 +17,7 @@ export const CLEAR_STATE = 'app/CLEAR_STATE';
 
 // Error handling middleware
 const errorHandlingMiddleware = store => next => action => {
-  // Check if the action has an error property that's an object
   if (action.payload && typeof action.payload.error === 'object') {
-    // Convert error object to string
     action.payload.error = action.payload.error.message || 'An error occurred';
   }
   return next(action);

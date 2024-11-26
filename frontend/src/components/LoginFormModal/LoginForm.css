@@ -12,6 +12,34 @@
     gap: 15px;
   }
   
+  .login-form.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+  }
+  
+  .loading-spinner {
+    color: #4a4a4a;
+    text-align: center;
+  }
+  
+  .error {
+    color: #ff3860;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  
+  .demo-user button {
+    margin-top: 1rem;
+    width: 100%;
+  }
+  
+  button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
   .login-form label {
     display: flex;
     flex-direction: column;
