@@ -1,4 +1,3 @@
-#backend/app/api/dreamscape_routes.py
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.models import db, DreamJournal, Dreamscape
@@ -7,7 +6,6 @@ from app.aws.aws_helpers import upload_dalle_image_to_s3
 from datetime import datetime, timezone
 import logging
 from threading import Thread
-
 
 dreamscape_routes = Blueprint('dreamscapes', __name__)
 logger = logging.getLogger(__name__)
@@ -40,7 +38,6 @@ def handle_s3_upload(dreamscape, dalle_url):
     except Exception as e:
         logger.error(f"Error in S3 upload handler: {str(e)}")
 
-
 @dreamscape_routes.route('/generate/<int:dream_id>', methods=['POST'])
 @login_required
 def generate_dreamscape(dream_id):
@@ -51,7 +48,7 @@ def generate_dreamscape(dream_id):
     if not is_valid:
         return error_response, error_code
 
-    try:
+     try:
         dream = DreamJournal.query.get_or_404(dream_id)
         if dream.user_id != current_user.id:
             return jsonify({'errors': {'auth': 'Unauthorized access'}}), 403
