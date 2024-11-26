@@ -90,25 +90,30 @@ export const getDreamscape = (dreamId) => async (dispatch) => {
   dispatch(setError(null));
 
   try {
+    console.log('Fetching dreamscape for dream:', dreamId);
     const response = await fetch(getApiUrl(`/api/dreamscapes/dream/${dreamId}`), {
       credentials: 'include'
     });
 
+    const data = await response.json();
+    console.log('Dreamscape response:', data);
+
     if (!response.ok) {
       if (response.status === 404) {
+        console.log('No dreamscape found');
         return { notFound: true };
       }
-      const errorData = await response.json();
-      throw new Error(errorData.errors?.server || 'Failed to fetch dreamscape');
+      throw new Error(data.errors?.server || 'Failed to fetch dreamscape');
     }
 
-    const result = await response.json();
-    dispatch(setDreamscape(dreamId, result.image_url, result.optimized_prompt));
-    return { success: true, imageUrl: result.image_url, prompt: result.optimized_prompt };
+    dispatch(setDreamscape(dreamId, data.image_url, data.optimized_prompt));
+    return { success: true };
   } catch (error) {
-    const errorMessage = error.message || 'Failed to fetch dreamscape';
-    dispatch(setError(errorMessage));
-    return { error: errorMessage };
+    console.error('Error in getDreamscape:', error);
+    if (!error.notFound) {
+      dispatch(setError(error.message || 'Failed to fetch dreamscape'));
+    }
+    return { error: error.message };
   } finally {
     dispatch(setLoading(false));
   }

@@ -43,7 +43,7 @@ function LoginFormModal() {
     e.preventDefault();
     return dispatch(
       thunkLogin({ 
-        email: 'tester11@email.com',  
+        email: 'demo@aa.io',  
         password: 'password' 
       })
     ).then(closeModal);

@@ -1,3 +1,4 @@
+#backend/app/api/dreamscape_routes.py
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.models import db, DreamJournal, Dreamscape
@@ -22,6 +23,8 @@ def validate_csrf_token():
 @login_required
 def generate_dreamscape(dream_id):
     """Generate a new dreamscape for a dream"""
+    logger.info(f"Starting dreamscape generation for dream {dream_id}")
+    
     # Validate CSRF token
     is_valid, error_response, error_code = validate_csrf_token()
     if not is_valid:
@@ -31,36 +34,46 @@ def generate_dreamscape(dream_id):
         # Verify dream belongs to current user
         dream = DreamJournal.query.get_or_404(dream_id)
         if dream.user_id != current_user.id:
+            logger.warning(f"Unauthorized access attempt for dream {dream_id}")
             return jsonify({'errors': {'auth': 'Unauthorized access'}}), 403
 
         # Check for existing dreamscape
         existing_dreamscape = Dreamscape.query.filter_by(dream_id=dream_id).first()
         if existing_dreamscape:
+            logger.info(f"Found existing dreamscape for dream {dream_id}")
             return jsonify({
                 'image_url': existing_dreamscape.image_url,
                 'optimized_prompt': existing_dreamscape.optimized_prompt
             })
 
+        logger.info(f"Generating new dreamscape for dream {dream_id}")
         try:
             # Generate dreamscape using OpenAIService
             dreamscape_data = OpenAIService.generate_dreamscape(dream.content)
+            logger.info(f"Successfully generated dreamscape data for dream {dream_id}")
         except Exception as e:
-            logger.error(f"OpenAI dreamscape generation error: {str(e)}")
+            logger.error(f"OpenAI dreamscape generation error for dream {dream_id}: {str(e)}")
             return jsonify({'errors': {'server': 'Failed to generate dreamscape'}}), 500
 
         # Save to database
         new_dreamscape = Dreamscape(
             dream_id=dream_id,
             image_url=dreamscape_data['image_url'],
-            optimized_prompt=dreamscape_data['optimized_prompt']
+            optimized_prompt=dreamscape_data['optimized_prompt'],
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
         )
         db.session.add(new_dreamscape)
         db.session.commit()
+        logger.info(f"Successfully saved dreamscape for dream {dream_id}")
 
-        return jsonify(dreamscape_data)
+        return jsonify({
+            'image_url': dreamscape_data['image_url'],
+            'optimized_prompt': dreamscape_data['optimized_prompt']
+        })
 
     except Exception as e:
-        logger.error(f"Error in dreamscape generation route: {str(e)}")
+        logger.error(f"Error in dreamscape generation route for dream {dream_id}: {str(e)}")
         db.session.rollback()
         return jsonify({'errors': {'server': str(e)}}), 500
 
@@ -68,29 +81,36 @@ def generate_dreamscape(dream_id):
 @login_required
 def get_dreamscape(dream_id):
     """Get existing dreamscape for a dream"""
+    logger.info(f"Fetching dreamscape for dream {dream_id}")
+    
     try:
         # Verify dream belongs to current user
         dream = DreamJournal.query.get_or_404(dream_id)
         if dream.user_id != current_user.id:
+            logger.warning(f"Unauthorized access attempt for dream {dream_id}")
             return jsonify({'errors': {'auth': 'Unauthorized access'}}), 403
 
         dreamscape = Dreamscape.query.filter_by(dream_id=dream_id).first()
         if not dreamscape:
-            return jsonify({'errors': {'not_found': 'Dreamscape not found'}}), 404
+            logger.info(f"No dreamscape found for dream {dream_id}")
+            return jsonify({'message': 'No dreamscape found'}), 404
 
+        logger.info(f"Successfully fetched dreamscape for dream {dream_id}")
         return jsonify({
             'image_url': dreamscape.image_url,
             'optimized_prompt': dreamscape.optimized_prompt
         })
 
     except Exception as e:
-        logger.error(f"Error fetching dreamscape: {str(e)}")
+        logger.error(f"Error fetching dreamscape for dream {dream_id}: {str(e)}")
         return jsonify({'errors': {'server': str(e)}}), 500
 
 @dreamscape_routes.route('/regenerate/<int:dream_id>', methods=['POST'])
 @login_required
 def regenerate_dreamscape(dream_id):
     """Regenerate dreamscape for a dream"""
+    logger.info(f"Starting dreamscape regeneration for dream {dream_id}")
+    
     # Validate CSRF token
     is_valid, error_response, error_code = validate_csrf_token()
     if not is_valid:
@@ -100,11 +120,13 @@ def regenerate_dreamscape(dream_id):
         # Verify dream belongs to current user
         dream = DreamJournal.query.get_or_404(dream_id)
         if dream.user_id != current_user.id:
+            logger.warning(f"Unauthorized access attempt for dream {dream_id}")
             return jsonify({'errors': {'auth': 'Unauthorized access'}}), 403
 
         try:
             # Generate new dreamscape using OpenAIService
             dreamscape_data = OpenAIService.generate_dreamscape(dream.content)
+            logger.info(f"Successfully generated new dreamscape data for dream {dream_id}")
         except Exception as e:
             logger.error(f"OpenAI dreamscape regeneration error: {str(e)}")
             return jsonify({'errors': {'server': 'Failed to regenerate dreamscape'}}), 500
@@ -119,12 +141,19 @@ def regenerate_dreamscape(dream_id):
             dreamscape = Dreamscape(
                 dream_id=dream_id,
                 image_url=dreamscape_data['image_url'],
-                optimized_prompt=dreamscape_data['optimized_prompt']
+                optimized_prompt=dreamscape_data['optimized_prompt'],
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc)
             )
             db.session.add(dreamscape)
 
         db.session.commit()
-        return jsonify(dreamscape_data)
+        logger.info(f"Successfully saved regenerated dreamscape for dream {dream_id}")
+
+        return jsonify({
+            'image_url': dreamscape_data['image_url'],
+            'optimized_prompt': dreamscape_data['optimized_prompt']
+        })
 
     except Exception as e:
         logger.error(f"Error in dreamscape regeneration route: {str(e)}")
