@@ -28,6 +28,8 @@ wtforms = "==3.0.1"
 zipp = "==3.17.0"
 flask-cors = "*"
 openai = "*"
+boto3 = "*"
+requests = "*"
 
 [dev-packages]
 

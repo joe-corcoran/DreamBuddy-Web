@@ -3,8 +3,11 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.models import db, DreamJournal, Dreamscape
 from app.services.openai_service import OpenAIService
+from app.aws.aws_helpers import upload_dalle_image_to_s3
 from datetime import datetime, timezone
 import logging
+from threading import Thread
+
 
 dreamscape_routes = Blueprint('dreamscapes', __name__)
 logger = logging.getLogger(__name__)
@@ -18,6 +21,25 @@ def validate_csrf_token():
     except Exception as e:
         logger.error(f"CSRF validation error: {str(e)}")
         return False, {'errors': {'csrf': 'Invalid CSRF token'}}, 400
+    
+    pass
+
+def handle_s3_upload(dreamscape, dalle_url):
+    """
+    Background handler for S3 upload
+    Updates dreamscape with permanent URL once complete
+    """
+    try:
+        s3_upload = upload_dalle_image_to_s3(dalle_url)
+        if "url" in s3_upload:
+            dreamscape.image_url = s3_upload["url"]
+            db.session.commit()
+            logger.info(f"Successfully updated dreamscape {dreamscape.id} with S3 URL")
+        else:
+            logger.error(f"Failed to upload to S3: {s3_upload.get('errors')}")
+    except Exception as e:
+        logger.error(f"Error in S3 upload handler: {str(e)}")
+
 
 @dreamscape_routes.route('/generate/<int:dream_id>', methods=['POST'])
 @login_required
@@ -25,37 +47,19 @@ def generate_dreamscape(dream_id):
     """Generate a new dreamscape for a dream"""
     logger.info(f"Starting dreamscape generation for dream {dream_id}")
     
-    # Validate CSRF token
     is_valid, error_response, error_code = validate_csrf_token()
     if not is_valid:
         return error_response, error_code
 
     try:
-        # Verify dream belongs to current user
         dream = DreamJournal.query.get_or_404(dream_id)
         if dream.user_id != current_user.id:
-            logger.warning(f"Unauthorized access attempt for dream {dream_id}")
             return jsonify({'errors': {'auth': 'Unauthorized access'}}), 403
 
-        # Check for existing dreamscape
-        existing_dreamscape = Dreamscape.query.filter_by(dream_id=dream_id).first()
-        if existing_dreamscape:
-            logger.info(f"Found existing dreamscape for dream {dream_id}")
-            return jsonify({
-                'image_url': existing_dreamscape.image_url,
-                'optimized_prompt': existing_dreamscape.optimized_prompt
-            })
-
-        logger.info(f"Generating new dreamscape for dream {dream_id}")
-        try:
-            # Generate dreamscape using OpenAIService
-            dreamscape_data = OpenAIService.generate_dreamscape(dream.content)
-            logger.info(f"Successfully generated dreamscape data for dream {dream_id}")
-        except Exception as e:
-            logger.error(f"OpenAI dreamscape generation error for dream {dream_id}: {str(e)}")
-            return jsonify({'errors': {'server': 'Failed to generate dreamscape'}}), 500
-
-        # Save to database
+        # Generate dreamscape using OpenAIService
+        dreamscape_data = OpenAIService.generate_dreamscape(dream.content)
+        
+        # Save dreamscape with temporary DALL-E URL
         new_dreamscape = Dreamscape(
             dream_id=dream_id,
             image_url=dreamscape_data['image_url'],
@@ -65,15 +69,18 @@ def generate_dreamscape(dream_id):
         )
         db.session.add(new_dreamscape)
         db.session.commit()
-        logger.info(f"Successfully saved dreamscape for dream {dream_id}")
 
+        # Start background S3 upload
+        Thread(target=handle_s3_upload, args=(new_dreamscape, dreamscape_data['image_url'])).start()
+
+        # Return immediately with DALL-E URL
         return jsonify({
             'image_url': dreamscape_data['image_url'],
             'optimized_prompt': dreamscape_data['optimized_prompt']
         })
 
     except Exception as e:
-        logger.error(f"Error in dreamscape generation route for dream {dream_id}: {str(e)}")
+        logger.error(f"Error in dreamscape generation: {str(e)}")
         db.session.rollback()
         return jsonify({'errors': {'server': str(e)}}), 500
 
@@ -84,7 +91,6 @@ def get_dreamscape(dream_id):
     logger.info(f"Fetching dreamscape for dream {dream_id}")
     
     try:
-        # Verify dream belongs to current user
         dream = DreamJournal.query.get_or_404(dream_id)
         if dream.user_id != current_user.id:
             logger.warning(f"Unauthorized access attempt for dream {dream_id}")
@@ -111,27 +117,23 @@ def regenerate_dreamscape(dream_id):
     """Regenerate dreamscape for a dream"""
     logger.info(f"Starting dreamscape regeneration for dream {dream_id}")
     
-    # Validate CSRF token
     is_valid, error_response, error_code = validate_csrf_token()
     if not is_valid:
         return error_response, error_code
 
     try:
-        # Verify dream belongs to current user
         dream = DreamJournal.query.get_or_404(dream_id)
         if dream.user_id != current_user.id:
             logger.warning(f"Unauthorized access attempt for dream {dream_id}")
             return jsonify({'errors': {'auth': 'Unauthorized access'}}), 403
 
         try:
-            # Generate new dreamscape using OpenAIService
             dreamscape_data = OpenAIService.generate_dreamscape(dream.content)
             logger.info(f"Successfully generated new dreamscape data for dream {dream_id}")
         except Exception as e:
             logger.error(f"OpenAI dreamscape regeneration error: {str(e)}")
             return jsonify({'errors': {'server': 'Failed to regenerate dreamscape'}}), 500
 
-        # Update or create dreamscape
         dreamscape = Dreamscape.query.filter_by(dream_id=dream_id).first()
         if dreamscape:
             dreamscape.image_url = dreamscape_data['image_url']
@@ -149,6 +151,9 @@ def regenerate_dreamscape(dream_id):
 
         db.session.commit()
         logger.info(f"Successfully saved regenerated dreamscape for dream {dream_id}")
+
+        # Start async S3 upload
+        asyncio.create_task(handle_s3_upload(dreamscape, dreamscape_data['image_url']))
 
         return jsonify({
             'image_url': dreamscape_data['image_url'],

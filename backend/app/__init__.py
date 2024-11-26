@@ -12,6 +12,7 @@ from .config import Config
 from .api.dream_routes import dream_routes
 from .api.interpretation_routes import interpretation_routes
 from .api.dreamscape_routes import dreamscape_routes
+from app.aws import aws_helpers
 import logging 
 
 logging.basicConfig(level=logging.DEBUG)
