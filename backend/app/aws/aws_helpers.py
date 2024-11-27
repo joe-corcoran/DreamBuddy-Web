@@ -6,6 +6,7 @@ import os
 import uuid
 import requests
 from datetime import datetime
+import logging
 
 BUCKET_NAME = os.environ.get("S3_BUCKET")
 S3_LOCATION = f"https://{BUCKET_NAME}.s3.amazonaws.com/"
