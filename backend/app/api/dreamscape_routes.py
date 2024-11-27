@@ -166,56 +166,72 @@ def get_dreamscape(dream_id):
         logger.error(f"Error fetching dreamscape for dream {dream_id}: {str(e)}")
         return jsonify({'errors': {'server': str(e)}}), 500
 
-@dreamscape_routes.route('/regenerate/<int:dream_id>', methods=['POST'])
+@dreamscape_routes.route('/generate/<int:dream_id>', methods=['POST'])
 @login_required
-def regenerate_dreamscape(dream_id):
-    """Regenerate dreamscape for a dream"""
-    logger.info(f"Starting dreamscape regeneration for dream {dream_id}")
+def generate_dreamscape(dream_id):
+    """Generate a new dreamscape for a dream"""
+    logger.info(f"Starting dreamscape generation for dream {dream_id}")
     
-    is_valid, error_response, error_code = validate_csrf_token()
-    if not is_valid:
-        return error_response, error_code
-
     try:
         dream = DreamJournal.query.get_or_404(dream_id)
         if dream.user_id != current_user.id:
-            logger.warning(f"Unauthorized access attempt for dream {dream_id}")
             return jsonify({'errors': {'auth': 'Unauthorized access'}}), 403
 
-        try:
-            dreamscape_data = OpenAIService.generate_dreamscape(dream.content)
-            logger.info(f"Successfully generated new dreamscape data for dream {dream_id}")
-        except Exception as e:
-            logger.error(f"OpenAI dreamscape regeneration error: {str(e)}")
-            return jsonify({'errors': {'server': 'Failed to regenerate dreamscape'}}), 500
+        # Check if there's already a dreamscape in progress
+        existing_dreamscape = Dreamscape.query.filter_by(dream_id=dream_id).first()
+        if existing_dreamscape:
+            if existing_dreamscape.status in ['generating', 'uploading']:
+                # If stuck for more than 5 minutes, mark as failed
+                time_diff = datetime.now(timezone.utc) - existing_dreamscape.updated_at
+                if time_diff.total_seconds() > 300:
+                    existing_dreamscape.status = 'failed'
+                    existing_dreamscape.error_message = "Generation timed out"
+                    db.session.commit()
+                else:
+                    return jsonify({
+                        'status': existing_dreamscape.status,
+                        'message': 'Dreamscape generation in progress'
+                    }), 202
 
-        dreamscape = Dreamscape.query.filter_by(dream_id=dream_id).first()
-        if dreamscape:
-            dreamscape.image_url = dreamscape_data['image_url']
-            dreamscape.optimized_prompt = dreamscape_data['optimized_prompt']
-            dreamscape.updated_at = datetime.now(timezone.utc)
-        else:
-            dreamscape = Dreamscape(
-                dream_id=dream_id,
-                image_url=dreamscape_data['image_url'],
-                optimized_prompt=dreamscape_data['optimized_prompt'],
-                created_at=datetime.now(timezone.utc),
-                updated_at=datetime.now(timezone.utc)
-            )
+        # Create or update dreamscape
+        dreamscape = existing_dreamscape or Dreamscape(dream_id=dream_id)
+        dreamscape.status = 'generating'
+        dreamscape.error_message = None
+        dreamscape.updated_at = datetime.now(timezone.utc)
+        if not existing_dreamscape:
+            dreamscape.created_at = datetime.now(timezone.utc)
             db.session.add(dreamscape)
-
         db.session.commit()
-        logger.info(f"Successfully saved regenerated dreamscape for dream {dream_id}")
 
-        # Start async S3 upload
-        asyncio.create_task(handle_s3_upload(dreamscape, dreamscape_data['image_url']))
+        try:
+            # Generate dreamscape
+            dreamscape_data = OpenAIService.generate_dreamscape(dream.content)
+            
+            # Upload to S3
+            s3_upload = upload_dalle_image_to_s3(dreamscape_data['image_url'])
+            if "errors" in s3_upload:
+                raise Exception(s3_upload["errors"])
 
-        return jsonify({
-            'image_url': dreamscape_data['image_url'],
-            'optimized_prompt': dreamscape_data['optimized_prompt']
-        })
+            # Update dreamscape
+            dreamscape.status = 'completed'
+            dreamscape.image_url = s3_upload["url"]
+            dreamscape.optimized_prompt = dreamscape_data['optimized_prompt']
+            db.session.commit()
+
+            return jsonify({
+                'status': 'completed',
+                'image_url': s3_upload["url"],
+                'optimized_prompt': dreamscape_data['optimized_prompt']
+            })
+
+        except Exception as e:
+            logger.error(f"Generation error: {str(e)}")
+            dreamscape.status = 'failed'
+            dreamscape.error_message = str(e)
+            db.session.commit()
+            return jsonify({'errors': {'server': str(e)}}), 500
 
     except Exception as e:
-        logger.error(f"Error in dreamscape regeneration route: {str(e)}")
+        logger.error(f"Route error: {str(e)}")
         db.session.rollback()
         return jsonify({'errors': {'server': str(e)}}), 500
