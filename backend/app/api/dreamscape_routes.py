@@ -54,64 +54,6 @@ def handle_s3_upload(dreamscape, dalle_url):
         db.session.commit()
         logger.error(f"Error in S3 upload handler: {str(e)}")
 
-@dreamscape_routes.route('/generate/<int:dream_id>', methods=['POST'])
-@login_required
-def generate_dreamscape(dream_id):
-    """Generate a new dreamscape for a dream"""
-    logger.info(f"Starting dreamscape generation for dream {dream_id}")
-    
-    try:
-        dream = DreamJournal.query.get_or_404(dream_id)
-        if dream.user_id != current_user.id:
-            return jsonify({'errors': {'auth': 'Unauthorized access'}}), 403
-
-        # Create new dreamscape with generating status
-        new_dreamscape = Dreamscape(
-            dream_id=dream_id,
-            status=GENERATION_STATUS['GENERATING'],
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc)
-        )
-        db.session.add(new_dreamscape)
-        db.session.commit()
-
-        try:
-            # Generate dreamscape using OpenAIService
-            dreamscape_data = OpenAIService.generate_dreamscape(dream.content)
-            
-            # Update status to uploading
-            new_dreamscape.status = GENERATION_STATUS['UPLOADING']
-            new_dreamscape.optimized_prompt = dreamscape_data['optimized_prompt']
-            db.session.commit()
-
-            # Upload to S3
-            s3_upload = upload_dalle_image_to_s3(dreamscape_data['image_url'])
-            
-            if "errors" in s3_upload:
-                raise Exception(s3_upload["errors"])
-
-            # Update with S3 URL
-            new_dreamscape.image_url = s3_upload["url"]
-            new_dreamscape.status = GENERATION_STATUS['COMPLETED']
-            db.session.commit()
-
-            return jsonify({
-                'status': GENERATION_STATUS['COMPLETED'],
-                'image_url': s3_upload["url"],
-                'optimized_prompt': dreamscape_data['optimized_prompt']
-            })
-
-        except Exception as e:
-            new_dreamscape.status = GENERATION_STATUS['FAILED']
-            new_dreamscape.error_message = str(e)
-            db.session.commit()
-            raise e
-
-    except Exception as e:
-        logger.error(f"Error in dreamscape generation: {str(e)}")
-        db.session.rollback()
-        return jsonify({'errors': {'server': str(e)}}), 500
-
 @dreamscape_routes.route('/status/<int:dream_id>', methods=['GET'])
 @login_required
 def get_generation_status(dream_id):
