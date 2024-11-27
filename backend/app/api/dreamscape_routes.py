@@ -60,24 +60,12 @@ def generate_dreamscape(dream_id):
     """Generate a new dreamscape for a dream"""
     logger.info(f"Starting dreamscape generation for dream {dream_id}")
     
-    is_valid, error_response, error_code = validate_csrf_token()
-    if not is_valid:
-        return error_response, error_code
-
     try:
         dream = DreamJournal.query.get_or_404(dream_id)
         if dream.user_id != current_user.id:
             return jsonify({'errors': {'auth': 'Unauthorized access'}}), 403
 
-        # Check for existing dreamscape
-        existing_dreamscape = Dreamscape.query.filter_by(dream_id=dream_id).first()
-        if existing_dreamscape and existing_dreamscape.status in [GENERATION_STATUS['GENERATING'], GENERATION_STATUS['UPLOADING']]:
-            return jsonify({
-                'status': existing_dreamscape.status,
-                'message': 'Dreamscape generation in progress'
-            }), 202
-
-        # Create new dreamscape with pending status
+        # Create new dreamscape with generating status
         new_dreamscape = Dreamscape(
             dream_id=dream_id,
             status=GENERATION_STATUS['GENERATING'],
@@ -91,17 +79,25 @@ def generate_dreamscape(dream_id):
             # Generate dreamscape using OpenAIService
             dreamscape_data = OpenAIService.generate_dreamscape(dream.content)
             
-            # Update dreamscape with DALL-E URL
-            new_dreamscape.image_url = dreamscape_data['image_url']
+            # Update status to uploading
+            new_dreamscape.status = GENERATION_STATUS['UPLOADING']
             new_dreamscape.optimized_prompt = dreamscape_data['optimized_prompt']
             db.session.commit()
 
-            # Start background S3 upload
-            Thread(target=handle_s3_upload, args=(new_dreamscape, dreamscape_data['image_url'])).start()
+            # Upload to S3
+            s3_upload = upload_dalle_image_to_s3(dreamscape_data['image_url'])
+            
+            if "errors" in s3_upload:
+                raise Exception(s3_upload["errors"])
+
+            # Update with S3 URL
+            new_dreamscape.image_url = s3_upload["url"]
+            new_dreamscape.status = GENERATION_STATUS['COMPLETED']
+            db.session.commit()
 
             return jsonify({
-                'status': GENERATION_STATUS['UPLOADING'],
-                'image_url': dreamscape_data['image_url'],
+                'status': GENERATION_STATUS['COMPLETED'],
+                'image_url': s3_upload["url"],
                 'optimized_prompt': dreamscape_data['optimized_prompt']
             })
 

@@ -28,28 +28,38 @@ def upload_dalle_image_to_s3(image_url, acl="public-read"):
     Returns the permanent S3 URL
     """
     try:
+        logger.info(f"Starting DALL-E image download from: {image_url}")
         # Download image from DALL-E
         response = requests.get(image_url)
         if response.status_code != 200:
-            return {"errors": "Failed to download image from DALL-E"}
+            logger.error(f"Failed to download DALL-E image: {response.status_code}")
+            return {"errors": f"Failed to download image from DALL-E: {response.status_code}"}
 
         # Generate unique filename
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f"dreamscape_{timestamp}.png"
+        logger.info(f"Generated filename: {filename}")
 
-        # Upload to S3
-        s3.put_object(
-            Bucket=BUCKET_NAME,
-            Key=filename,
-            Body=response.content,
-            ContentType='image/png',
-            ACL=acl
-        )
+        try:
+            # Upload to S3
+            logger.info(f"Attempting S3 upload to bucket: {BUCKET_NAME}")
+            s3.put_object(
+                Bucket=BUCKET_NAME,
+                Key=filename,
+                Body=response.content,
+                ContentType='image/png',
+                ACL=acl
+            )
+            s3_url = f"{S3_LOCATION}{filename}"
+            logger.info(f"Successfully uploaded to S3: {s3_url}")
+            return {"url": s3_url}
 
-        # Return permanent S3 URL
-        return {"url": f"{S3_LOCATION}{filename}"}
+        except Exception as s3_error:
+            logger.error(f"S3 upload error: {str(s3_error)}")
+            return {"errors": f"S3 upload failed: {str(s3_error)}"}
 
     except Exception as e:
+        logger.error(f"General error in upload_dalle_image_to_s3: {str(e)}")
         return {"errors": str(e)}
 
 def remove_file_from_s3(image_url):

@@ -189,66 +189,89 @@ const DreamDetailsModal = ({ date, dreams }) => {
           )}
         </div>
 
-        {/* Dreamscape Section */}
-        <div className="collapsible-section">
-          <div
-            className="section-header"
-            onClick={() => setIsDreamscapeExpanded(!isDreamscapeExpanded)}
-          >
-            <h3>Dreamscape</h3>
-            <i
-              className={`fas fa-chevron-${
-                isDreamscapeExpanded ? "up" : "down"
-              }`}
-            />
-          </div>
-          {isDreamscapeExpanded && dream && (
-  <div className="section-content">
-    {dreamscapesLoading ? (
-      <div className="loading">
-        <div className="loading-spinner"></div>
-        <p>
-          {dreamscapes[dream.id]?.status === 'uploading' 
-            ? 'Uploading dreamscape to storage...' 
-            : 'Generating dreamscape...'}
-        </p>
-      </div>
-    ) : dreamscapes[dream.id] ? (
-      <div className="dreamscape-image-container">
-        <img
-          src={dreamscapes[dream.id].imageUrl}
-          alt="Dreamscape"
-          className="dreamscape-image"
-          onError={(e) => {
-            console.error("Image failed to load:", e);
-            e.target.style.display = "none";
-            setErrorMessage("Failed to load dreamscape image");
-          }}
-        />
-        <div className="prompt-text">
-          <small>Prompt: {dreamscapes[dream.id].prompt}</small>
-        </div>
-      </div>
-    ) : (
-      <button
-        className="generate-button"
-        onClick={handleGenerateDreamscape}
-        disabled={dreamscapesLoading}
-      >
-        Generate Dreamscape
-      </button>
-    )}
-    {(dreamscapesError || errorMessage) && (
-      <div className="error">
-        {errorMessage ||
-          (typeof dreamscapesError === "string"
-            ? dreamscapesError
-            : "Failed to generate dreamscape")}
-      </div>
-    )}
+    {/* Dreamscape Section */}
+<div className="collapsible-section">
+  <div
+    className="section-header"
+    onClick={() => setIsDreamscapeExpanded(!isDreamscapeExpanded)}
+  >
+    <h3>Dreamscape</h3>
+    <i
+      className={`fas fa-chevron-${
+        isDreamscapeExpanded ? "up" : "down"
+      }`}
+    />
   </div>
-)}
+  {isDreamscapeExpanded && dream && (
+    <div className="section-content">
+      {dreamscapesLoading ? (
+        <div className="dreamscape-loading">
+          <div className="loading-spinner-container">
+            <div className="loading-spinner"></div>
+          </div>
+          <div className="loading-text">
+            <p className="loading-primary">Creating your dreamscape visualization</p>
+            <p className="loading-secondary">
+              {dreamscapes[dream.id]?.status === 'uploading' 
+                ? 'Saving your dreamscape to the eternal realm...' 
+                : 'Channeling your dream into visual form...'}
+            </p>
+            <p className="loading-hint">This mystical process takes 1-2 minutes</p>
+          </div>
         </div>
+      ) : dreamscapes[dream.id]?.status === 'completed' ? (
+        <div className="dreamscape-image-container">
+          <img
+            src={dreamscapes[dream.id].imageUrl}
+            alt="Dreamscape Visualization"
+            className="dreamscape-image"
+            onError={(e) => {
+              console.error("Image failed to load:", e);
+              setErrorMessage("Your dreamscape encountered a mystical barrier. Please try regenerating it.");
+              e.target.style.display = "none";
+            }}
+          />
+          <div className="prompt-text">
+            <small>Inspiration: {dreamscapes[dream.id].prompt}</small>
+          </div>
+        </div>
+      ) : dreamscapes[dream.id]?.status === 'failed' ? (
+        <div className="dreamscape-error">
+          <p>Failed to manifest your dreamscape</p>
+          <button
+            className="retry-button"
+            onClick={handleGenerateDreamscape}
+            disabled={dreamscapesLoading}
+          >
+            Try Again
+          </button>
+        </div>
+      ) : (
+        <div className="dreamscape-generate">
+          <button
+            className="generate-button"
+            onClick={handleGenerateDreamscape}
+            disabled={dreamscapesLoading}
+          >
+            Generate Dreamscape
+          </button>
+          <p className="generate-hint">Transform your dream into a visual masterpiece</p>
+        </div>
+      )}
+      {(dreamscapesError || errorMessage) && (
+        <div className="dreamscape-error-message">
+          <i className="fas fa-exclamation-circle"></i>
+          <span>
+            {errorMessage ||
+              (typeof dreamscapesError === "string"
+                ? dreamscapesError
+                : "Failed to generate dreamscape")}
+          </span>
+        </div>
+      )}
+    </div>
+  )}
+</div>
 
         {/* Interpretations Section */}
         <div className="collapsible-section">
