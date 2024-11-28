@@ -485,19 +485,19 @@ const DreamJournal = () => {
                     )}
                   </div>
 
-                  {todayDream.dreamscape && (
-                    <div className="dreamscape-container">
-                      <img 
-                        src={todayDream.dreamscape.imageUrl} 
-                        alt="Dreamscape"
-                        className="dreamscape-image"
-                        onError={(e) => {
-                          console.error("Image failed to load:", e);
-                          e.target.style.display = "none";
-                        }}
-                      />
-                    </div>
-                  )}
+                  {todayDream?.dreamscape?.image_url && ( // Changed condition and property name
+  <div className="dreamscape-container">
+    <img 
+      src={todayDream.dreamscape.image_url} // Changed from imageUrl
+      alt="Dreamscape"
+      className="dreamscape-image"
+      onError={(e) => {
+        console.error("Image failed to load:", e);
+        e.target.style.display = "none";
+      }}
+    />
+  </div>
+)}
                 </div>
               ) : (
                 <div className="empty-page">

@@ -219,12 +219,43 @@
 //   }
 // }
 
-// dreamscapes.js
+// frontend/src/redux/dreamscapes.js
+// frontend/src/redux/dreamscapes.js
+import { getApiUrl } from '../config';
+
+// Action Types
+const SET_DREAMSCAPE = "dreamscapes/SET_DREAMSCAPE";
+const SET_LOADING = "dreamscapes/SET_LOADING";
+const SET_ERROR = "dreamscapes/SET_ERROR";
+
+// Action Creators
+const setDreamscape = (dreamId, imageUrl, prompt) => ({
+  type: SET_DREAMSCAPE,
+  payload: { 
+    dreamId, 
+    imageUrl, // match backend property name
+    optimized_prompt: prompt // match backend property name
+  }
+});
+
+const setLoading = (isLoading) => ({
+  type: SET_LOADING,
+  payload: isLoading
+});
+
+const setError = (error) => ({
+  type: SET_ERROR,
+  payload: error
+});
+
+// Thunk Actions
 export const generateDreamscape = (dreamId, dreamContent) => async (dispatch) => {
   dispatch(setLoading(true));
   dispatch(setError(null));
 
   try {
+    console.log('Generating dreamscape for dream:', dreamId);
+    
     const response = await fetch(getApiUrl(`/api/dreamscapes/generate/${dreamId}`), {
       method: 'POST',
       headers: {
@@ -235,13 +266,15 @@ export const generateDreamscape = (dreamId, dreamContent) => async (dispatch) =>
     });
 
     const data = await response.json();
+    console.log('Generate response:', data);
     
     if (!response.ok) {
       throw new Error(data.errors?.server || 'Failed to generate dreamscape');
     }
 
+    // Use the exact property names from backend
     dispatch(setDreamscape(dreamId, data.image_url, data.optimized_prompt));
-    return { success: true };
+    return { success: true, data };
 
   } catch (error) {
     console.error('Generate error:', error);
@@ -256,11 +289,14 @@ export const getDreamscape = (dreamId) => async (dispatch) => {
   dispatch(setLoading(true));
   
   try {
+    console.log('Fetching dreamscape for dream:', dreamId);
+    
     const response = await fetch(getApiUrl(`/api/dreamscapes/dream/${dreamId}`), {
       credentials: 'include'
     });
 
     const data = await response.json();
+    console.log('Dreamscape response:', data);
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -270,7 +306,7 @@ export const getDreamscape = (dreamId) => async (dispatch) => {
     }
 
     dispatch(setDreamscape(dreamId, data.image_url, data.optimized_prompt));
-    return { success: true };
+    return { success: true, data };
 
   } catch (error) {
     console.error('Fetch error:', error);
@@ -280,3 +316,45 @@ export const getDreamscape = (dreamId) => async (dispatch) => {
     dispatch(setLoading(false));
   }
 };
+
+const initialState = {
+  byDreamId: {},
+  isLoading: false,
+  error: null
+};
+
+const dreamscapesReducer = (state = initialState, action) => {
+  switch (action.type) {
+    case SET_DREAMSCAPE: {
+      const { dreamId, imageUrl, optimized_prompt } = action.payload;
+      return {
+        ...state,
+        byDreamId: {
+          ...state.byDreamId,
+          [dreamId]: {
+            image_url: imageUrl, // match backend property name
+            optimized_prompt, // match backend property name
+          }
+        },
+        error: null
+      };
+    }
+
+    case SET_LOADING:
+      return {
+        ...state,
+        isLoading: action.payload
+      };
+
+    case SET_ERROR:
+      return {
+        ...state,
+        error: action.payload
+      };
+
+    default:
+      return state;
+  }
+};
+
+export default dreamscapesReducer;
