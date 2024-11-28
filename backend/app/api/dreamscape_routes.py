@@ -290,6 +290,7 @@ GENERATION_STATUS = {
 
 def update_dreamscape_status(dreamscape, status, error_message=None):
     """Atomic status update for dreamscape"""
+    logger = logging.getLogger(__name__)
     with current_app.app_context():
         try:
             dreamscape = Dreamscape.query.get(dreamscape.id)  # Refresh instance
@@ -316,6 +317,7 @@ def ensure_timezone(dt):
 
 def handle_generation_process(dream_id, app):
     """Background handler for dreamscape generation"""
+    logger = logging.getLogger(__name__) 
     with app.app_context():
         try:
             dreamscape = Dreamscape.query.filter_by(dream_id=dream_id).first()
