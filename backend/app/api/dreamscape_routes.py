@@ -308,6 +308,12 @@ def make_timezone_aware(dt):
     """Ensure datetime is timezone-aware"""
     return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
+def ensure_timezone(dt):
+    """Ensure datetime is timezone-aware"""
+    if dt is None:
+        return datetime.now(timezone.utc)
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
 def handle_generation_process(dream_id, app):
     """Background handler for dreamscape generation"""
     with app.app_context():
