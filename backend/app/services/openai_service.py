@@ -1,3 +1,4 @@
+#backend/app/services/openai_service.py
 from openai import OpenAI
 import os
 import logging

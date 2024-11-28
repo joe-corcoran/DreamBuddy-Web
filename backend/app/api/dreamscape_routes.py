@@ -268,6 +268,7 @@
 #         db.session.rollback()
 #         return jsonify({'errors': {'server': str(e)}}), 500
 
+#backend/app/api/dreamscape_routes.py
 from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 from app.models import db, DreamJournal, Dreamscape
@@ -317,7 +318,6 @@ def ensure_timezone(dt):
 
 def handle_generation_process(dream_id, app):
     """Background handler for dreamscape generation"""
-    logger = logging.getLogger(__name__) 
     with app.app_context():
         try:
             dreamscape = Dreamscape.query.filter_by(dream_id=dream_id).first()
@@ -331,6 +331,9 @@ def handle_generation_process(dream_id, app):
             update_dreamscape_status(dreamscape, GENERATION_STATUS['GENERATING'])
             dreamscape_data = OpenAIService.generate_dreamscape(dream.content)
             
+            if not dreamscape_data or 'image_url' not in dreamscape_data:
+                raise Exception("Failed to generate dreamscape image")
+                
             # Upload to S3
             update_dreamscape_status(dreamscape, GENERATION_STATUS['UPLOADING'])
             s3_upload = upload_dalle_image_to_s3(dreamscape_data['image_url'])
@@ -346,7 +349,11 @@ def handle_generation_process(dream_id, app):
         except Exception as e:
             logger.error(f"Generation process failed: {str(e)}")
             if dreamscape:
-                update_dreamscape_status(dreamscape, GENERATION_STATUS['FAILED'], str(e))
+                update_dreamscape_status(
+                    dreamscape, 
+                    GENERATION_STATUS['FAILED'], 
+                    str(e)
+                )
 
 @dreamscape_routes.route('/status/<int:dream_id>', methods=['GET'])
 @login_required
