@@ -303,6 +303,10 @@ def update_dreamscape_status(dreamscape, status, error_message=None):
             db.session.rollback()
             logger.error(f"Failed to update dreamscape status: {str(e)}")
             raise
+    
+def make_timezone_aware(dt):
+    """Ensure datetime is timezone-aware"""
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 def handle_generation_process(dream_id, app):
     """Background handler for dreamscape generation"""
@@ -385,36 +389,63 @@ def get_dreamscape(dream_id):
 def generate_dreamscape(dream_id):
     """Generate a new dreamscape for a dream"""
     try:
+        # Verify dream ownership
         dream = DreamJournal.query.get_or_404(dream_id)
         if dream.user_id != current_user.id:
+            logger.warning(f"Unauthorized dreamscape generation attempt for dream {dream_id}")
             return jsonify({'errors': {'auth': 'Unauthorized access'}}), 403
 
         # Check existing dreamscape
         dreamscape = Dreamscape.query.filter_by(dream_id=dream_id).first()
         
         if dreamscape:
-            # Check for stuck processes
-            time_diff = datetime.now(timezone.utc) - dreamscape.updated_at
-            if time_diff.total_seconds() > 300 and dreamscape.status in ['generating', 'uploading']:
-                update_dreamscape_status(dreamscape, GENERATION_STATUS['FAILED'], "Generation timed out")
-            elif dreamscape.status in ['generating', 'uploading']:
-                return jsonify({
-                    'status': dreamscape.status,
-                    'message': 'Generation in progress'
-                }), 202
-        else:
-            # Create new dreamscape
+            current_time = datetime.now(timezone.utc)
+            updated_at = ensure_timezone(dreamscape.updated_at)
+            time_diff = (current_time - updated_at).total_seconds()
+
+            logger.debug(f"Dreamscape status check - Status: {dreamscape.status}, Time diff: {time_diff}")
+
+            if dreamscape.status in ['generating', 'uploading']:
+                if time_diff > 300:  # 5 minutes timeout
+                    logger.warning(f"Dreamscape generation timed out for dream {dream_id}")
+                    update_dreamscape_status(
+                        dreamscape, 
+                        GENERATION_STATUS['FAILED'], 
+                        "Generation timed out after 5 minutes"
+                    )
+                else:
+                    logger.info(f"Dreamscape generation in progress for dream {dream_id}")
+                    return jsonify({
+                        'status': dreamscape.status,
+                        'message': 'Generation in progress'
+                    }), 202
+        
+        # Create new dreamscape or reset failed one
+        current_time = datetime.now(timezone.utc)
+        if not dreamscape:
             dreamscape = Dreamscape(
                 dream_id=dream_id,
                 status=GENERATION_STATUS['PENDING'],
-                created_at=datetime.now(timezone.utc),
-                updated_at=datetime.now(timezone.utc)
+                created_at=current_time,
+                updated_at=current_time
             )
             db.session.add(dreamscape)
-            db.session.commit()
+        else:
+            dreamscape.status = GENERATION_STATUS['PENDING']
+            dreamscape.error_message = None
+            dreamscape.updated_at = current_time
+            dreamscape.image_url = None
+            dreamscape.optimized_prompt = None
+        
+        db.session.commit()
+        logger.info(f"Starting dreamscape generation for dream {dream_id}")
 
-        # Start generation in background
-        Thread(target=handle_generation_process, args=(dream_id, current_app._get_current_object())).start()
+        # Start generation in background with app context
+        Thread(
+            target=handle_generation_process,
+            args=(dream_id, current_app._get_current_object()),
+            daemon=True  # Ensure thread doesn't block application shutdown
+        ).start()
         
         return jsonify({
             'status': GENERATION_STATUS['GENERATING'],
@@ -422,5 +453,6 @@ def generate_dreamscape(dream_id):
         }), 202
 
     except Exception as e:
-        logger.error(f"Failed to start generation: {str(e)}")
+        logger.error(f"Failed to start dreamscape generation: {str(e)}", exc_info=True)
+        db.session.rollback()
         return jsonify({'errors': {'server': str(e)}}), 500

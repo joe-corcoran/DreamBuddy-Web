@@ -25,14 +25,13 @@ const QuickDreamEntry = () => {
   }, []);
 
   const formatDateTime = (date) => {
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    return date.toLocaleDateString('en-US', {
+    return new Date(date).toLocaleString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: 'numeric',
       minute: '2-digit',
-      timeZone: userTimeZone,
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       timeZoneName: 'short'
     });
   };

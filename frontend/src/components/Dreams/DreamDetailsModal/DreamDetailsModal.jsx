@@ -144,14 +144,15 @@ const DreamDetailsModal = ({ date, dreams }) => {
       <div className="modal-content">
         {/* Date Navigation */}
         <div className="date-navigation">
-          <h2>
-            {date.toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </h2>
+        <h2>
+  {new Date(date).toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+  })}
+</h2>
         </div>
 
         {/* Dream Details Section */}

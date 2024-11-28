@@ -233,9 +233,8 @@
 import "./DreamJournal.css"
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import moment from 'moment';
 import { 
-  Moon, Save, Edit2, ChevronLeft, ChevronRight 
+  Moon, Save, ChevronLeft, ChevronRight 
 } from 'lucide-react';
 import { 
   thunkLoadDreams, 
@@ -261,12 +260,23 @@ const DreamJournal = () => {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
+  const formatDateTime = (date) => {
+    return new Date(date).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timeZoneName: 'short'
+    });
+  };
+
   useEffect(() => {
     loadContent();
   }, [dispatch]);
 
   useEffect(() => {
-    // Populate form with today's dream if it exists
     if (todayDream) {
       setFormData({
         title: todayDream.title,
@@ -284,7 +294,9 @@ const DreamJournal = () => {
     setIsLoading(true);
     try {
       await dispatch(thunkLoadDreams());
-      const clientDate = new Date().toISOString();
+      // Send timezone-aware ISO string
+      const now = new Date();
+      const clientDate = now.toISOString();
       await dispatch(thunkCheckTodayDream(clientDate));
     } catch (error) {
       setErrorMessage('Failed to load dreams');
@@ -293,8 +305,9 @@ const DreamJournal = () => {
   };
 
   const resetForm = () => {
+    const now = new Date();
     setFormData({
-      title: '',
+      title: `Dream on ${formatDateTime(now)}`,
       content: '',
       is_lucid: false,
       tags: ''
@@ -314,10 +327,12 @@ const DreamJournal = () => {
     e.preventDefault();
     setIsLoading(true);
     
+    const now = new Date();
     const dreamData = {
       ...formData,
       tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-      clientDate: new Date().toISOString()
+      clientDate: now.toISOString(),
+      title: formData.title || `Dream on ${formatDateTime(now)}`
     };
 
     try {
@@ -372,7 +387,6 @@ const DreamJournal = () => {
           <div className="book-binding"></div>
           
           <div className="book-pages">
-            {/* Navigation */}
             <div className="page-navigation">
               <button 
                 className="nav-button"
@@ -398,7 +412,7 @@ const DreamJournal = () => {
               <form onSubmit={handleSubmit} className="dream-entry-form">
                 <div className="page-header">
                   <h2 className="current-date">
-                    {moment().format('MMMM Do YYYY, h:mm a')}
+                    {formatDateTime(new Date())}
                   </h2>
                 </div>
 
@@ -474,11 +488,14 @@ const DreamJournal = () => {
                   {todayDream.dreamscape && (
                     <div className="dreamscape-container">
                       <img 
-  src={todayDream.dreamscape.imageUrl} 
-  alt="Dreamscape"
-  className="dreamscape-image"
-  onError={(e) => console.error("Image failed to load:", e)}
-/>
+                        src={todayDream.dreamscape.imageUrl} 
+                        alt="Dreamscape"
+                        className="dreamscape-image"
+                        onError={(e) => {
+                          console.error("Image failed to load:", e);
+                          e.target.style.display = "none";
+                        }}
+                      />
                     </div>
                   )}
                 </div>
