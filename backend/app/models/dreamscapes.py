@@ -1,6 +1,6 @@
 #backend/app/models/dreamscapes.py
 from .db import db, environment, SCHEMA, add_prefix_for_prod
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Dreamscape(db.Model):
     __tablename__ = 'dreamscapes'
@@ -14,8 +14,8 @@ class Dreamscape(db.Model):
     optimized_prompt = db.Column(db.Text)
     status = db.Column(db.String(50), nullable=False, default='pending')
     error_message = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     dream = db.relationship('DreamJournal', back_populates='dreamscape')
 

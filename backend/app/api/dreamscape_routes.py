@@ -268,7 +268,7 @@
 #         db.session.rollback()
 #         return jsonify({'errors': {'server': str(e)}}), 500
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 from app.models import db, DreamJournal, Dreamscape
 from app.services.openai_service import OpenAIService
@@ -288,49 +288,53 @@ GENERATION_STATUS = {
     'FAILED': 'failed'
 }
 
-def update_dreamscape_status(dreamscape, status, error_message=None, commit=True):
+def update_dreamscape_status(dreamscape, status, error_message=None):
     """Atomic status update for dreamscape"""
-    try:
-        dreamscape.status = status
-        dreamscape.error_message = error_message
-        dreamscape.updated_at = datetime.now(timezone.utc)
-        if commit:
-            db.session.commit()
-        logger.info(f"Updated dreamscape {dreamscape.id} status to {status}")
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Failed to update dreamscape status: {str(e)}")
-        raise
+    with current_app.app_context():
+        try:
+            dreamscape = Dreamscape.query.get(dreamscape.id)  # Refresh instance
+            if dreamscape:
+                dreamscape.status = status
+                dreamscape.error_message = error_message
+                dreamscape.updated_at = datetime.now(timezone.utc)
+                db.session.commit()
+                logger.info(f"Updated dreamscape {dreamscape.id} status to {status}")
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Failed to update dreamscape status: {str(e)}")
+            raise
 
-def handle_generation_process(dream_id):
+def handle_generation_process(dream_id, app):
     """Background handler for dreamscape generation"""
-    try:
-        dreamscape = Dreamscape.query.filter_by(dream_id=dream_id).first()
-        dream = DreamJournal.query.get(dream_id)
-        
-        if not dreamscape or not dream:
-            logger.error(f"Missing dreamscape or dream for id {dream_id}")
-            return
-        
-        # Generate dreamscape
-        update_dreamscape_status(dreamscape, GENERATION_STATUS['GENERATING'])
-        dreamscape_data = OpenAIService.generate_dreamscape(dream.content)
-        
-        # Upload to S3
-        update_dreamscape_status(dreamscape, GENERATION_STATUS['UPLOADING'])
-        s3_upload = upload_dalle_image_to_s3(dreamscape_data['image_url'])
-        
-        if "errors" in s3_upload:
-            raise Exception(s3_upload["errors"])
+    with app.app_context():
+        try:
+            dreamscape = Dreamscape.query.filter_by(dream_id=dream_id).first()
+            dream = DreamJournal.query.get(dream_id)
             
-        # Update dreamscape
-        dreamscape.image_url = s3_upload["url"]
-        dreamscape.optimized_prompt = dreamscape_data['optimized_prompt']
-        update_dreamscape_status(dreamscape, GENERATION_STATUS['COMPLETED'])
-        
-    except Exception as e:
-        logger.error(f"Generation process failed: {str(e)}")
-        update_dreamscape_status(dreamscape, GENERATION_STATUS['FAILED'], str(e))
+            if not dreamscape or not dream:
+                logger.error(f"Missing dreamscape or dream for id {dream_id}")
+                return
+            
+            # Generate dreamscape
+            update_dreamscape_status(dreamscape, GENERATION_STATUS['GENERATING'])
+            dreamscape_data = OpenAIService.generate_dreamscape(dream.content)
+            
+            # Upload to S3
+            update_dreamscape_status(dreamscape, GENERATION_STATUS['UPLOADING'])
+            s3_upload = upload_dalle_image_to_s3(dreamscape_data['image_url'])
+            
+            if "errors" in s3_upload:
+                raise Exception(s3_upload["errors"])
+                
+            # Update dreamscape
+            dreamscape.image_url = s3_upload["url"]
+            dreamscape.optimized_prompt = dreamscape_data['optimized_prompt']
+            update_dreamscape_status(dreamscape, GENERATION_STATUS['COMPLETED'])
+            
+        except Exception as e:
+            logger.error(f"Generation process failed: {str(e)}")
+            if dreamscape:
+                update_dreamscape_status(dreamscape, GENERATION_STATUS['FAILED'], str(e))
 
 @dreamscape_routes.route('/status/<int:dream_id>', methods=['GET'])
 @login_required
@@ -410,7 +414,7 @@ def generate_dreamscape(dream_id):
             db.session.commit()
 
         # Start generation in background
-        Thread(target=handle_generation_process, args=(dream_id,)).start()
+        Thread(target=handle_generation_process, args=(dream_id, current_app._get_current_object())).start()
         
         return jsonify({
             'status': GENERATION_STATUS['GENERATING'],
