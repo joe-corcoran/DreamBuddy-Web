@@ -54,11 +54,6 @@ class OpenAIService:
             raise Exception(f"Failed to generate interpretation: {str(e)}")
 
     @staticmethod
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=4, max=10),
-        reraise=True
-    )
     def generate_dreamscape(dream_content):
         """Generate both the optimized prompt and image for a dreamscape"""
         try:
@@ -68,11 +63,11 @@ class OpenAIService:
                 messages=[
                     {
                         "role": "system",
-                        "content": "Create vivid, detailed, artistic image generation prompts. Focus on visual elements, style, mood, and composition. Keep prompts under 800 characters."
+                        "content": "Create vivid, artistic image generation prompts. Focus on visual elements."
                     },
                     {
                         "role": "user",
-                        "content": f"Create an artistic image generation prompt based on this dream: {dream_content}"
+                        "content": f"Create an artistic image prompt based on this dream: {dream_content}"
                     }
                 ],
                 timeout=30
@@ -80,7 +75,7 @@ class OpenAIService:
             
             optimized_prompt = prompt_response.choices[0].message.content
 
-            # Generate the image with a longer timeout
+            # Generate the image
             image_response = client.images.generate(
                 model="dall-e-3",
                 prompt=optimized_prompt[:1000],
@@ -96,5 +91,5 @@ class OpenAIService:
             }
 
         except Exception as e:
-            logger.error(f"OpenAI dreamscape error: {str(e)}")
-            raise Exception(f"Failed to generate dreamscape: {str(e)}")
+            logger.error(f"OpenAI error: {str(e)}")
+            raise
