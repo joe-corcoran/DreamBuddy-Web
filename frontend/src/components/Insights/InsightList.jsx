@@ -44,13 +44,14 @@ const InsightList = () => {
       ? interpretations.filter(interp => interp.interpretation_type === selectedType)
       : interpretations;
 
-  const typeColors = {
-      [interpretationTypes.SPIRITUAL]: '#9b59b6',
-      [interpretationTypes.PRACTICAL]: '#3498db',
-      [interpretationTypes.EMOTIONAL]: '#e74c3c',
-      [interpretationTypes.ACTIONABLE]: '#2ecc71',
-      [interpretationTypes.LUCID]: '#f1c40f'
-  };
+      const typeColors = {
+        [interpretationTypes.SPIRITUAL]: '#9b59b6',
+        [interpretationTypes.PRACTICAL]: '#3498db',
+        [interpretationTypes.EMOTIONAL]: '#e74c3c',
+        [interpretationTypes.ACTIONABLE]: '#2ecc71',
+        [interpretationTypes.LUCID]: '#f1c40f',
+        [interpretationTypes.RELIGIOUS]: '#8e44ad'
+    };
 
   const handleRetry = async () => {
     setLoadError(null);

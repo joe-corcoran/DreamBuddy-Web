@@ -15,8 +15,17 @@ class OpenAIService:
             'practical': "Provide practical insights and real-world applications from these dreams. Focus on how they relate to current life situations and potential actions:",
             'emotional': "Examine the emotional themes and patterns in these dreams. Consider the feelings present, their significance, and what they might reveal about emotional state:",
             'actionable': "Suggest specific actions, changes, or adjustments based on these dreams. Provide concrete steps that could be taken in waking life:",
-            'lucid': "Analyze these dreams from a lucid dreaming perspective. Identify dream signs, potential triggers, and techniques for increasing dream awareness:"
-        }
+            'lucid': "Analyze these dreams from a lucid dreaming perspective. Identify dream signs, potential triggers, and techniques for increasing dream awareness:",
+            'religious': """Analyze this dream and find a relevant verse or passage from religious texts (Bible, Quran, Torah, etc.) that shares similar themes or wisdom. Structure the response as follows:
+
+**Selected Verse/Passage**: [Quote the specific verse or passage, including its source and reference]
+
+**Dream Connection**: [Explain how this verse/passage relates to the dream's content and themes]
+
+**Spiritual Insight**: [Provide wisdom derived from this connection]
+
+**Application**: [Suggest how this religious wisdom could be applied to the dreamer's waking life]"""
+    }
         return prompts.get(interpretation_type, prompts['practical'])
 
     @staticmethod

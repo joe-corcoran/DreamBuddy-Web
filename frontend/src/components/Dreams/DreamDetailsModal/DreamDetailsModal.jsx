@@ -17,6 +17,7 @@ const InterpretationType = {
   EMOTIONAL: "emotional",
   ACTIONABLE: "actionable",
   LUCID: "lucid",
+  RELIGIOUS: "religious"
 };
 
 const getTypeIcon = (type) => {
@@ -25,11 +26,11 @@ const getTypeIcon = (type) => {
     practical: 'fa-tools',
     emotional: 'fa-heart',
     actionable: 'fa-tasks',
-    lucid: 'fa-moon'
+    lucid: 'fa-moon',
+    religious: 'fa-dove' 
   };
   return icons[type] || 'fa-star';
 };
-
 const formatInterpretationText = (text) => {
   // Split into paragraphs
   const paragraphs = text.split('\n\n');
@@ -170,6 +171,7 @@ const DreamDetailsModal = ({ date: initialDate, dreams: initialDreams }) => {
     [InterpretationType.EMOTIONAL]: "#e74c3c",
     [InterpretationType.ACTIONABLE]: "#2ecc71",
     [InterpretationType.LUCID]: "#f1c40f",
+    [InterpretationType.RELIGIOUS]: "#8e44ad" 
   };
 
   return (

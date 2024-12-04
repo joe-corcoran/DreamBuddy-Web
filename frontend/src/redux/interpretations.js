@@ -8,7 +8,8 @@ export const interpretationTypes = {
   PRACTICAL: 'practical',
   EMOTIONAL: 'emotional',
   ACTIONABLE: 'actionable',
-  LUCID: 'lucid'
+  LUCID: 'lucid',
+  RELIGIOUS: 'religious' 
 };
 
 // Action Types
@@ -27,7 +28,8 @@ const initialState = {
     [interpretationTypes.PRACTICAL]: null,
     [interpretationTypes.EMOTIONAL]: null,
     [interpretationTypes.ACTIONABLE]: null,
-    [interpretationTypes.LUCID]: null
+    [interpretationTypes.LUCID]: null,
+    [interpretationTypes.RELIGIOUS]: null
   },
   allInterpretations: [],
   isLoading: false,
