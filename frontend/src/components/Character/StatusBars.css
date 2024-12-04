@@ -1,14 +1,13 @@
 .status-bars-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    width: 100%;
-    max-width: 28rem;
-  }
-  
-  .status-bar {
-    width: 100%;
-  }
+  width: 100%;
+  max-width: 500px; 
+  margin: 0 auto;
+  padding: 20px;
+  margin-top: 1rem;
+}
+.status-bar {
+  margin-bottom: 1rem;
+}
   
   .status-bar-header {
     display: flex;

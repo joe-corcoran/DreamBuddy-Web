@@ -1,5 +1,4 @@
 # backend/app/api/dream_routes.py
-# backend/app/api/dream_routes.py
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from flask_wtf.csrf import validate_csrf
@@ -56,21 +55,27 @@ def get_dreams():
 @dream_routes.route('/today')
 @login_required
 def get_today_dream():
-    """Check if user has already logged a dream today"""
     try:
         client_date_str = request.args.get('clientDate')
-        target_date = parse_client_date(client_date_str).date() if client_date_str else datetime.now(timezone.utc).date()
+        if not client_date_str:
+            return jsonify(None)
+            
+        # Parse client date with timezone awareness
+        client_date = parse_client_date(client_date_str)
+        target_date = client_date.date()
         
         dream = DreamJournal.get_dream_for_date(current_user.id, target_date)
-        if dream:
-            response = dream.to_dict()
-            if dream.dreamscape:
-                response['dreamscape'] = dream.dreamscape.to_dict()
-            return jsonify(response)
-        return jsonify(None)
+        if not dream:
+            return jsonify(None)
+            
+        response = dream.to_dict()
+        if dream.dreamscape:
+            response['dreamscape'] = dream.dreamscape.to_dict()
+        return jsonify(response)
     except Exception as e:
         logger.error(f"Error getting today's dream: {str(e)}")
         return {'errors': {'server': 'An error occurred'}}, 500
+
 
 @dream_routes.route('/<int:dream_id>')
 @login_required
@@ -92,7 +97,6 @@ def get_dream(dream_id):
 @dream_routes.route('/quick', methods=['POST'])
 @login_required
 def quick_dream():
-    """Create a quick dream entry"""
     is_valid, error_response, error_code = validate_csrf_token()
     if not is_valid:
         return error_response, error_code
@@ -100,37 +104,28 @@ def quick_dream():
     try:
         data = request.json
         client_date_str = data.get('clientDate')
+        if not client_date_str:
+            return {'errors': {'date': 'Client date is required'}}, 400
+
         target_date = parse_client_date(client_date_str)
+        # Use date only for comparison
+        target_date_only = target_date.date()
 
-        if not data.get('content'):
-            return {'errors': {'content': 'Dream content is required'}}, 400
-
-        existing_dream = DreamJournal.get_dream_for_date(current_user.id, target_date.date())
+        existing_dream = DreamJournal.get_dream_for_date(current_user.id, target_date_only)
         if existing_dream:
             return {'errors': {'date': 'You have already logged a dream for this date'}}, 400
 
         new_dream = DreamJournal(
             user_id=current_user.id,
-            title=data.get('title', f"Dream on {target_date.strftime('%B %d, %Y')}"),
+            title=data.get('title', f"Dream on {target_date.strftime('%B %d, %Y at %I:%M %p')}"),
             content=data['content'],
             is_lucid=data.get('is_lucid', False),
             date=target_date
         )
         db.session.add(new_dream)
         db.session.commit()
-             
-        if data.get('tags'):
-            for tag in data['tags']:
-                new_tag = DreamTags(
-                    dream_id=new_dream.id,
-                    tag=tag,
-                    is_auto_generated=False
-                )
-                db.session.add(new_tag)
-            db.session.commit()
 
-        response = new_dream.to_dict()
-        return jsonify(response)
+        return jsonify(new_dream.to_dict())
     except Exception as e:
         logger.error(f"Error saving dream: {str(e)}")
         db.session.rollback()

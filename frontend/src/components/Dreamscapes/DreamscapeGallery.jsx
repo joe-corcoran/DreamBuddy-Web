@@ -74,6 +74,19 @@ const DreamscapeGallery = () => {
 
   return (
     <div className="dreamscape-gallery">
+       <div className="stars-background">
+        {[...Array(50)].map((_, i) => (
+          <div
+            key={i}
+            className="star"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 2}s`,
+            }}
+          />
+        ))}
+      </div>
       {sortedDreams.length === 0 ? (
         <div className="no-dreamscapes">
           <p>No dreamscapes yet. Generate your first dreamscape in your dream journal!</p>

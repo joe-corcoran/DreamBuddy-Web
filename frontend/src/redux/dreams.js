@@ -73,9 +73,7 @@ export const thunkCheckTodayDream = (clientDate) => async (dispatch) => {
   try {
     const response = await csrfFetch(`/api/dreams/today?clientDate=${encodeURIComponent(clientDate)}`);
     const dream = await response.json();
-    if (dream) {
-      dispatch(setTodayDream(dream));
-    }
+    dispatch(setTodayDream(dream));
     return dream;
   } catch (error) {
     return { errors: { server: "Failed to check today's dream" } };
@@ -84,22 +82,21 @@ export const thunkCheckTodayDream = (clientDate) => async (dispatch) => {
 
 export const thunkQuickDream = (dreamData) => async (dispatch) => {
   try {
-    const todayDream = await dispatch(thunkCheckTodayDream());
-    if (todayDream && !todayDream.errors) {
-      return { errors: { date: "You have already logged a dream today" } };
-    }
-
     const response = await csrfFetch('/api/dreams/quick', {
       method: "POST",
       body: JSON.stringify(dreamData)
     });
 
     const newDream = await response.json();
+    if (!response.ok) {
+      throw newDream;
+    }
+    
     dispatch(addDream(newDream));
     dispatch(setTodayDream(newDream));
     return { dream: newDream };
   } catch (error) {
-    return { errors: await error.json() };
+    return { errors: error.errors || { server: "Failed to save dream" } };
   }
 };
 

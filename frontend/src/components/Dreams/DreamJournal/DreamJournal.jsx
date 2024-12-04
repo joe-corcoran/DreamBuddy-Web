@@ -43,6 +43,39 @@ const DreamJournal = () => {
     });
   };
 
+  const splitContentIntoPages = (content, maxHeight) => {
+    const tempDiv = document.createElement('div');
+    tempDiv.style.cssText = `
+      position: absolute;
+      visibility: hidden;
+      width: ${maxHeight}px;
+      font-size: 1.2rem;
+      line-height: 1.6;
+    `;
+    document.body.appendChild(tempDiv);
+
+    let words = content.split(' ');
+    let currentPage = [];
+    let pages = [];
+    let currentHeight = 0;
+
+    for (let word of words) {
+      currentPage.push(word);
+      tempDiv.textContent = currentPage.join(' ');
+      if (tempDiv.offsetHeight > maxHeight) {
+        currentPage.pop();
+        pages.push(currentPage.join(' '));
+        currentPage = [word];
+      }
+    }
+    if (currentPage.length) {
+      pages.push(currentPage.join(' '));
+    }
+
+    document.body.removeChild(tempDiv);
+    return pages;
+  };
+
   const handlePageTurn = async (direction) => {
     if (isFlipping) return;
     
@@ -64,6 +97,39 @@ const DreamJournal = () => {
     return [sortedDreams[startIndex], sortedDreams[startIndex + 1]];
   };
 
+  const getCurrentPageContent = () => {
+    const startIndex = currentPage * 2;
+    const pageHeight = 400; // Adjust based on your page height
+    let leftContent, rightContent;
+
+    const leftDream = sortedDreams[startIndex];
+    const rightDream = sortedDreams[startIndex + 1];
+
+    if (leftDream) {
+      const pages = splitContentIntoPages(leftDream.content, pageHeight);
+      leftContent = {
+        ...leftDream,
+        content: pages[0],
+        remainingPages: pages.slice(1)
+      };
+    }
+
+    if (rightDream || (leftDream?.remainingPages?.length > 0)) {
+      if (leftContent?.remainingPages?.length > 0) {
+        rightContent = {
+          ...leftDream,
+          content: leftContent.remainingPages[0],
+          remainingPages: leftContent.remainingPages.slice(1)
+        };
+      } else {
+        rightContent = rightDream;
+      }
+    }
+
+    return [leftContent, rightContent];
+  };
+
+
   const renderDreamContent = (dream, isLeftPage) => {
     if (!dream) return (
       <div className="empty-page">
@@ -75,17 +141,7 @@ const DreamJournal = () => {
       <div className="dream-page-content">
         <h2 className="dream-date">{formatDate(dream.date)}</h2>
         
-        <div className="dream-text">
-          {dream.is_lucid && (
-            <div className="lucid-indicator">
-              <Moon className="moon-icon" size={16} />
-              <span>Lucid Dream</span>
-            </div>
-          )}
-          <p>{dream.content}</p>
-        </div>
-        
-        {dreamscapes[dream.id]?.image_url && (
+        {dreamscapes[dream.id]?.image_url && !dream.remainingPages && (
           <div className="dreamscape-wrapper">
             <img 
               src={dreamscapes[dream.id].image_url}
@@ -94,8 +150,19 @@ const DreamJournal = () => {
             />
           </div>
         )}
+
+        {dream.is_lucid && !dream.remainingPages && (
+          <div className="lucid-indicator">
+            <Moon className="moon-icon" size={16} />
+            <span>Lucid Dream</span>
+          </div>
+        )}
         
-        {interpretations?.spiritual && (
+        <div className="dream-text">
+          <p>{dream.content}</p>
+        </div>
+        
+        {!dream.remainingPages && interpretations?.spiritual && (
           <div className="interpretation-text">
             <p>{interpretations.spiritual.interpretation_text}</p>
           </div>

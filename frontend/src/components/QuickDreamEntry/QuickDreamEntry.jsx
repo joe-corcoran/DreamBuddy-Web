@@ -9,100 +9,83 @@ const QuickDreamEntry = () => {
   const dispatch = useDispatch();
   const todayDream = useSelector(state => state.dreams.todayDream);
   const user = useSelector(state => state.session.user);
+  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isLucid, setIsLucid] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState(null);
-  const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentDateTime(new Date());
-    }, 60000);
+  const getUserLocalDate = () => {
+    const now = new Date();
+    return new Date(now.toLocaleString('en-US', { 
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone 
+    }));
+  };
 
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatDateTime = (date) => {
-    return new Date(date).toLocaleString('en-US', {
+  const getDefaultTitle = () => {
+    return `Dream on ${new Date().toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      timeZoneName: 'short'
-    });
+      day: 'numeric'
+    })}`;
   };
 
   useEffect(() => {
-    setContent('');
-    setIsLucid(false);
-    
-    if (user) {
-      const checkTodayDream = async () => {
-        setIsLoading(true);
-        try {
-          const clientDate = new Date().toISOString();
-          const response = await dispatch(thunkCheckTodayDream(clientDate));
-          
-          if (!response || response.errors) {
-            setContent('');
-            setIsLucid(false);
-          }
-        } catch (err) {
-          console.error('Error checking today\'s dream:', err);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      checkTodayDream();
-    }
+    if (!user) return;
+
+    const checkTodayDream = async () => {
+      setIsLoading(true);
+      try {
+        const clientDate = getUserLocalDate().toISOString();
+        await dispatch(thunkCheckTodayDream(clientDate));
+      } catch (err) {
+        console.error('Error checking today\'s dream:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkTodayDream();
   }, [dispatch, user]);
 
   useEffect(() => {
-    if (user && todayDream) {
+    if (todayDream) {
+      setTitle(todayDream.title);
       setContent(todayDream.content);
       setIsLucid(todayDream.is_lucid);
     } else {
+      setTitle(getDefaultTitle());
       setContent('');
       setIsLucid(false);
     }
-  }, [todayDream, user]);
-
-  const generateTitle = () => {
-    return formatDateTime(currentDateTime);
-  };
-
-  const showSuccessNotification = (message) => {
-    setSuccessMessage(message);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
-  };
+  }, [todayDream]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!content.trim() || !user) return;
+    if (!title.trim()) {
+      setTitle(getDefaultTitle());
+    }
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const clientDate = new Date().toISOString();
+      const localDate = getUserLocalDate();
       const dreamData = {
-        title: `Dream on ${generateTitle()}`,
+        title: title.trim(),
         content: content.trim(),
         is_lucid: isLucid,
-        clientDate,
+        clientDate: localDate.toISOString(),
         tags: []
       };
 
       let result;
       if (todayDream) {
         const dreamDate = new Date(todayDream.date);
-        const today = new Date();
+        const today = getUserLocalDate();
         const isDreamFromToday = 
           dreamDate.getFullYear() === today.getFullYear() &&
           dreamDate.getMonth() === today.getMonth() &&
@@ -113,36 +96,22 @@ const QuickDreamEntry = () => {
           setIsLoading(false);
           return;
         }
-
         result = await dispatch(thunkUpdateDream(todayDream.id, dreamData));
       } else {
         result = await dispatch(thunkQuickDream(dreamData));
-        
-        // Update character stats after successful dream entry
         if (!result.errors) {
           await dispatch(updateCharacterStats());
         }
       }
 
       if (result.errors) {
-        setError(
-          typeof result.errors === 'string' 
-            ? result.errors 
-            : Object.values(result.errors)[0]
-        );
+        setError(typeof result.errors === 'string' ? result.errors : Object.values(result.errors)[0]);
       } else {
-        showSuccessNotification(
-          todayDream 
-            ? 'Dream updated successfully!' 
-            : 'Dream saved successfully!'
-        );
-        if (!todayDream) {
-          setContent('');
-          setIsLucid(false);
-        }
+        setShowSuccess(true);
+        setSuccessMessage(todayDream ? 'Dream updated successfully!' : 'Dream saved successfully!');
+        setTimeout(() => setShowSuccess(false), 3000);
       }
     } catch (err) {
-      console.error('Error saving dream:', err);
       setError('Failed to save dream. Please try again.');
     } finally {
       setIsLoading(false);
@@ -153,11 +122,14 @@ const QuickDreamEntry = () => {
 
   return (
     <div className="quick-dream-entry">
-      <h3 className="quick-dream-title">
-        {todayDream 
-          ? `Dream on ${formatDateTime(new Date(todayDream.date))}` 
-          : `Dream on ${formatDateTime(currentDateTime)}`}
-      </h3>
+      <input
+        type="text"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder={getDefaultTitle()}
+        className="dream-title-input"
+        disabled={isLoading}
+      />
       
       <form onSubmit={handleSubmit} className="quick-dream-form">
         <div className="dream-input-container">

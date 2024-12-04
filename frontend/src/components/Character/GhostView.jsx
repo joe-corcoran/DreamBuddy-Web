@@ -58,11 +58,11 @@ const GhostView = ({
       
       {getAccessories()}
       
-      {CHARACTER_STAGES[stageName] && (
-        <div className="ghost-name">
-          {CHARACTER_STAGES[stageName].name}
-        </div>
-      )}
+      {/* {CHARACTER_STAGES[stageName] && (
+        // <div className="ghost-name">
+        //   {CHARACTER_STAGES[stageName].name}
+        // </div>
+      )} */}
     </div>
   );
 };

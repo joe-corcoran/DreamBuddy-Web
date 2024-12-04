@@ -52,15 +52,30 @@ class DreamJournal(db.Model):
             'date': self.date.isoformat(),
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
-            'tags': [tag.to_dict() for tag in self.tags],
+            'tags': [tag.tag for tag in self.tags],
             'dreamscape': self.dreamscape.to_dict() if self.dreamscape else None,
-            'interpretations': [interpretation.to_dict() for interpretation in self.interpretations]
-    }
+            'interpretations': [interp.to_dict() for interp in self.interpretations]
+        }
 
     @classmethod
     def get_dream_for_date(cls, user_id, target_date):
-        """Get dream for a specific date in user's local timezone"""
+        """Get dream for a specific date"""
         return cls.query.filter(
             cls.user_id == user_id,
-            cls.dream_date == target_date
-        ).first()
+            func.date(cls.date) == target_date
+        ).order_by(cls.created_at.desc()).first()
+
+    @classmethod
+    def get_dreams_by_month(cls, user_id, year, month):
+        """Get all dreams for a specific month"""
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime(year, month + 1, 1)
+            
+        return cls.query.filter(
+            cls.user_id == user_id,
+            cls.date >= start_date,
+            cls.date < end_date
+        ).order_by(cls.date.desc()).all()

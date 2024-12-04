@@ -1,10 +1,17 @@
 .ghost-container {
-    position: relative;
-    width: 12rem;
-    height: 12rem;
-    margin: 0 auto;
-  }
-  
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ghost-animation {
+  width: 70%;
+  height: 100%;
+}
   .ghost-container.interactive {
     cursor: pointer;
   }
@@ -26,9 +33,10 @@
     animation: spin 1s linear infinite;
   }
   
-  .ghost-animation {
-    width: 100%;
-    height: 100%;
+ 
+
+  .ghost-container .ghost-animation {
+    transform: scale(1.2);
   }
   
   .ghost-accessories {

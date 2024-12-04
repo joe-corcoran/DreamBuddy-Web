@@ -1,223 +1,228 @@
-/* frontend/src/components/HomePage/HomePage.css */
-
 .home-container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #663399 0%, #1a1a2e 100%);
-  position: relative;
-  overflow: hidden;
+  width: 100vw;
+  background: linear-gradient(to bottom, #1a1a2e, #40006e);
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  padding-bottom: 60px;
+  padding-top: 60px;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
-  
-  .stars-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1;
-  }
-  
-  .star {
-    position: absolute;
-    width: 2px;
-    height: 2px;
-    background: white;
-    border-radius: 50%;
-    animation: twinkle 2s infinite;
-  }
-  
-  @keyframes twinkle {
-    0% { opacity: 0; }
-    50% { opacity: 1; }
-    100% { opacity: 0; }
-  }
-  
-  .content-container {
-    position: relative;
-    padding: 20px;
-    max-width: 800px;
-    margin: 0 auto;
-  }
-  
-  .header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 0;
-  }
-  
-  .app-title {
-    color: white;
-    font-size: 2rem;
-    text-align: center;
-    margin: 0;
-  }
-  
-  .profile-icon, .reality-check-icon {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5rem;
-    opacity: 0.8;
-    cursor: pointer;
-    transition: opacity 0.2s;
-  }
-  
-  .profile-icon:hover, .reality-check-icon:hover {
-    opacity: 1;
-  }
-  
-  .main-content {
-    padding: 20px 0;
-  }
-  
-  .character-status {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 20px;
-    padding: 20px;
-    margin-bottom: 20px;
-  }
-  
-  .status-bar {
-    margin-bottom: 15px;
-  }
-  
-  .status-bar label {
-    color: white;
-    display: block;
-    margin-bottom: 5px;
-  }
-  
-  .progress-bar {
-    background: rgba(255, 255, 255, 0.1);
-    height: 10px;
-    border-radius: 5px;
-    overflow: hidden;
-  }
-  
-  .progress-fill {
-    height: 100%;
-    transition: width 0.3s ease;
-  }
-  
-  .progress-fill.happiness {
-    background: linear-gradient(to right, #ffd700, #ffa500);
-  }
-  
-  .progress-fill.health {
-    background: linear-gradient(to right, #4caf50, #45a049);
-  }
-  
-  .loading-spinner {
-    color: white;
-    text-align: center;
-    padding: 20px;
-  }
 
-  .text-area.dream-textarea {
-    color: black;
-  }
+.stars-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle 2s infinite;
+}
+
+@keyframes twinkle {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.content-container {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.authenticated-content {
+  display: flex;
+  padding-top: 1rem;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.character-section {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+
+.ghost-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ghost-status-wrapper {
+  border-radius: 15px;
+  padding: 2rem;
+  width: 100%;
+  margin-bottom: 2rem;
+  box-sizing: border-box;
+}
+
+.ghost-view-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+
+.character-name {
+  color: white;
+  font-size: 1.8rem;
+  text-align: center;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dream-entry-section {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.dream-entry-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.dream-entry-header h2 {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  background: linear-gradient(45deg, #fff, #a5a5a5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.ghost-container .status-bars-container {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 20px;
+}
+
+.dream-entry-header p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.1rem;
+}
+
+.loading-spinner {
+  color: white;
+  text-align: center;
+  padding: 40px;
+  font-size: 1.2rem;
+}
 
 .auth-prompt {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 20px;
-    padding: 30px;
-    text-align: center;
-    color: white;
-    margin: 20px;
-  }
-  
-  .auth-prompt h2 {
-    margin-bottom: 15px;
-    font-size: 1.8rem;
-  }
-  
-  .auth-prompt p {
-    margin-bottom: 20px;
-    opacity: 0.8;
-  }
-  
-  .auth-buttons {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-  }
-  
-  .auth-button {
-    padding: 12px 30px;
-    border: none;
-    border-radius: 10px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: transform 0.2s, background-color 0.2s;
-  }
-  
-  .auth-button:first-child {
-    background: linear-gradient(to right, #4a90e2, #357abd);
-    color: white;
-  }
-  
-  .auth-button:last-child {
-    background: linear-gradient(to right, #6c757d, #495057);
-    color: white;
-  }
-  
-  .auth-button:hover {
-    transform: translateY(-2px);
-  }
-  
-  #modal-content {
-    background-color: #1a1a2e;
-    border-radius: 20px;
-    padding: 20px;
-    color: white;
-  }
-  
-  /*Homepage quickdream cloud container*/
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  color: white;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
 
-  .quick-dream-container {
-    position: relative;
-    background-image: url('../../assets/images/homePage_quickDreamEntry_cloud.png');
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: bottom right;
-    min-height: 800px; 
-    
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  
+.auth-prompt h2 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  background: linear-gradient(45deg, #fff, #a5a5a5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.auth-prompt p {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.auth-buttons button {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.auth-buttons button:first-child {
+  background: linear-gradient(45deg, #4a90e2, #357abd);
+}
+
+.auth-buttons button:last-child {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+}
+
+.auth-buttons button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .content-container {
+    padding: 20px;
   }
-  
-  .quick-dream-container {
+
+  .character-section {
+    padding: 20px;
+  }
+
+  .auth-buttons {
+    flex-direction: column;
+  }
+
+  .auth-buttons button {
     width: 100%;
   }
 
-  .quick-dream-entry {
-margin-bottom: 100;
+  .dream-entry-header h2 {
+    font-size: 1.5rem;
   }
-  
+}
 
-  /* Mobile @600px */
-  @media (max-width: 600px) {
-    .content-container {
-      padding: 10px;
-    }
-    
-    .app-title {
-      font-size: 1.5rem;
-    }
-    
-    .character-status {
-      margin: 10px;
-      padding: 15px;
-    }
-
-      .quick-dream-container {
-    background-size: cover;
-    padding: 10px;
+@media (max-width: 480px) {
+  .character-name {
+    font-size: 1.5rem;
   }
 
+  .dream-entry-section {
+    padding: 20px;
   }
+
+  .auth-prompt {
+    padding: 30px 20px;
+  }
+
+  .auth-prompt h2 {
+    font-size: 2rem;
+  }
+}

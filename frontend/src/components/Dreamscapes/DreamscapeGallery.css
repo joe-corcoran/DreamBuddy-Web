@@ -1,8 +1,9 @@
 /* frontend/src/components/Dreamscapes/DreamscapeGallery.css */
 .dreamscape-gallery {
     padding: 20px;
+  
     min-height: 100vh;
-    background: linear-gradient(to bottom, #1a1a2e, #16213e);
+    background: linear-gradient(to bottom, #1a1a2e, #40006e);
   }
   
   .dreamscape-grid {
