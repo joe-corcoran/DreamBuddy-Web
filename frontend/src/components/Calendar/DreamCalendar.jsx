@@ -114,15 +114,15 @@ const DreamCalendar = () => {
     setSelectedDate(date);
     setSelectedDreams(dreamsForDate);
     
-        setModalContent(
+    setModalContent(
       <DreamDetailsModal 
         key={`dream-modal-${date.toISOString()}`} 
         date={date}
         dreams={dreamsForDate}
+        allDreams={dreams} // Pass all dreams for navigation
       />
     );
   };
-
   
 
   return (

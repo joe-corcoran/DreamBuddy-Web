@@ -1,6 +1,7 @@
 // frontend/src/components/Dreams/DreamDetailsModal/DreamDetailsModal.jsx
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { thunkGetDreamsByMonth } from "../../../redux/dreams";
 import { useModal } from "../../../context/Modal";
 import {
   generateInterpretation,
@@ -18,37 +19,30 @@ const InterpretationType = {
   LUCID: "lucid",
 };
 
-const DreamDetailsModal = ({ date, dreams }) => {
+const DreamDetailsModal = ({ date: initialDate, dreams: initialDreams }) => {
   const dispatch = useDispatch();
   const { closeModal } = useModal();
+  const [currentDate, setCurrentDate] = useState(initialDate);
+  const [currentDreams, setCurrentDreams] = useState(initialDreams);
   const [isDreamDetailsExpanded, setIsDreamDetailsExpanded] = useState(true);
   const [isDreamscapeExpanded, setIsDreamscapeExpanded] = useState(false);
-  const [isInterpretationsExpanded, setIsInterpretationsExpanded] =
-    useState(false);
-  const [selectedType, setSelectedType] = useState(
-    InterpretationType.ACTIONABLE
-  );
+  const [isInterpretationsExpanded, setIsInterpretationsExpanded] = useState(false);
+  const [selectedType, setSelectedType] = useState(InterpretationType.ACTIONABLE);
   const [errorMessage, setErrorMessage] = useState("");
   const [isInitialized, setIsInitialized] = useState(false);
   const [initialFetchAttempted, setInitialFetchAttempted] = useState(false);
   const [generationStatus, setGenerationStatus] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-
+  const allDreams = useSelector((state) => state.dreams.allDreams);
   const interpretations = useSelector((state) => state.interpretations.byType);
-  const interpretationsLoading = useSelector(
-    (state) => state.interpretations.isLoading
-  );
-  const interpretationsError = useSelector(
-    (state) => state.interpretations.error
-  );
-
+  const interpretationsLoading = useSelector((state) => state.interpretations.isLoading);
+  const interpretationsError = useSelector((state) => state.interpretations.error);
   const dreamscapes = useSelector((state) => state.dreamscapes.byDreamId);
-  const dreamscapesLoading = useSelector(
-    (state) => state.dreamscapes.isLoading
-  );
+  const dreamscapesLoading = useSelector((state) => state.dreamscapes.isLoading);
   const dreamscapesError = useSelector((state) => state.dreamscapes.error);
 
-  const dream = dreams[0];
+  const dream = currentDreams[0];
 
   useEffect(() => {
     const fetchExistingData = async () => {
@@ -63,10 +57,7 @@ const DreamDetailsModal = ({ date, dreams }) => {
             console.error("Error fetching dreamscape:", dreamscapeResult.error);
           }
           if (interpretationsResult?.error) {
-            console.error(
-              "Error fetching interpretations:",
-              interpretationsResult.error
-            );
+            console.error("Error fetching interpretations:", interpretationsResult.error);
           }
         } catch (error) {
           console.error("Error in fetchExistingData:", error);
@@ -79,14 +70,40 @@ const DreamDetailsModal = ({ date, dreams }) => {
     fetchExistingData();
   }, [dream, dispatch, initialFetchAttempted]);
 
+  const handleDateChange = async (newDate) => {
+    setIsLoading(true);
+    try {
+      // Fetch dreams for the new month
+      const year = newDate.getFullYear();
+      const month = newDate.getMonth() + 1;
+      await dispatch(thunkGetDreamsByMonth(year, month));
+
+      // Filter dreams for the specific date
+      const dreamsForDate = Object.values(allDreams).filter((dream) => {
+        const dreamDate = new Date(dream.date);
+        return (
+          dreamDate.getDate() === newDate.getDate() &&
+          dreamDate.getMonth() === newDate.getMonth() &&
+          dreamDate.getFullYear() === newDate.getFullYear()
+        );
+      });
+
+      setCurrentDate(newDate);
+      setCurrentDreams(dreamsForDate);
+      setInitialFetchAttempted(false);
+    } catch (error) {
+      console.error('Error fetching dreams:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleGenerateInterpretation = async () => {
     if (!dream) return;
     setErrorMessage("");
 
     const dreamIds = [dream.id];
-    const result = await dispatch(
-      generateInterpretation(dreamIds, selectedType)
-    );
+    const result = await dispatch(generateInterpretation(dreamIds, selectedType));
 
     if (result.error) {
       setErrorMessage(result.error);
@@ -101,16 +118,14 @@ const DreamDetailsModal = ({ date, dreams }) => {
 
     try {
       const result = await dispatch(generateDreamscape(dream.id, dream.content));
-      
+
       if (result.error) {
         setErrorMessage(result.error);
       } else if (result.status) {
         setGenerationStatus(result.status);
       }
     } catch (error) {
-      setErrorMessage(
-        error.message || "Failed to generate dreamscape. Please try again."
-      );
+      setErrorMessage(error.message || "Failed to generate dreamscape. Please try again.");
       console.error("Error in handleGenerateDreamscape:", error);
     }
   };
@@ -126,7 +141,11 @@ const DreamDetailsModal = ({ date, dreams }) => {
   };
 
   return (
-    <div className="dream-details-modal">
+    <div className="dream-details-modal" onClick={(e) => {
+      if (e.target.className === 'dream-details-modal') {
+        closeModal();
+      }
+    }}>
       <div className="stars-background">
         {[...Array(50)].map((_, i) => (
           <div
@@ -144,15 +163,39 @@ const DreamDetailsModal = ({ date, dreams }) => {
       <div className="modal-content">
         {/* Date Navigation */}
         <div className="date-navigation">
-        <h2>
-  {new Date(date).toLocaleString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-  })}
-</h2>
+          <button 
+            className="nav-button"
+            onClick={() => {
+              const prevDate = new Date(currentDate);
+              prevDate.setDate(prevDate.getDate() - 1);
+              handleDateChange(prevDate);
+            }}
+            disabled={isLoading}
+          >
+            <i className="fas fa-chevron-left" />
+          </button>
+
+          <h2>
+            {new Date(currentDate).toLocaleString("en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            })}
+          </h2>
+
+          <button 
+            className="nav-button"
+            onClick={() => {
+              const nextDate = new Date(currentDate);
+              nextDate.setDate(nextDate.getDate() + 1);
+              handleDateChange(nextDate);
+            }}
+            disabled={isLoading}
+          >
+            <i className="fas fa-chevron-right" />
+          </button>
         </div>
 
         {/* Dream Details Section */}
@@ -170,7 +213,7 @@ const DreamDetailsModal = ({ date, dreams }) => {
           </div>
           {isDreamDetailsExpanded && (
             <div className="section-content">
-              {dreams.map((dream) => (
+              {currentDreams.map((dream) => (
                 <div key={dream.id} className="dream-entry">
                   <h4>{dream.title}</h4>
                   <p>{dream.content}</p>
@@ -190,83 +233,81 @@ const DreamDetailsModal = ({ date, dreams }) => {
           )}
         </div>
 
-    {/* Dreamscape Section */}
-<div className="collapsible-section">
-  <div
-    className="section-header"
-    onClick={() => setIsDreamscapeExpanded(!isDreamscapeExpanded)}
-  >
-    <h3>Dreamscape</h3>
-    <i
-      className={`fas fa-chevron-${
-        isDreamscapeExpanded ? "up" : "down"
-      }`}
-    />
-  </div>
-  {isDreamscapeExpanded && dream && (
-  <div className="section-content">
-    {dreamscapesLoading ? (
-      <div className="dreamscape-loading">
-        <div className="loading-spinner-container">
-          <div className="loading-spinner"></div>
+        {/* Dreamscape Section */}
+        <div className="collapsible-section">
+          <div
+            className="section-header"
+            onClick={() => setIsDreamscapeExpanded(!isDreamscapeExpanded)}
+          >
+            <h3>Dreamscape</h3>
+            <i
+              className={`fas fa-chevron-${
+                isDreamscapeExpanded ? "up" : "down"
+              }`}
+            />
+          </div>
+          {isDreamscapeExpanded && dream && (
+            <div className="section-content">
+              {dreamscapesLoading ? (
+                <div className="dreamscape-loading">
+                  <div className="loading-spinner-container">
+                    <div className="loading-spinner"></div>
+                  </div>
+                  <div className="loading-text">
+                    <p className="loading-primary">Creating your dreamscape visualization</p>
+                    <p className="loading-secondary">Channeling your dream into visual form...</p>
+                    <p className="loading-hint">This mystical process takes 1-2 minutes</p>
+                  </div>
+                </div>
+              ) : dreamscapes[dream.id]?.image_url ? (
+                <div className="dreamscape-image-container">
+                  <img
+                    src={dreamscapes[dream.id].image_url}
+                    alt="Dreamscape Visualization"
+                    className="dreamscape-image"
+                    onError={(e) => {
+                      console.error("Image failed to load:", e);
+                      setErrorMessage("Your dreamscape encountered a mystical barrier. Please try regenerating it.");
+                      e.target.style.display = "none";
+                    }}
+                  />
+                  <div className="prompt-text">
+                    <small>Inspiration: {dreamscapes[dream.id].optimized_prompt}</small>
+                  </div>
+                </div>
+              ) : (
+                <div className="dreamscape-generate">
+                  <button
+                    className="generate-button"
+                    onClick={handleGenerateDreamscape}
+                    disabled={dreamscapesLoading}
+                  >
+                    Generate Dreamscape
+                  </button>
+                  <p className="generate-hint">Transform your dream into a visual masterpiece</p>
+                </div>
+              )}
+              {/* Error display */}
+              {(dreamscapesError || errorMessage) && (
+                <div className="dreamscape-error-message">
+                  <i className="fas fa-exclamation-circle"></i>
+                  <span>
+                    {errorMessage ||
+                      (typeof dreamscapesError === "string"
+                        ? dreamscapesError
+                        : "Failed to generate dreamscape")}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        <div className="loading-text">
-          <p className="loading-primary">Creating your dreamscape visualization</p>
-          <p className="loading-secondary">Channeling your dream into visual form...</p>
-          <p className="loading-hint">This mystical process takes 1-2 minutes</p>
-        </div>
-      </div>
-    ) : dreamscapes[dream.id]?.image_url ? ( // Changed from status check to image_url check
-      <div className="dreamscape-image-container">
-        <img
-          src={dreamscapes[dream.id].image_url} // Changed from imageUrl to image_url
-          alt="Dreamscape Visualization"
-          className="dreamscape-image"
-          onError={(e) => {
-            console.error("Image failed to load:", e);
-            setErrorMessage("Your dreamscape encountered a mystical barrier. Please try regenerating it.");
-            e.target.style.display = "none";
-          }}
-        />
-        <div className="prompt-text">
-          <small>Inspiration: {dreamscapes[dream.id].optimized_prompt}</small> // Changed from prompt
-        </div>
-      </div>
-    ) : (
-      <div className="dreamscape-generate">
-        <button
-          className="generate-button"
-          onClick={handleGenerateDreamscape}
-          disabled={dreamscapesLoading}
-        >
-          Generate Dreamscape
-        </button>
-        <p className="generate-hint">Transform your dream into a visual masterpiece</p>
-      </div>
-    )}
-    {/* Error display */}
-    {(dreamscapesError || errorMessage) && (
-      <div className="dreamscape-error-message">
-        <i className="fas fa-exclamation-circle"></i>
-        <span>
-          {errorMessage ||
-            (typeof dreamscapesError === "string"
-              ? dreamscapesError
-              : "Failed to generate dreamscape")}
-        </span>
-      </div>
-    )}
-  </div>
-)}
-</div>
 
         {/* Interpretations Section */}
         <div className="collapsible-section">
           <div
             className="section-header"
-            onClick={() =>
-              setIsInterpretationsExpanded(!isInterpretationsExpanded)
-            }
+            onClick={() => setIsInterpretationsExpanded(!isInterpretationsExpanded)}
           >
             <h3>Interpretations</h3>
             <i
@@ -307,17 +348,10 @@ const DreamDetailsModal = ({ date, dreams }) => {
                 <button
                   className="generate-button"
                   onClick={handleGenerateInterpretation}
+                  disabled={interpretationsLoading}
                 >
                   Generate {selectedType} Interpretation
                 </button>
-              )}
-              {(interpretationsError || errorMessage) && (
-                <div className="error">
-                  {errorMessage ||
-                    (typeof interpretationsError === "string"
-                      ? interpretationsError
-                      : "Failed to generate interpretation")}
-                </div>
               )}
             </div>
           )}

@@ -1,4 +1,4 @@
-//frontend/src/redux/session.js
+// frontend/src/redux/session.js
 const SET_USER = 'session/setUser';
 const REMOVE_USER = 'session/removeUser';
 
@@ -21,18 +21,13 @@ const getCookie = (name) => {
 };
 
 const makeRequest = async (url, method = 'GET', body = null) => {
-  // For non-GET requests, refresh CSRF token first
   if (method !== 'GET') {
-    console.log('Making CSRF refresh request...');
-    const csrfResponse = await fetch('/api/auth/csrf/refresh', {
+    await fetch('/api/auth/csrf/refresh', {
       credentials: 'include'
     });
-    console.log('CSRF Headers:', [...csrfResponse.headers.entries()]);
-    console.log('CSRF Cookies after refresh:', document.cookie);
   }
 
   const csrfToken = getCookie('csrf_token');
-  console.log('CSRF Token for request:', csrfToken);
 
   const options = {
     method,
@@ -44,40 +39,27 @@ const makeRequest = async (url, method = 'GET', body = null) => {
     body: body ? JSON.stringify(body) : null
   };
 
-  console.log('Request Options:', {
-    url,
-    method,
-    headers: options.headers,
-    credentials: options.credentials
-  });
-
   const response = await fetch(url, options);
   
+  const data = await response.json();
+  
   if (!response.ok) {
-    const text = await response.text();
-    console.error('Request failed:', {
-      status: response.status,
-      text,
-      responseHeaders: [...response.headers.entries()]
-    });
-    throw new Error(text);
+    throw data;
   }
   
-  return response.json();
+  return data;
 };
 
 export const thunkSignup = (userData) => async (dispatch) => {
   try {
-    console.log('Attempting signup...');
     const data = await makeRequest('/api/auth/signup', 'POST', userData);
     dispatch(setUser(data));
     return null;
   } catch (err) {
     console.error('Signup error:', err);
-    return err;
+    return err.errors || err;
   }
 };
-
 export const thunkAuthenticate = () => async (dispatch) => {
   try {
     const data = await makeRequest('/api/auth');
@@ -91,11 +73,13 @@ export const thunkAuthenticate = () => async (dispatch) => {
     dispatch(removeUser());
   }
 };
-
 export const thunkLogin = (credentials) => async (dispatch) => {
   try {
-    console.log('Attempting login with credentials:', credentials);
-    const data = await makeRequest('/api/auth/login', 'POST', credentials);
+    const data = await makeRequest('/api/auth/login', 'POST', {
+      credential: credentials.credential,
+      password: credentials.password
+    });
+    
     dispatch(setUser(data));
     return null;
   } catch (err) {
@@ -103,7 +87,6 @@ export const thunkLogin = (credentials) => async (dispatch) => {
     return err;
   }
 };
-
 export const thunkLogout = () => async (dispatch) => {
   try {
     await makeRequest('/api/auth/logout');

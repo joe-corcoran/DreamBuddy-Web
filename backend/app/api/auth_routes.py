@@ -28,7 +28,7 @@ def authenticate():
 @auth_routes.route('/login', methods=['POST'])
 def login():
     """
-    Logs a user in
+    Logs a user in with either email or username
     """
     logger.debug("=== Login Request ===")
     logger.debug(f"Request Headers: {dict(request.headers)}")
@@ -47,7 +47,11 @@ def login():
     form['csrf_token'].data = csrf_token
     
     if form.validate_on_submit():
-        user = User.query.filter(User.email == form.data['email']).first()
+        credential = form.data['credential']
+        user = User.query.filter(
+            (User.email == credential) | (User.username == credential)
+        ).first()
+        
         login_user(user)
         return user.to_dict()
         

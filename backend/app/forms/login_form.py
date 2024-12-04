@@ -1,36 +1,45 @@
 # login_form.py
 from flask_wtf import FlaskForm
 from wtforms import StringField
-from wtforms.validators import DataRequired, Email, ValidationError
+from wtforms.validators import DataRequired, ValidationError
 from app.models import User
 import logging
 
 logger = logging.getLogger(__name__)
 
 def user_exists(form, field):
-    email = field.data
-    logger.debug(f"Checking if user exists with email: {email}")
-    user = User.query.filter(User.email == email).first()
+    credential = field.data
+    logger.debug(f"Checking if user exists with credential: {credential}")
+    
+    # Check if credential is email or username
+    user = User.query.filter(
+        (User.email == credential) | (User.username == credential)
+    ).first()
+    
     if not user:
-        logger.error(f"User with email {email} not found")
-        raise ValidationError('Email provided not found.')
-    logger.debug(f"User found with email: {email}")
+        logger.error(f"No user found with credential: {credential}")
+        raise ValidationError('No user found with this email or username.')
+    logger.debug(f"User found with credential: {credential}")
 
 def password_matches(form, field):
     password = field.data
-    email = form.data['email']
-    logger.debug(f"Checking password for email: {email}")
-    user = User.query.filter(User.email == email).first()
+    credential = form.data['credential']
+    logger.debug(f"Checking password for credential: {credential}")
+    
+    user = User.query.filter(
+        (User.email == credential) | (User.username == credential)
+    ).first()
+    
     if not user:
-        logger.error(f"No user exists with email: {email}")
+        logger.error(f"No user exists with credential: {credential}")
         raise ValidationError('No such user exists.')
     if not user.check_password(password):
-        logger.error(f"Invalid password for email: {email}")
+        logger.error(f"Invalid password for credential: {credential}")
         raise ValidationError('Password was incorrect.')
     logger.debug("Password validation successful")
 
 class LoginForm(FlaskForm):
-    email = StringField('email', validators=[DataRequired(), user_exists])
+    credential = StringField('credential', validators=[DataRequired(), user_exists])
     password = StringField('password', validators=[DataRequired(), password_matches])
 
     def validate_on_submit(self):

@@ -1,5 +1,5 @@
 // frontend/src/components/LoginFormModal/LoginFormModal.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { thunkLogin } from "../../redux/session";
 import { useDispatch } from "react-redux";
 import { useModal } from "../../context/Modal";
@@ -7,81 +7,150 @@ import "./LoginForm.css";
 
 function LoginFormModal() {
   const dispatch = useDispatch();
-  const [email, setEmail] = useState("");
+  const [credential, setCredential] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isFormValid, setIsFormValid] = useState(false);
   const { closeModal } = useModal();
+
+  useEffect(() => {
+    const validateForm = () => {
+      const newErrors = {};
+      
+      if (!credential) {
+        newErrors.credential = "Email or username is required";
+      } else if (credential.length < 3) {
+        newErrors.credential = "Email or username must be at least 3 characters";
+      }
+      
+      if (!password) {
+        newErrors.password = "Password is required";
+      } else if (password.length < 6) {
+        newErrors.password = "Password must be at least 6 characters";
+      }
+
+      setErrors(newErrors);
+      setIsFormValid(credential.length >= 3 && password.length >= 6);
+    };
+
+    validateForm();
+  }, [credential, password]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-    setErrors({});
+    if (!isFormValid) return;
 
+    setIsLoading(true);
     try {
-      const serverResponse = await dispatch(
+      const response = await dispatch(
         thunkLogin({
-          email,
+          credential,
           password,
         })
       );
 
-      if (serverResponse) {
-        setErrors(serverResponse);
+      if (response) {
+        const formattedErrors = {};
+        Object.entries(response).forEach(([key, messages]) => {
+          if (Array.isArray(messages)) {
+            formattedErrors[key] = messages[0]; 
+          } else {
+            formattedErrors[key] = messages;
+          }
+        });
+        setErrors(formattedErrors);
       } else {
         closeModal();
       }
     } catch (error) {
-      setErrors({ server: 'An unexpected error occurred. Please try again.' });
+      setErrors({ 
+        general: 'An unexpected error occurred. Please try again.' 
+      });
       console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDemoUser = (e) => {
+  const handleDemoUser = async (e) => {
     e.preventDefault();
-    return dispatch(
-      thunkLogin({ 
-        email: 'demo@aa.io',  
-        password: 'password' 
-      })
-    ).then(closeModal);
+    setIsLoading(true);
+    try {
+      const response = await dispatch(
+        thunkLogin({ 
+          credential: 'demo@aa.io',  
+          password: 'password' 
+        })
+      );
+      if (!response) closeModal();
+    } catch (error) {
+      setErrors({ general: 'Demo login failed. Please try again.' });
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
 
   return (
     <div className="login-form">
       <h1>Log In</h1>
-      <form onSubmit={handleSubmit}>
-        <label>
-          Email
-          <input
-            type="text"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
-        {errors.email && <p>{errors.email}</p>}
-        <label>
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
-        {errors.password && <p>{errors.password}</p>}
-        <button type="submit">Log In</button>
+
+      <form onSubmit={handleSubmit} noValidate>
+        <div className={`form-group ${errors.credential ? 'has-error' : credential ? 'is-valid' : ''}`}>
+          <label htmlFor="credential">
+            Email or Username
+            <input
+              id="credential"
+              type="text"
+              value={credential}
+              onChange={(e) => setCredential(e.target.value)}
+              disabled={isLoading}
+              required
+            />
+          </label>
+          {errors.credential && (
+            <div className="form-error-message">
+              {errors.credential}
+            </div>
+          )}
+        </div>
+
+        <div className={`form-group ${errors.password ? 'has-error' : password ? 'is-valid' : ''}`}>
+          <label htmlFor="password">
+            Password
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+              required
+            />
+          </label>
+          {errors.password && (
+            <div className="form-error-message">
+              {errors.password}
+            </div>
+          )}
+        </div>
+
+        <button 
+          type="submit" 
+          className={`submit-button ${isFormValid ? 'is-valid' : ''}`}
+          disabled={!isFormValid || isLoading}
+        >
+          {isLoading ? 'Logging in...' : 'Log In'}
+        </button>
+        
         <div className="demo-user">
-        <button onClick={handleDemoUser}>Demo User</button>
-      </div>
+          <button 
+            onClick={handleDemoUser} 
+            disabled={isLoading}
+            type="button"
+          >
+            {isLoading ? 'Loading...' : 'Demo User'}
+          </button>
+        </div>
       </form>
     </div>
   );
