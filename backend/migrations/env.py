@@ -3,7 +3,7 @@ from __future__ import with_statement
 import logging
 import os
 from logging.config import fileConfig
-
+from sqlalchemy import text as SqlText
 from flask import current_app
 
 from alembic import context
