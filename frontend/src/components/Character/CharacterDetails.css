@@ -1,0 +1,102 @@
+.character-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 50;
+  }
+  
+  .character-modal {
+    background: linear-gradient(to bottom, #4C1D95, #1E3A8A);
+    border-radius: 0.5rem;
+    max-width: 28rem;
+    width: 100%;
+    padding: 1.5rem;
+    position: relative;
+  }
+  
+  .character-modal-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+  
+  .character-modal-close:hover {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .character-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .character-name {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 0.5rem;
+  }
+  
+  .character-streak {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .character-animation {
+    width: 12rem;
+    height: 12rem;
+    margin: 0 auto 1.5rem;
+  }
+  
+  .character-traits {
+    margin-top: 1.5rem;
+  }
+  
+  .character-traits-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.5rem;
+  }
+  
+  .character-traits-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .character-trait-item {
+    color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+  }
+  
+  .character-trait-bullet {
+    margin-right: 0.5rem;
+  }
+  
+  .character-evolution {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(147, 51, 234, 0.3);
+  }
+  
+  .character-evolution-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.5rem;
+  }
+  
+  .character-evolution-text {
+    color: rgba(255, 255, 255, 0.8);
+  }

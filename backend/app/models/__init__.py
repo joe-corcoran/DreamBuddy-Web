@@ -5,3 +5,4 @@ from .dream_journal import DreamJournal
 from .dream_tags import DreamTags
 from .dream_interpretation import DreamInterpretation
 from .dreamscapes import Dreamscape
+from .character_stages import CharacterStage

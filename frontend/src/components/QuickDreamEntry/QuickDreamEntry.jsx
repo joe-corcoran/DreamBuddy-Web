@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { thunkQuickDream, thunkCheckTodayDream, thunkUpdateDream } from '../../redux/dreams';
+import { updateCharacterStats } from '../../redux/character';
 import './QuickDreamEntry.css';
 
 const QuickDreamEntry = () => {
@@ -116,6 +117,11 @@ const QuickDreamEntry = () => {
         result = await dispatch(thunkUpdateDream(todayDream.id, dreamData));
       } else {
         result = await dispatch(thunkQuickDream(dreamData));
+        
+        // Update character stats after successful dream entry
+        if (!result.errors) {
+          await dispatch(updateCharacterStats());
+        }
       }
 
       if (result.errors) {
