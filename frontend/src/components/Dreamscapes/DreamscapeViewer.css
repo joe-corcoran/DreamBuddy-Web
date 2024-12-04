@@ -1,0 +1,100 @@
+/* frontend/src/components/Dreamscapes/DreamscapeViewer.css */
+.dreamscape-viewer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+  
+  .dreamscape-viewer-content {
+    background: linear-gradient(to bottom, #1a1a2e, #16213e);
+    border-radius: 15px;
+    width: 90%;
+    max-width: 1200px;
+    max-height: 90vh;
+    overflow-y: auto;
+    color: white;
+  }
+  
+  .dreamscape-viewer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .dreamscape-viewer-header h2 {
+    margin: 0;
+    font-size: 1.5em;
+  }
+  
+  .close-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+    padding: 5px;
+  }
+  
+  .dreamscape-viewer-body {
+    padding: 20px;
+  }
+  
+  .dreamscape-image-container {
+    margin-bottom: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  .dreamscape-full-image {
+    width: 100%;
+    max-height: 60vh;
+    object-fit: contain;
+  }
+  
+  .dream-details {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  .dream-content, .dream-tags, .dream-prompt {
+    margin-bottom: 20px;
+  }
+  
+  .dream-details h3 {
+    margin-bottom: 10px;
+    color: #a0a0ff;
+  }
+  
+  .tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .tag {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.9em;
+  }
+  
+  @media (max-width: 768px) {
+    .dreamscape-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    
+    .dreamscape-viewer-content {
+      width: 95%;
+    }
+  }
