@@ -1,439 +1,350 @@
 .dream-journal-container {
-    min-height: 100vh;
-    background: linear-gradient(180deg, #2d1b69 0%, #1a0b2e 100%);
-    position: relative;
-    overflow: hidden;
-    padding: 2rem;
-    font-family: 'Playfair Display', serif;
-  }
-  
-  /* Stars Background */
-  .stars-background {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-  }
-  
-  .star {
-    position: absolute;
-    width: 2px;
-    height: 2px;
-    background-color: white;
-    border-radius: 50%;
-    opacity: 0;
-    animation: twinkle 3s infinite;
-  }
-  
-  /* Book Layout */
+  min-height: 100vh;
+  background: linear-gradient(180deg, #2d1b69 0%, #1a0b2e 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+  font-family: 'Playfair Display', serif;
+}
+
+/* Stars Background */
+.stars-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background-color: white;
+  border-radius: 50%;
+  opacity: 0;
+  animation: twinkle 3s infinite;
+}
+
+/* Journal Layout */
+.journal-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+  perspective: 2000px;
+  padding-top: 8rem; /* Moved down for better floating effect */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.journal-book {
+  background: #4a2b82;
+  border-radius: 15px;
+  padding: 3rem;
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(10deg);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 100px rgba(99, 102, 241, 0.1);
+  min-height: 700px;
+}
+
+.book-spine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(90deg, #2d1b69, #4a2b82);
+  border-radius: 15px 0 0 15px;
+  transform: translateX(-20px) rotateY(-20deg);
+  box-shadow: 
+    inset -5px 0 10px rgba(0, 0, 0, 0.3),
+    -2px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.book-binding {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  transform: translateX(-50%);
+  box-shadow: 
+    1px 0 2px rgba(255, 255, 255, 0.1),
+    -1px 0 2px rgba(0, 0, 0, 0.2);
+}
+
+.book-pages {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+/* Page Styling */
+.page {
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 10px;
+  padding: 2rem;
+  position: relative;
+  transition: transform 0.6s;
+  transform-origin: center right;
+  transform-style: preserve-3d;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  min-height: 600px;
+  max-height: 600px;
+  overflow: hidden;
+}
+
+.left-page {
+  transform-origin: right center;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.97) 95%, rgba(0, 0, 0, 0.05) 100%);
+}
+
+.right-page {
+  transform-origin: left center;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.97) 95%, rgba(0, 0, 0, 0.05) 100%);
+}
+
+/* Page Flip Animations */
+.page.flip-right {
+  animation: flipRight 0.6s ease-in-out forwards;
+  transform-origin: left;
+}
+
+.page.flip-left {
+  animation: flipLeft 0.6s ease-in-out forwards;
+  transform-origin: right;
+}
+
+@keyframes flipRight {
+  0% { transform: rotateY(0); }
+  100% { transform: rotateY(-180deg); }
+}
+
+@keyframes flipLeft {
+  0% { transform: rotateY(0); }
+  100% { transform: rotateY(180deg); }
+}
+
+/* Page Lines */
+.page-lines {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    transparent 0px,
+    transparent 24px,
+    rgba(0, 0, 0, 0.1) 25px
+  );
+  margin: 50px 0;
+}
+
+/* Dream Content */
+.dream-page-content {
+  position: relative;
+  z-index: 1;
+}
+
+.dream-date {
+  font-size: 1.75rem;
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 0.5rem;
+}
+
+.dream-text {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: #000000;
+  margin-bottom: 2rem;
+}
+
+/* Dreamscape */
+.dreamscape-wrapper {
+  margin: 1.5rem 0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.dreamscape-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.dreamscape-wrapper:hover .dreamscape-image {
+  transform: scale(1.05);
+}
+
+/* Lucid Dream Indicator */
+.lucid-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(241, 196, 15, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+.moon-icon {
+  color: #f1c40f;
+}
+
+/* Navigation */
+.page-navigation {
+  position: absolute;
+  top: -3rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1rem;
+}
+
+.nav-button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.nav-button:hover:not(:disabled) {
+  color: white;
+  transform: scale(1.1);
+}
+
+.nav-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.page-title {
+  color: white;
+  font-size: 2rem;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Empty Page */
+.empty-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 1.2rem;
+}
+
+/* Interpretation Text */
+.interpretation-text {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: rgba(99, 102, 241, 0.05);
+  border-radius: 10px;
+  border-left: 4px solid rgba(99, 102, 241, 0.5);
+  font-style: italic;
+  color: #4f46e5;
+}
+
+/* Animation */
+@keyframes twinkle {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 1024px) {
   .journal-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    position: relative;
-    z-index: 2;
-    perspective: 2000px;
-  }
-  
-  .journal-book {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 15px;
-    padding: 3rem;
-    position: relative;
-    transform-style: preserve-3d;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-  }
-  
-  .book-spine {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 40px;
-    background: linear-gradient(90deg, #1a0b2e, #2d1b69);
-    border-radius: 15px 0 0 15px;
-    transform: translateX(-20px) rotateY(-20deg);
-    box-shadow: 
-      inset -5px 0 10px rgba(0, 0, 0, 0.3),
-      -2px 0 5px rgba(0, 0, 0, 0.2);
-  }
-  
-  .book-binding {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: rgba(0, 0, 0, 0.1);
-    transform: translateX(-50%);
-    box-shadow: 
-      1px 0 2px rgba(255, 255, 255, 0.1),
-      -1px 0 2px rgba(0, 0, 0, 0.2);
-  }
-  
-  .book-pages {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    position: relative;
-    min-height: 700px;
-  }
-  
-  /* Page Styling */
-  .book-page {
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 10px;
-    padding: 2rem;
-    position: relative;
-    color: #2c3e50;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .left-page {
-    transform: rotateY(2deg);
-    background: linear-gradient(to right, rgba(255, 255, 255, 0.95) 90%, rgba(0, 0, 0, 0.02) 100%);
-  }
-  
-  .right-page {
-    transform: rotateY(-2deg);
-    background: linear-gradient(to left, rgba(255, 255, 255, 0.95) 90%, rgba(0, 0, 0, 0.02) 100%);
-  }
-  
-  .page-lines {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    pointer-events: none;
-    background-image: repeating-linear-gradient(
-      transparent 0px,
-      transparent 24px,
-      rgba(0, 0, 0, 0.1) 25px
-    );
-    margin: 50px 0;
-  }
-  
-  /* Form Styling */
-  .dream-entry-form {
-    position: relative;
-    z-index: 2;
-  }
-  
-  .dream-textarea {
-    width: 100%;
-    min-height: 300px;
-    background: transparent;
-    border: none;
-    line-height: 25px;
-    padding: 0;
-    font-family: 'Playfair Display', serif;
-    font-size: 1rem;
-    color: #2c3e50;
-    resize: none;
-  }
-  
-  .dream-textarea:focus {
-    outline: none;
-  }
-  
-  .dream-input {
-    width: 100%;
-    background: transparent;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 5px;
-    padding: 0.5rem;
-    margin-top: 1rem;
-    font-family: inherit;
-  }
-  
-  /* Dream Display */
-  .dream-display {
     padding: 1rem;
   }
   
-  .dream-content h3 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-    color: #2c3e50;
+  .book-pages {
+    grid-template-columns: 1fr;
+    gap: 2rem;
   }
   
-  .dream-content p {
-    line-height: 1.6;
-    color: #34495e;
-  }
-  
-  /* Dreamscape Image */
-  .dreamscape-container {
-    margin-top: 2rem;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  }
-  
-  .dreamscape-image {
-    width: 100%;
-    height: auto;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-  
-  .dreamscape-container:hover .dreamscape-image {
-    transform: scale(1.05);
+  .book-spine,
+  .book-binding {
+    display: none;
   }
 
-  /* Continuing from dream-controls */
-.dream-controls {
-    margin-top: 2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+  .journal-book {
+    padding: 1.5rem;
+    transform: none;
   }
-  
-  .lucid-toggle {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #2c3e50;
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 5px;
-    transition: background-color 0.2s ease;
+
+  .page {
+    transform: none !important;
+    min-height: 400px;
+    max-height: 400px;
   }
-  
-  .lucid-toggle:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+  .dream-journal-container {
+    padding: 1rem;
   }
-  
-  .toggle-icon {
-    padding: 0.5rem;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.8);
-    transition: all 0.3s ease;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+
+  .journal-book {
+    padding: 1rem;
   }
-  
-  input[type="checkbox"]:checked + .toggle-icon {
-    background: #fbbf24;
-    color: #1a0b2e;
-    border-color: #f59e0b;
-  }
-  
-  /* Save Button */
-  .save-button {
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-    color: white;
-    border: none;
-    padding: 0.75rem;
-    border-radius: 10px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    transition: all 0.2s ease;
-    font-family: inherit;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  }
-  
-  .save-button:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  }
-  
-  .save-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  /* Tags */
-  .dream-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 1rem;
-  }
-  
-  .tag {
-    background: rgba(99, 102, 241, 0.1);
-    color: #4f46e5;
-    padding: 0.25rem 0.75rem;
-    border-radius: 999px;
-    font-size: 0.875rem;
-    transition: all 0.2s ease;
-  }
-  
-  .tag:hover {
-    background: rgba(99, 102, 241, 0.2);
-    transform: translateY(-1px);
-  }
-  
-  /* Navigation */
-  .page-navigation {
-    position: absolute;
-    top: -3rem;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 1rem;
-  }
-  
-  .nav-button {
-    background: none;
-    border: none;
-    color: rgba(255, 255, 255, 0.7);
-    cursor: pointer;
-    padding: 0.5rem;
-    transition: all 0.3s ease;
-  }
-  
-  .nav-button:hover:not(:disabled) {
-    color: white;
-    transform: scale(1.1);
-  }
-  
-  .nav-button:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-  
+
   .page-title {
-    color: white;
-    font-size: 2rem;
-    margin: 0;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    font-size: 1.5rem;
   }
-  
-  /* Notifications */
-  .success-popup,
-  .error-message {
-    position: fixed;
-    bottom: 2rem;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 0.75rem 1.5rem;
-    border-radius: 10px;
-    color: white;
-    z-index: 100;
-    animation: fadeInOut 3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+
+  .dream-date {
+    font-size: 1.25rem;
   }
-  
-  .success-popup {
-    background-color: rgba(34, 197, 94, 0.9);
+
+  .dream-text {
+    font-size: 1rem;
   }
-  
-  .error-message {
-    background-color: rgba(239, 68, 68, 0.9);
+}
+
+@media (max-width: 480px) {
+  .page-navigation {
+    position: relative;
+    top: 0;
+    margin-bottom: 1rem;
   }
-  
-  /* Page Turn Animation */
-  @keyframes turnPage {
-    0% { transform: rotateY(0); }
-    100% { transform: rotateY(-180deg); }
+
+  .dream-date {
+    font-size: 1.1rem;
   }
-  
-  .journal-book.turning .book-pages {
-    animation: turnPage 0.5s ease;
+
+  .dream-text {
+    font-size: 0.9rem;
   }
-  
-  /* Empty Page State */
-  .empty-page {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: #94a3b8;
-    font-style: italic;
+
+  .interpretation-text {
+    font-size: 0.9rem;
+    padding: 0.75rem;
   }
-  
-  /* Mobile Responsiveness */
-  @media (max-width: 1024px) {
-    .journal-content {
-      padding: 1rem;
-    }
-    
-    .book-pages {
-      grid-template-columns: 1fr;
-      gap: 2rem;
-    }
-    
-    .book-spine,
-    .book-binding {
-      display: none;
-    }
-  
-    .book-page {
-      transform: none !important;
-    }
+
+  .lucid-indicator {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.75rem;
   }
-  
-  @media (max-width: 768px) {
-    .dream-journal-container {
-      padding: 1rem;
-    }
-  
-    .journal-book {
-      padding: 1rem;
-    }
-  
-    .page-title {
-      font-size: 1.5rem;
-    }
-  
-    .dream-controls {
-      gap: 0.75rem;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .page-navigation {
-      position: relative;
-      top: 0;
-      margin-bottom: 1rem;
-    }
-  
-    .dream-textarea {
-      font-size: 0.875rem;
-    }
-  
-    .tag {
-      font-size: 0.75rem;
-    }
-  }
-  
-  /* Loading State */
-  .loading-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    backdrop-filter: blur(5px);
-  }
-  
-  .loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    border-top-color: white;
-    animation: spin 1s linear infinite;
-  }
-  
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-  
-  @keyframes fadeInOut {
-    0%, 100% { opacity: 0; transform: translate(-50%, 20px); }
-    10%, 90% { opacity: 1; transform: translate(-50%, 0); }
-  }
+}

@@ -33,7 +33,6 @@
   
   .content-container {
     position: relative;
-    z-index: 2;
     padding: 20px;
     max-width: 800px;
     margin: 0 auto;
@@ -118,7 +117,6 @@
   }
 
   .text-area.dream-textarea {
-    z-index: 9999;
     color: black;
   }
 

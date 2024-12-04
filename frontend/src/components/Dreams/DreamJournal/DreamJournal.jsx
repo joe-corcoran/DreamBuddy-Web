@@ -1,525 +1,162 @@
-// // frontend/src/components/Dreams/DreamJournal/DreamJournal.jsx
-// import React, { useState, useEffect } from 'react';
-// import { useDispatch, useSelector } from 'react-redux';
-// import { thunkLoadDreams, thunkUpdateDream, thunkDeleteDream } from '../../../redux/dreams';
-// import { useModal } from '../../../context/Modal';
-// import './DreamJournal.css';
-
-// const DeleteConfirmModal = ({ onConfirm, onClose }) => (
-//     <div className="delete-confirm-modal">
-//         <h2>Delete Dream?</h2>
-//         <p>Are you sure you want to delete this dream? This action cannot be undone.</p>
-//         <div className="delete-modal-buttons">
-//             <button onClick={onConfirm} className="confirm-delete-button">
-//                 Delete
-//             </button>
-//             <button onClick={onClose} className="cancel-button">
-//                 Cancel
-//             </button>
-//         </div>
-//     </div>
-// );
-
-// const DreamJournal = () => {
-//     const dispatch = useDispatch();
-//     const { setModalContent, closeModal } = useModal();
-//     const dreams = useSelector(state => Object.values(state.dreams.allDreams));
-//     const [isLoading, setIsLoading] = useState(true);
-//     const [selectedDream, setSelectedDream] = useState(null);
-//     const [editMode, setEditMode] = useState(false);
-//     const [formData, setFormData] = useState({
-//         title: '',
-//         content: '',
-//         is_lucid: false,
-//         tags: ''
-//     });
-//     const [errorMessage, setErrorMessage] = useState(null);
-//     const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-//     const [successMessage, setSuccessMessage] = useState('');
-
-//     useEffect(() => {
-//         loadDreams();
-//     }, [dispatch]);
-
-//     const loadDreams = async () => {
-//         setIsLoading(true);
-//         const response = await dispatch(thunkLoadDreams());
-//         if (response.errors) {
-//             setErrorMessage(response.errors);
-//         }
-//         setIsLoading(false);
-//     };
-
-//     const handleDreamSelect = (dream) => {
-//         setSelectedDream(dream);
-//         setFormData({
-//             title: dream.title,
-//             content: dream.content,
-//             is_lucid: dream.is_lucid,
-//             tags: dream.tags?.join(', ') || ''
-//         });
-//         setEditMode(true);
-//     };
-
-//     const handleInputChange = (e) => {
-//         const { name, value, type, checked } = e.target;
-//         setFormData(prev => ({
-//             ...prev,
-//             [name]: type === 'checkbox' ? checked : value
-//         }));
-//     };
-
-//     const handleSubmit = async (e) => {
-//         e.preventDefault();
-//         setIsLoading(true);
-        
-//         const dreamData = {
-//             ...formData,
-//             tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
-//         };
-
-//         const response = await dispatch(thunkUpdateDream(selectedDream.id, dreamData));
-        
-//         if (response.errors) {
-//             setErrorMessage(response.errors);
-//         } else {
-//             showSuccessMessage('Dream saved successfully!');
-//             setEditMode(false);
-//         }
-//         setIsLoading(false);
-//     };
-
-//     const handleDelete = async (dreamId) => {
-//         setModalContent(
-//             <DeleteConfirmModal
-//                 onConfirm={async () => {
-//                     setIsLoading(true);
-//                     const response = await dispatch(thunkDeleteDream(dreamId));
-//                     if (response.errors) {
-//                         setErrorMessage(response.errors);
-//                     } else {
-//                         if (selectedDream?.id === dreamId) {
-//                             setSelectedDream(null);
-//                             setEditMode(false);
-//                         }
-//                         showSuccessMessage('Dream deleted successfully!');
-//                     }
-//                     closeModal();
-//                     setIsLoading(false);
-//                 }}
-//                 onClose={closeModal}
-//             />
-//         );
-//     };
-
-//     const showSuccessMessage = (message) => {
-//         setSuccessMessage(message);
-//         setShowSuccessPopup(true);
-//         setTimeout(() => setShowSuccessPopup(false), 3000);
-//     };
-
-//     return (
-//         <div className="dream-journal-container">
-//             <div className="stars-background">
-//                 {[...Array(50)].map((_, i) => (
-//                     <div key={i} className="star" style={{
-//                         left: `${Math.random() * 100}%`,
-//                         top: `${Math.random() * 100}%`,
-//                         animationDelay: `${Math.random() * 2}s`
-//                     }} />
-//                 ))}
-//             </div>
-
-//             <div className="content-container">
-//                 <h1 className="page-title">Dream Journal</h1>
-
-//                 {isLoading ? (
-//                     <div className="loading-spinner">Loading...</div>
-//                 ) : (
-//                     <div className="dream-journal-layout">
-//                         {/* Dreams List */}
-//                         <div className="dreams-list">
-//                             {dreams.map(dream => (
-//                                 <div 
-//                                     key={dream.id} 
-//                                     className={`dream-item ${selectedDream?.id === dream.id ? 'selected' : ''}`}
-//                                 >
-//                                     <div className="dream-item-content" onClick={() => handleDreamSelect(dream)}>
-//                                         <h3>{dream.title}</h3>
-//                                         <p>{new Date(dream.date).toLocaleDateString()}</p>
-//                                         {dream.is_lucid && (
-//                                             <span className="lucid-indicator">Lucid</span>
-//                                         )}
-//                                     </div>
-//                                     <button 
-//                                         className="delete-button"
-//                                         onClick={(e) => {
-//                                             e.stopPropagation();
-//                                             handleDelete(dream.id);
-//                                         }}
-//                                     >
-//                                         <i className="fas fa-trash"></i>
-//                                     </button>
-//                                 </div>
-//                             ))}
-//                         </div>
-
-//                         {/* Dream Editor */}
-//                         {editMode && selectedDream && (
-//                             <form onSubmit={handleSubmit} className="dream-editor">
-//                                 <input
-//                                     type="text"
-//                                     name="title"
-//                                     value={formData.title}
-//                                     onChange={handleInputChange}
-//                                     placeholder="Dream Title"
-//                                     className="dream-input"
-//                                 />
-
-//                                 <textarea
-//                                     name="content"
-//                                     value={formData.content}
-//                                     onChange={handleInputChange}
-//                                     placeholder="What did you dream about?"
-//                                     className="dream-textarea"
-//                                 />
-
-//                                 <div className="dream-controls">
-//                                     <label className="lucid-toggle">
-//                                         <input
-//                                             type="checkbox"
-//                                             name="is_lucid"
-//                                             checked={formData.is_lucid}
-//                                             onChange={handleInputChange}
-//                                         />
-//                                         Lucid Dream
-//                                     </label>
-
-//                                     <input
-//                                         type="text"
-//                                         name="tags"
-//                                         value={formData.tags}
-//                                         onChange={handleInputChange}
-//                                         placeholder="Tags (comma-separated)"
-//                                         className="dream-input"
-//                                     />
-//                                 </div>
-
-//                                 <button type="submit" className="save-button">
-//                                     Save Dream
-//                                 </button>
-//                             </form>
-//                         )}
-//                     </div>
-//                 )}
-
-//                 {errorMessage && (
-//                     <div className="error-message">
-//                         {typeof errorMessage === 'string' ? errorMessage : 'An error occurred'}
-//                     </div>
-//                 )}
-
-//                 {showSuccessPopup && (
-//                     <div className="success-popup">
-//                         {successMessage}
-//                     </div>
-//                 )}
-//             </div>
-//         </div>
-//     );
-// };
-
-// export default DreamJournal;
-import "./DreamJournal.css"
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { 
-  Moon, Save, ChevronLeft, ChevronRight 
-} from 'lucide-react';
-import { 
-  thunkLoadDreams, 
-  thunkUpdateDream, 
-  thunkQuickDream,
-  thunkCheckTodayDream 
-} from '../../../redux/dreams';
+import { getDreamscape } from '../../../redux/dreamscapes';
+import { getDreamInterpretations } from '../../../redux/interpretations';
+import { thunkLoadDreams } from '../../../redux/dreams';
+import { ChevronLeft, ChevronRight, Moon } from 'lucide-react';
+import "./DreamJournal.css";
 
 const DreamJournal = () => {
   const dispatch = useDispatch();
-  const dreams = useSelector(state => Object.values(state.dreams.allDreams));
-  const todayDream = useSelector(state => state.dreams.todayDream);
   const [currentPage, setCurrentPage] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    is_lucid: false,
-    tags: ''
-  });
-  const [isEditing, setIsEditing] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-
-  const formatDateTime = (date) => {
-    return new Date(date).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      timeZoneName: 'short'
-    });
-  };
-
+  const [isFlipping, setIsFlipping] = useState(false);
+  const [flipDirection, setFlipDirection] = useState(null);
+  
+  const dreams = useSelector(state => Object.values(state.dreams.allDreams));
+  const dreamscapes = useSelector(state => state.dreamscapes.byDreamId);
+  const interpretations = useSelector(state => state.interpretations.byType);
+  
+  // Sort dreams by date in ascending order for consistent book layout
+  const sortedDreams = [...dreams].sort((a, b) => new Date(a.date) - new Date(b.date));
+  
   useEffect(() => {
-    loadContent();
+    dispatch(thunkLoadDreams());
   }, [dispatch]);
 
   useEffect(() => {
-    if (todayDream) {
-      setFormData({
-        title: todayDream.title,
-        content: todayDream.content,
-        is_lucid: todayDream.is_lucid,
-        tags: todayDream.tags?.join(', ') || ''
-      });
-      setIsEditing(true);
-    } else {
-      resetForm();
-    }
-  }, [todayDream]);
-
-  const loadContent = async () => {
-    setIsLoading(true);
-    try {
-      await dispatch(thunkLoadDreams());
-      // Send timezone-aware ISO string
-      const now = new Date();
-      const clientDate = now.toISOString();
-      await dispatch(thunkCheckTodayDream(clientDate));
-    } catch (error) {
-      setErrorMessage('Failed to load dreams');
-    }
-    setIsLoading(false);
-  };
-
-  const resetForm = () => {
-    const now = new Date();
-    setFormData({
-      title: `Dream on ${formatDateTime(now)}`,
-      content: '',
-      is_lucid: false,
-      tags: ''
-    });
-    setIsEditing(false);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    const now = new Date();
-    const dreamData = {
-      ...formData,
-      tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-      clientDate: now.toISOString(),
-      title: formData.title || `Dream on ${formatDateTime(now)}`
-    };
-
-    try {
-      if (isEditing && todayDream) {
-        await dispatch(thunkUpdateDream(todayDream.id, dreamData));
-        showSuccessMessage('Dream updated successfully!');
-      } else {
-        await dispatch(thunkQuickDream(dreamData));
-        showSuccessMessage('Dream saved successfully!');
+    // Pre-fetch dreamscapes and interpretations for visible pages
+    const visibleDreams = getCurrentPageDreams();
+    visibleDreams.forEach(dream => {
+      if (dream) {
+        dispatch(getDreamscape(dream.id));
+        dispatch(getDreamInterpretations(dream.id));
       }
-      await loadContent();
-    } catch (error) {
-      setErrorMessage(isEditing ? 'Failed to update dream' : 'Failed to save dream');
-    }
+    });
+  }, [currentPage]);
+
+  const formatDate = (date) => {
+    return new Date(date).toLocaleString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const handlePageTurn = async (direction) => {
+    if (isFlipping) return;
     
-    setIsLoading(false);
-  };
-
-  const turnPage = (direction) => {
     const newPage = currentPage + direction;
-    if (newPage >= 0 && newPage < Math.ceil(dreams.length / 2)) {
-      const journalBook = document.querySelector('.journal-book');
-      journalBook.classList.add('turning');
-      setCurrentPage(newPage);
+    if (newPage >= 0 && newPage < Math.ceil(sortedDreams.length / 2)) {
+      setIsFlipping(true);
+      setFlipDirection(direction);
+      
       setTimeout(() => {
-        journalBook.classList.remove('turning');
-      }, 500);
+        setCurrentPage(newPage);
+        setIsFlipping(false);
+        setFlipDirection(null);
+      }, 600);
     }
   };
 
-  const showSuccessMessage = (message) => {
-    setSuccessMessage(message);
-    setShowSuccessPopup(true);
-    setTimeout(() => setShowSuccessPopup(false), 3000);
+  const getCurrentPageDreams = () => {
+    const startIndex = currentPage * 2;
+    return [sortedDreams[startIndex], sortedDreams[startIndex + 1]];
+  };
+
+  const renderDreamContent = (dream, isLeftPage) => {
+    if (!dream) return (
+      <div className="empty-page">
+        <span>This page is waiting for your dreams...</span>
+      </div>
+    );
+    
+    return (
+      <div className="dream-page-content">
+        <h2 className="dream-date">{formatDate(dream.date)}</h2>
+        
+        <div className="dream-text">
+          {dream.is_lucid && (
+            <div className="lucid-indicator">
+              <Moon className="moon-icon" size={16} />
+              <span>Lucid Dream</span>
+            </div>
+          )}
+          <p>{dream.content}</p>
+        </div>
+        
+        {dreamscapes[dream.id]?.image_url && (
+          <div className="dreamscape-wrapper">
+            <img 
+              src={dreamscapes[dream.id].image_url}
+              alt="Dreamscape"
+              className="dreamscape-image"
+            />
+          </div>
+        )}
+        
+        {interpretations?.spiritual && (
+          <div className="interpretation-text">
+            <p>{interpretations.spiritual.interpretation_text}</p>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
     <div className="dream-journal-container">
       <div className="stars-background">
-        {[...Array(50)].map((_, i) => (
-          <div key={i} className="star" style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 2}s`
-          }} />
+        {[...Array(75)].map((_, i) => (
+          <div 
+            key={i} 
+            className="star" 
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 2}s`,
+              width: `${Math.random() * 3}px`,
+              height: `${Math.random() * 3}px`
+            }}
+          />
         ))}
       </div>
 
       <div className="journal-content">
-        <div className="journal-book">
+        <div className={`journal-book ${isFlipping ? 'flipping' : ''}`}>
           <div className="book-spine"></div>
           <div className="book-binding"></div>
           
+          <div className="page-navigation">
+            <button 
+              className="nav-button"
+              onClick={() => handlePageTurn(-1)}
+              disabled={currentPage === 0 || isFlipping}
+            >
+              <ChevronLeft />
+            </button>
+            <h1 className="page-title">Dream Journal</h1>
+            <button 
+              className="nav-button"
+              onClick={() => handlePageTurn(1)}
+              disabled={currentPage >= Math.ceil(sortedDreams.length / 2) - 1 || isFlipping}
+            >
+              <ChevronRight />
+            </button>
+          </div>
+
           <div className="book-pages">
-            <div className="page-navigation">
-              <button 
-                className="nav-button"
-                onClick={() => turnPage(-1)}
-                disabled={currentPage === 0 || isLoading}
-              >
-                <ChevronLeft />
-              </button>
-              
-              <h1 className="page-title">Dream Journal</h1>
-              <button 
-                className="nav-button"
-                onClick={() => turnPage(1)}
-                disabled={currentPage >= Math.ceil(dreams.length / 2) - 1 || isLoading}
-              >
-                <ChevronRight />
-              </button>
-            </div>
-
-            {/* Left Page - Current Day Dream Entry */}
-            <div className="book-page left-page">
+            <div className={`page left-page ${flipDirection === -1 ? 'flip-left' : ''}`}>
               <div className="page-lines"></div>
-              <form onSubmit={handleSubmit} className="dream-entry-form">
-                <div className="page-header">
-                  <h2 className="current-date">
-                    {formatDateTime(new Date())}
-                  </h2>
-                </div>
-
-                <textarea
-                  name="content"
-                  value={formData.content}
-                  onChange={handleInputChange}
-                  placeholder="What did you dream about?"
-                  className="dream-textarea"
-                />
-
-                <div className="dream-controls">
-                  <label className="lucid-toggle">
-                    <input
-                      type="checkbox"
-                      name="is_lucid"
-                      checked={formData.is_lucid}
-                      onChange={handleInputChange}
-                    />
-                    <span className="toggle-icon">
-                      <Moon />
-                    </span>
-                    <span>Lucid Dream</span>
-                  </label>
-
-                  <input
-                    type="text"
-                    name="tags"
-                    value={formData.tags}
-                    onChange={handleInputChange}
-                    placeholder="Tags (comma-separated)"
-                    className="dream-input"
-                  />
-
-                  <button 
-                    type="submit" 
-                    className="save-button"
-                    disabled={isLoading || !formData.content.trim()}
-                  >
-                    <Save size={16} />
-                    {isLoading ? 'Saving...' : (isEditing ? 'Update Dream' : 'Save Dream')}
-                  </button>
-                </div>
-              </form>
+              {renderDreamContent(getCurrentPageDreams()[0], true)}
             </div>
-
-            {/* Right Page - Dream Display & Dreamscape */}
-            <div className="book-page right-page">
-              {todayDream ? (
-                <div className="dream-display">
-                  <div className="dream-content">
-                    <h3>{todayDream.title}</h3>
-                    <p>{todayDream.content}</p>
-                    
-                    {todayDream.is_lucid && (
-                      <div className="lucid-indicator">
-                        <Moon size={16} />
-                        <span>Lucid Dream</span>
-                      </div>
-                    )}
-
-                    {todayDream.tags?.length > 0 && (
-                      <div className="dream-tags">
-                        {todayDream.tags.map(tag => (
-                          <span key={tag} className="tag">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {todayDream?.dreamscape?.image_url && ( // Changed condition and property name
-  <div className="dreamscape-container">
-    <img 
-      src={todayDream.dreamscape.image_url} // Changed from imageUrl
-      alt="Dreamscape"
-      className="dreamscape-image"
-      onError={(e) => {
-        console.error("Image failed to load:", e);
-        e.target.style.display = "none";
-      }}
-    />
-  </div>
-)}
-                </div>
-              ) : (
-                <div className="empty-page">
-                  <p>No dream recorded yet for today</p>
-                </div>
-              )}
+            <div className={`page right-page ${flipDirection === 1 ? 'flip-right' : ''}`}>
+              <div className="page-lines"></div>
+              {renderDreamContent(getCurrentPageDreams()[1], false)}
             </div>
           </div>
         </div>
       </div>
-
-      {showSuccessPopup && (
-        <div className="success-popup">
-          {successMessage}
-        </div>
-      )}
-
-      {errorMessage && (
-        <div className="error-message">
-          {errorMessage}
-        </div>
-      )}
     </div>
   );
 };
