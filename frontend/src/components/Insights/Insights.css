@@ -161,12 +161,126 @@
     margin-bottom: 15px;
     line-height: 1.7;
   }
+
+  .insight-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .user-notes-section {
+    margin-bottom: 20px;
+  }
+  
+  .notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+  
+  .notes-header h4 {
+    color: var(--card-color);
+    margin: 0;
+  }
+  
+  .notes-actions {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .notes-input {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    resize: vertical;
+    font-family: inherit;
+    margin-bottom: 10px;
+  }
+  
+  .notes-input:focus {
+    outline: none;
+    border-color: var(--card-color);
+  }
+  
+  .notes-content {
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.5;
+  }
+  
+  .notes-placeholder {
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+  }
+  
+  .edit-button,
+  .save-button,
+  .cancel-button,
+  .delete-button {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  
+  .edit-button {
+    background-color: var(--card-color);
+    color: white;
+  }
+  
+  .save-button {
+    background-color: #2ecc71;
+    color: white;
+  }
+  
+  .save-button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
+  .cancel-button {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+  }
+  
+  .delete-button {
+    background-color: #e74c3c;
+    color: white;
+    width: 100%;
+    margin-top: 20px;
+  }
+  
+  .edit-button:hover,
+  .save-button:hover,
+  .cancel-button:hover,
+  .delete-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
   
   /* Responsive Design */
   @media (max-width: 768px) {
     .insights-grid {
       grid-template-columns: 1fr;
       padding: 10px;
+    }
+    .notes-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    
+    .notes-actions {
+      width: 100%;
+      justify-content: flex-end;
     }
     
     .type-filters {

@@ -137,3 +137,57 @@ def get_dream_interpretations(dream_id):
     except Exception as e:
         logger.error(f"Error fetching interpretations: {str(e)}")
         return jsonify({'errors': {'server': str(e)}}), 500
+    
+@interpretation_routes.route('/<int:id>/notes', methods=['PUT'])
+@login_required
+def update_interpretation_notes(id):
+    """Update notes for a specific interpretation"""
+    logger.info(f"Received notes update request for interpretation {id}")
+    
+    try:
+        data = request.get_json()
+        logger.info(f"Received data: {data}")
+        
+        interpretation = DreamInterpretation.query.get_or_404(id)
+        logger.info(f"Found interpretation: {interpretation.id}")
+        
+        if interpretation.user_id != current_user.id:
+            logger.warning(f"Unauthorized notes update attempt for interpretation {id}")
+            return jsonify({'errors': {'auth': 'Unauthorized'}}), 403
+        
+        interpretation.user_notes = data.get('notes')
+        db.session.commit()
+        
+        result = interpretation.to_dict()
+        logger.info(f"Successfully updated notes, returning: {result}")
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Error updating interpretation notes: {str(e)}")
+        db.session.rollback()
+        return jsonify({'errors': {'server': str(e)}}), 500
+
+@interpretation_routes.route('/<int:id>', methods=['DELETE'])
+@login_required
+def delete_interpretation(id):
+    """Delete a specific interpretation"""
+    is_valid, error_response, error_code = validate_csrf_token()
+    if not is_valid:
+        return error_response, error_code
+    
+    try:
+        interpretation = DreamInterpretation.query.get_or_404(id)
+        
+        # Verify ownership
+        if interpretation.user_id != current_user.id:
+            return jsonify({'errors': {'auth': 'Unauthorized'}}), 403
+            
+        db.session.delete(interpretation)
+        db.session.commit()
+        
+        return jsonify({'message': 'Interpretation deleted successfully'})
+        
+    except Exception as e:
+        logger.error(f"Error deleting interpretation: {str(e)}")
+        db.session.rollback()
+        return jsonify({'errors': {'server': str(e)}}), 500

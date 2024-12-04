@@ -15,6 +15,7 @@ class DreamInterpretation(db.Model):
     interpretation_type = db.Column(db.String(50), nullable=False)
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    user_notes = db.Column(db.Text, nullable=True)
 
     dreams = db.relationship(
         'DreamJournal',
@@ -29,5 +30,6 @@ class DreamInterpretation(db.Model):
             'interpretation_text': self.interpretation_text,
             'interpretation_type': self.interpretation_type,
             'date': self.date.isoformat(),
-            'dream_ids': [dream.id for dream in self.dreams]
+            'dream_ids': [dream.id for dream in self.dreams],
+            'user_notes': self.user_notes
         }

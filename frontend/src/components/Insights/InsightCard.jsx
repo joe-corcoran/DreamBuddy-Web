@@ -1,7 +1,13 @@
 // frontend/src/components/Insights/InsightCard.jsx
-import React from 'react';
+import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { saveInterpretationNotes, removeInterpretation } from '../../redux/interpretations';
 
-const InsightCard = ({ interpretation, color }) => {
+const InsightCard = ({ interpretation, color, onDeleteSuccess = async () => await dispatch(getAllInterpretations()) }) => {
+  const dispatch = useDispatch();
+  const [notes, setNotes] = useState(interpretation.user_notes || '');
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const getTypeIcon = (type) => {
     const icons = {
       spiritual: 'fa-pray',
@@ -43,6 +49,41 @@ const InsightCard = ({ interpretation, color }) => {
     });
   };
 
+  const handleSaveNotes = async () => {
+    setIsSaving(true);
+    try {
+        const result = await dispatch(saveInterpretationNotes(interpretation.id, notes));
+        if (result.success) {
+            setIsEditing(false);
+            onSaveSuccess?.(); // Call the success handler if provided
+        } else {
+            console.error('Failed to save notes:', result.error);
+        }
+    } catch (error) {
+        console.error('Error in handleSaveNotes:', error);
+    } finally {
+        setIsSaving(false);
+    }
+};
+
+
+const handleDelete = async () => {
+  if (window.confirm('Are you sure you want to delete this interpretation?')) {
+    try {
+      const result = await dispatch(removeInterpretation(interpretation.id));
+      if (result.success) {
+        onDeleteSuccess?.(); // Call the success handler passed from parent
+      } else {
+        console.error('Failed to delete interpretation:', result.error);
+      }
+    } catch (error) {
+      console.error('Error deleting interpretation:', error);
+    }
+  }
+};
+
+
+
   return (
     <div className="insight-card" style={{ 
       '--card-color': color,
@@ -82,8 +123,64 @@ const InsightCard = ({ interpretation, color }) => {
           <h4>Interpretation:</h4>
           {formatInterpretationText(interpretation.interpretation_text)}
         </div>
+        <div className="insight-footer">
+        <div className="user-notes-section">
+          <div className="notes-header">
+            <h4>Your Notes</h4>
+            <div className="notes-actions">
+              {isEditing ? (
+                <>
+                  <button 
+                    className="save-button"
+                    onClick={handleSaveNotes}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Saving...' : 'Save'}
+                  </button>
+                  <button 
+                    className="cancel-button"
+                    onClick={() => {
+                      setNotes(interpretation.user_notes || '');
+                      setIsEditing(false);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button 
+                  className="edit-button"
+                  onClick={() => setIsEditing(true)}
+                >
+                  {notes ? 'Edit Notes' : 'Add Notes'}
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {isEditing ? (
+            <textarea
+              className="notes-input"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add your personal notes about this interpretation..."
+            />
+          ) : notes ? (
+            <p className="notes-content">{notes}</p>
+          ) : (
+            <p className="notes-placeholder">No notes added yet</p>
+          )}
+        </div>
+        
+        <button 
+          className="delete-button"
+          onClick={handleDelete}
+        >
+          Delete Interpretation
+        </button>
       </div>
     </div>
+      </div>
   );
 };
 

@@ -17,7 +17,8 @@ const SET_TYPE_INTERPRETATION = 'interpretations/SET_TYPE_INTERPRETATION';
 const SET_LOADING = 'interpretations/SET_LOADING';
 const SET_ERROR = 'interpretations/SET_ERROR';
 const SET_ALL_INTERPRETATIONS = 'interpretations/SET_ALL_INTERPRETATIONS';
-
+const UPDATE_INTERPRETATION_NOTES = 'interpretations/UPDATE_INTERPRETATION_NOTES';
+const DELETE_INTERPRETATION = 'interpretations/DELETE_INTERPRETATION';
 // Initial state with all interpretation types
 const initialState = {
   byId: {},
@@ -37,6 +38,16 @@ const initialState = {
 export const setTypeInterpretation = (type, interpretation) => ({
   type: SET_TYPE_INTERPRETATION,
   payload: { type, interpretation }
+});
+
+export const updateInterpretationNotes = (interpretationId, notes) => ({
+  type: UPDATE_INTERPRETATION_NOTES,
+  payload: { id: interpretationId, notes }
+});
+
+export const deleteInterpretation = (interpretationId) => ({
+  type: DELETE_INTERPRETATION,
+  payload: interpretationId
 });
 
 export const setAllInterpretations = (interpretations) => ({
@@ -93,6 +104,70 @@ export const generateInterpretation = (dreamIds, type) => async (dispatch) => {
   }
 };
 
+export const saveInterpretationNotes = (interpretationId, notes) => async (dispatch) => {
+  dispatch(setLoading(true));
+  dispatch(setError(null));
+
+  try {
+    const response = await csrfFetch(getApiUrl(`/api/interpretations/${interpretationId}/notes`), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ notes })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.errors?.server || 'Failed to save notes');
+    }
+
+    const interpretation = await response.json();
+    console.log('Server response:', interpretation);
+    
+    dispatch(updateInterpretationNotes(interpretationId, notes));
+    // Don't reload all interpretations here since we already updated the state
+    return { success: true, interpretation };
+  } catch (error) {
+    console.error('Error saving notes:', error);
+    const errorMessage = error.message || 'Failed to save notes';
+    dispatch(setError(errorMessage));
+    return { error: errorMessage };
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+export const removeInterpretation = (interpretationId) => async (dispatch) => {
+  dispatch(setLoading(true));
+  dispatch(setError(null));
+
+  try {
+    console.log('Attempting to remove interpretation:', interpretationId);
+    
+    const response = await csrfFetch(getApiUrl(`/api/interpretations/${interpretationId}`), {
+      method: 'DELETE'
+    });
+
+    console.log('Delete response status:', response.status);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.errors?.server || 'Failed to delete interpretation');
+    }
+
+    // Dispatch the delete action to update the store
+    dispatch(deleteInterpretation(interpretationId));
+    
+    console.log('Successfully deleted interpretation');
+    return { success: true };
+  } catch (error) {
+    console.error('Error in removeInterpretation:', error);
+    dispatch(setError(error.message || 'Failed to delete interpretation'));
+    return { error: error.message || 'Failed to delete interpretation' };
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
 export const getAllInterpretations = () => async (dispatch) => {
   dispatch(setLoading(true));
   dispatch(setError(null));
@@ -170,6 +245,39 @@ export default function interpretationsReducer(state = initialState, action) {
           return acc;
         }, {}),
         error: null  // Clear any previous errors
+      };
+      case UPDATE_INTERPRETATION_NOTES:
+        const updatedInterpretations = state.allInterpretations.map(interp => 
+          interp.id === action.payload.id 
+            ? { ...interp, user_notes: action.payload.notes }
+            : interp
+        );
+      
+        console.log('Updating notes for interpretation:', action.payload.id);
+        console.log('Updated interpretations:', updatedInterpretations);
+      
+        return {
+          ...state,
+          allInterpretations: updatedInterpretations,
+          byId: {
+            ...state.byId,
+            [action.payload.id]: {
+              ...state.byId[action.payload.id],
+              user_notes: action.payload.notes
+            }
+          },
+          error: null // Clear any existing errors
+        };
+      
+    case DELETE_INTERPRETATION:
+      return {
+        ...state,
+        allInterpretations: state.allInterpretations.filter(
+          interp => interp.id !== action.payload
+        ),
+        byId: Object.fromEntries(
+          Object.entries(state.byId).filter(([id]) => id !== action.payload.toString())
+        )
       };
     case SET_LOADING:
       return {

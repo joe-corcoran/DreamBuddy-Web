@@ -98,10 +98,12 @@
 }
 
 .generate-hint {
-  margin-top: 0.8rem;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9em;
+  text-align: center;
 }
+
 
 .dreamscape-error {
   text-align: center;
@@ -438,6 +440,120 @@
     padding: 2rem;
     color: #3498db;
   }
+
+  /* Interpretation Section Styling */
+.interpretation-wrapper {
+  background: rgba(20, 20, 35, 0.95);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.interpretation-types {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 20px 0;
+  padding: 0 20px;
+  flex-wrap: wrap;
+}
+
+.type-filter {
+  padding: 10px 20px;
+  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.type-filter i {
+  font-size: 1.1em;
+}
+
+.type-filter:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.type-filter.active {
+  background: var(--type-color);
+  border-color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.interpretation-content {
+  padding: 25px;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.dream-content {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 25px;
+}
+
+.dream-content h4,
+.interpretation-text h4 {
+  color: var(--card-color);
+  margin-bottom: 20px;
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.interpretation-section h5 {
+  color: var(--card-color);
+  margin-bottom: 10px;
+  font-size: 1.1em;
+  font-weight: 500;
+}
+
+.dream-text {
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 15px;
+}
+
+.dream-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.dream-tag {
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.9em;
+  color: white;
+  opacity: 0.8;
+}
+
+.interpretation-section {
+  margin-bottom: 20px;
+}
+
+.interpretation-section h5 {
+  color: var(--card-color);
+  margin-bottom: 10px;
+  font-size: 1.1em;
+}
+
+.interpretation-paragraph {
+  margin-bottom: 15px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.generate-interpretation {
+  text-align: center;
+  padding: 20px;
+}
   
   @media (max-width: 768px) {
     .modal-content {

@@ -19,6 +19,38 @@ const InterpretationType = {
   LUCID: "lucid",
 };
 
+const getTypeIcon = (type) => {
+  const icons = {
+    spiritual: 'fa-pray',
+    practical: 'fa-tools',
+    emotional: 'fa-heart',
+    actionable: 'fa-tasks',
+    lucid: 'fa-moon'
+  };
+  return icons[type] || 'fa-star';
+};
+
+const formatInterpretationText = (text) => {
+  // Split into paragraphs
+  const paragraphs = text.split('\n\n');
+  
+  return paragraphs.map((paragraph, index) => {
+    // Check if paragraph is a list item
+    if (paragraph.includes('**') && paragraph.includes(':')) {
+      // Format as a list item with title
+      const [title, ...content] = paragraph.split(':');
+      return (
+        <div key={index} className="interpretation-section">
+          <h5>{title.replace(/\*\*/g, '')}</h5>
+          <p>{content.join(':').trim()}</p>
+        </div>
+      );
+    }
+    // Regular paragraph
+    return <p key={index} className="interpretation-paragraph">{paragraph}</p>;
+  });
+};
+
 const DreamDetailsModal = ({ date: initialDate, dreams: initialDreams }) => {
   const dispatch = useDispatch();
   const { closeModal } = useModal();
@@ -303,60 +335,61 @@ const DreamDetailsModal = ({ date: initialDate, dreams: initialDreams }) => {
           )}
         </div>
 
-        {/* Interpretations Section */}
-        <div className="collapsible-section">
-          <div
-            className="section-header"
-            onClick={() => setIsInterpretationsExpanded(!isInterpretationsExpanded)}
+      {/* Interpretations Section */}
+<div className="collapsible-section interpretation-wrapper">
+  <div
+    className="section-header"
+    onClick={() => setIsInterpretationsExpanded(!isInterpretationsExpanded)}
+  >
+    <h3>Interpretations</h3>
+    <i className={`fas fa-chevron-${isInterpretationsExpanded ? "up" : "down"}`} />
+  </div>
+  {isInterpretationsExpanded && (
+    <div className="section-content interpretations-section">
+      <div className="interpretation-types">
+        {Object.values(InterpretationType).map((type) => (
+          <button
+            key={type}
+            className={`type-filter ${selectedType === type ? 'active' : ''}`}
+            style={{
+              '--type-color': typeColors[type],
+              borderColor: selectedType === type ? typeColors[type] : 'transparent'
+            }}
+            onClick={() => setSelectedType(type)}
           >
-            <h3>Interpretations</h3>
-            <i
-              className={`fas fa-chevron-${
-                isInterpretationsExpanded ? "up" : "down"
-              }`}
-            />
-          </div>
-          {isInterpretationsExpanded && (
-            <div className="section-content interpretations-section">
-              <div className="interpretation-types">
-                {Object.values(InterpretationType).map((type) => (
-                  <button
-                    key={type}
-                    className={`type-button ${
-                      selectedType === type ? "selected" : ""
-                    }`}
-                    style={{
-                      "--type-color": typeColors[type],
-                      opacity: selectedType === type ? 1 : 0.6,
-                    }}
-                    onClick={() => setSelectedType(type)}
-                  >
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </button>
-                ))}
-              </div>
+            <i className={`fas ${getTypeIcon(type)}`}></i>
+            <span>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
+          </button>
+        ))}
+      </div>
 
-              {interpretationsLoading ? (
-                <div className="loading">
-                  Generating {selectedType} interpretation...
-                </div>
-              ) : getCurrentInterpretation() ? (
-                <div className="interpretation-content">
-                  <p>{getCurrentInterpretation().interpretation_text}</p>
-                </div>
-              ) : (
-                <button
-                  className="generate-button"
-                  onClick={handleGenerateInterpretation}
-                  disabled={interpretationsLoading}
-                >
-                  Generate {selectedType} Interpretation
-                </button>
-              )}
-            </div>
-          )}
+      {interpretationsLoading ? (
+        <div className="insights-loading">
+          <div className="loading-spinner"></div>
+          <p>Generating {selectedType} interpretation...</p>
         </div>
-
+      ) : getCurrentInterpretation() ? (
+        <div className="interpretation-content" style={{ '--card-color': typeColors[selectedType] }}>
+          <div className="interpretation-text">
+            <h4>{selectedType.charAt(0).toUpperCase() + selectedType.slice(1)} Interpretation:</h4>
+            {formatInterpretationText(getCurrentInterpretation().interpretation_text)}
+          </div>
+        </div>
+      ) : (
+        <div className="generate-interpretation">
+          <button
+            className="generate-button"
+            onClick={handleGenerateInterpretation}
+            disabled={interpretationsLoading}
+          >
+            Generate {selectedType} Interpretation
+          </button>
+          <p className="generate-hint">Discover the {selectedType} significance of your dream</p>
+        </div>
+      )}
+    </div>
+  )}
+</div>
         <button className="close-button" onClick={closeModal}>
           Close
         </button>
