@@ -5,6 +5,7 @@ import HomePage from '../components/HomePage/HomePage';
 import DreamJournal from '../components/Dreams/DreamJournal/DreamJournal';
 import DreamCalendar from '../components/Calendar/DreamCalendar';
 import DreamscapeGallery from '../components/Dreamscapes/DreamscapeGallery';
+import InsightList from '../components/Insights/InsightList';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 export const router = createBrowserRouter([
@@ -39,6 +40,14 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      {
+        path: "/interpret",
+        element: (
+          <ProtectedRoute>
+            <InsightList />
+          </ProtectedRoute>
+        ),
+      }
     ],
   },
 ]);

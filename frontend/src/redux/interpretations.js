@@ -1,5 +1,6 @@
 //frontend/src/reduc/interpretations.js
 import { getApiUrl } from '../config';
+import { csrfFetch } from './csrf';
 
 // Interpretation Types Definition
 export const interpretationTypes = {
@@ -15,6 +16,7 @@ const SET_INTERPRETATIONS = 'interpretations/SET_INTERPRETATIONS';
 const SET_TYPE_INTERPRETATION = 'interpretations/SET_TYPE_INTERPRETATION';
 const SET_LOADING = 'interpretations/SET_LOADING';
 const SET_ERROR = 'interpretations/SET_ERROR';
+const SET_ALL_INTERPRETATIONS = 'interpretations/SET_ALL_INTERPRETATIONS';
 
 // Initial state with all interpretation types
 const initialState = {
@@ -26,6 +28,7 @@ const initialState = {
     [interpretationTypes.ACTIONABLE]: null,
     [interpretationTypes.LUCID]: null
   },
+  allInterpretations: [],
   isLoading: false,
   error: null
 };
@@ -34,6 +37,11 @@ const initialState = {
 export const setTypeInterpretation = (type, interpretation) => ({
   type: SET_TYPE_INTERPRETATION,
   payload: { type, interpretation }
+});
+
+export const setAllInterpretations = (interpretations) => ({
+  type: SET_ALL_INTERPRETATIONS,
+  payload: interpretations
 });
 
 export const setLoading = (isLoading) => ({
@@ -85,6 +93,32 @@ export const generateInterpretation = (dreamIds, type) => async (dispatch) => {
   }
 };
 
+export const getAllInterpretations = () => async (dispatch) => {
+  dispatch(setLoading(true));
+  dispatch(setError(null));
+
+  try {
+    // Use csrfFetch with getApiUrl
+    const response = await csrfFetch(getApiUrl('/api/interpretations/all'));
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch interpretations');
+    }
+
+    const interpretations = await response.json();
+    console.log('Fetched interpretations:', interpretations); // Debug log
+    dispatch(setAllInterpretations(interpretations));
+    return { success: true, interpretations };
+  } catch (error) {
+    console.error('Error fetching interpretations:', error); // Debug log
+    const errorMessage = error.message || 'Failed to fetch interpretations';
+    dispatch(setError(errorMessage));
+    return { error: errorMessage };
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
 export const getDreamInterpretations = (dreamId) => async (dispatch) => {
   dispatch(setLoading(true));
   dispatch(setError(null));
@@ -126,6 +160,16 @@ export default function interpretationsReducer(state = initialState, action) {
           ...state.byType,
           [action.payload.type]: action.payload.interpretation
         }
+      };
+    case SET_ALL_INTERPRETATIONS:
+      return {
+        ...state,
+        allInterpretations: action.payload,
+        byId: action.payload.reduce((acc, interp) => {
+          acc[interp.id] = interp;
+          return acc;
+        }, {}),
+        error: null  // Clear any previous errors
       };
     case SET_LOADING:
       return {

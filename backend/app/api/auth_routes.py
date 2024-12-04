@@ -175,28 +175,3 @@ def internal_server_error(e):
 def not_found_error(e):
     logger.error(f"Route not found: {request.url}")
     return {'errors': {'server': 'Route not found'}}, 404
-
-# @auth_routes.route('/test-csrf', methods=['POST'])
-# def test_csrf():
-#     """
-#     Test endpoint for CSRF validation
-#     """
-#     logger.debug("=== CSRF Test Endpoint ===")
-#     logger.debug(f"Headers: {dict(request.headers)}")
-#     logger.debug(f"Cookies: {dict(request.cookies)}")
-
-#     header_token = request.headers.get('X-CSRF-Token')
-#     cookie_token = request.cookies.get('csrf_token')
-    
-#     logger.debug(f"Header CSRF token: {header_token}")
-#     logger.debug(f"Cookie CSRF token: {cookie_token}")
-    
-#     # Check if we have any token
-#     if not header_token:
-#         return jsonify({
-#             "error": "No CSRF token in headers",
-#             "header_token": header_token,
-#             "cookie_token": cookie_token
-#         }), 400
-
-#     return jsonify({"success": True, "message": "CSRF token validated"})

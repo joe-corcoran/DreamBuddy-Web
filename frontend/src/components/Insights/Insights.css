@@ -1,0 +1,185 @@
+/* frontend/src/components/Insights/Insights.css */
+.insights-container {
+    min-height: 100vh;
+    background: linear-gradient(to bottom, #1a1a2e, #16213e);
+    padding: 20px;
+    position: relative;
+    overflow-x: hidden;
+  }
+  
+  /* Header and Filter Styles */
+  .insights-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-top: 20px;
+    color: white;
+  }
+  
+  .insights-header h1 {
+    font-size: 2.5em;
+    margin-bottom: 30px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  .type-filters {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    padding: 0 20px;
+  }
+  
+  .type-filter {
+    padding: 10px 20px;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+  }
+  
+  .type-filter:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+  }
+  
+  .type-filter.active {
+    background: var(--type-color);
+    border-color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Grid Layout */
+  .insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 30px;
+    padding: 20px;
+    max-width: 1800px;
+    margin: 0 auto;
+  }
+  
+  /* Card Styles */
+  .insight-card {
+    background: rgba(20, 20, 35, 0.95);
+    border-radius: 20px;
+    border: 1px solid var(--card-color);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  .insight-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  }
+  
+  .insight-header {
+    background-color: var(--card-color);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+  }
+  
+  .insight-type {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+  }
+  
+  .insight-type i {
+    font-size: 1.2em;
+  }
+  
+  .insight-content {
+    padding: 25px;
+  }
+  
+  /* Dream Content Styles */
+  .dream-content {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 25px;
+  }
+  
+  .dream-content h4 {
+    color: var(--card-color);
+    margin-bottom: 15px;
+    font-size: 1.1em;
+  }
+  
+  .dream-text {
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 15px;
+  }
+  
+  .dream-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 15px;
+  }
+  
+  .dream-tag {
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.9em;
+    color: white;
+    background-color: var(--card-color);
+    opacity: 0.8;
+  }
+  
+  /* Interpretation Text Styles */
+  .interpretation-text {
+    color: rgba(255, 255, 255, 0.95);
+  }
+  
+  .interpretation-text h4 {
+    color: var(--card-color);
+    margin-bottom: 20px;
+    font-size: 1.2em;
+  }
+  
+  .interpretation-section {
+    margin-bottom: 20px;
+  }
+  
+  .interpretation-section h5 {
+    color: var(--card-color);
+    margin-bottom: 10px;
+    font-size: 1.1em;
+  }
+  
+  .interpretation-paragraph {
+    margin-bottom: 15px;
+    line-height: 1.7;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .insights-grid {
+      grid-template-columns: 1fr;
+      padding: 10px;
+    }
+    
+    .type-filters {
+      overflow-x: auto;
+      padding: 10px;
+      justify-content: flex-start;
+    }
+    
+    .type-filter {
+      flex-shrink: 0;
+    }
+  
+    .insight-card {
+      margin-bottom: 20px;
+    }
+  }

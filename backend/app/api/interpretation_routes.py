@@ -1,3 +1,4 @@
+#backend/app/api/interpretation_routes.py
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.models import db, DreamInterpretation, DreamJournal
@@ -92,6 +93,30 @@ def generate_interpretation():
     except Exception as e:
         logger.error(f"Error generating interpretation: {str(e)}")
         db.session.rollback()
+        return jsonify({'errors': {'server': str(e)}}), 500
+    
+@interpretation_routes.route('/all', methods=['GET'])
+@login_required
+def get_all_interpretations():
+    """Get all interpretations for the current user with associated dreams"""
+    try:
+        interpretations = (DreamInterpretation.query
+            .filter(DreamInterpretation.user_id == current_user.id)
+            .order_by(DreamInterpretation.date.desc())
+            .all())
+        
+        # Create a more detailed response that includes dream data
+        response_data = []
+        for interp in interpretations:
+            interp_dict = interp.to_dict()
+            # Add associated dreams
+            interp_dict['dreams'] = [dream.to_dict() for dream in interp.dreams]
+            response_data.append(interp_dict)
+        
+        return jsonify(response_data)
+
+    except Exception as e:
+        logger.error(f"Error fetching all interpretations: {str(e)}")
         return jsonify({'errors': {'server': str(e)}}), 500
 
 @interpretation_routes.route('/dream/<int:dream_id>', methods=['GET'])

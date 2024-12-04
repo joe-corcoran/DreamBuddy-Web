@@ -24,17 +24,23 @@ export default function Layout() {
     }
   }, [user, isLoaded, navigate]);
 
+  if (!isLoaded) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
+
   return (
     <ModalProvider>
-      {isLoaded && (
-        <div className="app-layout">
-          <Navigation />
-          <main className="main-content">
-            <Outlet />
-          </main>
-          {user && <BottomNavigation />}
-        </div>
-      )}
+      <div className="app-layout">
+        <Navigation />
+        <main className="main-content">
+          <Outlet />
+        </main>
+        {user && <BottomNavigation />}
+      </div>
       <Modal />
     </ModalProvider>
   );
