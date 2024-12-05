@@ -160,6 +160,10 @@
     padding: 20px;
   }
 
+  .dream-textarea {
+    height: 300px;
+  }
+
   .dream-controls {
     flex-direction: column;
     gap: 15px;

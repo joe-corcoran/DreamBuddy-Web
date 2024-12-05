@@ -15,11 +15,13 @@ function SignupFormModal() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
   const { closeModal } = useModal();
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
-  useEffect(() => {
-    const validateForm = () => {
-      const newErrors = {};
-      
+ useEffect(() => {
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (isSubmitted) {  
       if (!email) {
         newErrors.email = "Email is required";
       } else if (!/\S+@\S+\.\S+/.test(email)) {
@@ -47,24 +49,25 @@ function SignupFormModal() {
       } else if (password !== confirmPassword) {
         newErrors.confirmPassword = "Passwords must match";
       }
+    }
 
-      setErrors(newErrors);
-      setIsFormValid(
-        email && 
-        username && 
-        password && 
-        confirmPassword && 
-        password === confirmPassword && 
-        Object.keys(newErrors).length === 0
-      );
-    };
+    setErrors(newErrors);
+    setIsFormValid(
+      email && 
+      username && 
+      password && 
+      confirmPassword && 
+      password === confirmPassword && 
+      Object.keys(newErrors).length === 0
+    );
+  };
 
-    validateForm();
-  }, [email, username, password, confirmPassword]);
+  validateForm();
+}, [email, username, password, confirmPassword, isSubmitted]); 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    setIsSubmitted(true); 
     if (!isFormValid) return;
 
     if (password !== confirmPassword) {
@@ -109,7 +112,8 @@ function SignupFormModal() {
 
   return (
     <div className="signup-form">
-      <h1>Sign Up</h1>
+    <button onClick={closeModal} className="close-button">×</button>
+    <h1>Sign Up</h1>
       
       {errors.general && (
         <div className="error-alert">

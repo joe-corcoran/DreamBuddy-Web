@@ -1,43 +1,58 @@
 .character-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-   
-  }
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  z-index: 1000; /* Ensure it's above other content */
+}
+
+.character-modal {
+  background: linear-gradient(to bottom, #4C1D95, #1E3A8A);
+  border-radius: 1rem;
+  max-width: 28rem;
+  width: 100%;
+  padding: 2rem 1.5rem;
+  position: relative;
+  margin: auto; 
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.character-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px 10px;
+  line-height: 1;
+  transition: opacity 0.2s;
+  z-index: 1001; 
+}
+
+.character-modal-close:hover {
+  opacity: 0.7;
+}
   
-  .character-modal {
-    background: linear-gradient(to bottom, #4C1D95, #1E3A8A);
-    border-radius: 0.5rem;
-    max-width: 28rem;
-    width: 100%;
-    padding: 1.5rem;
-    position: relative;
-  }
-  
-  .character-modal-close {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0.5rem;
-  }
-  
-  .character-modal-close:hover {
-    color: rgba(255, 255, 255, 0.8);
-  }
-  
-  .character-header {
-    text-align: center;
-    margin-bottom: 1.5rem;
-  }
+.character-header {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.character-animation {
+  width: 10rem;
+  height: 10rem;
+  margin: 0 auto 1rem;
+}
+
+.character-traits {
+  margin-top: 1rem;
+}
   
   .character-name {
     font-size: 1.5rem;
@@ -50,15 +65,7 @@
     color: rgba(255, 255, 255, 0.8);
   }
   
-  .character-animation {
-    width: 12rem;
-    height: 12rem;
-    margin: 0 auto 1.5rem;
-  }
-  
-  .character-traits {
-    margin-top: 1.5rem;
-  }
+
   
   .character-traits-title {
     font-size: 1.125rem;
@@ -99,4 +106,54 @@
   
   .character-evolution-text {
     color: rgba(255, 255, 255, 0.8);
+  }
+
+  @media (max-width: 768px) {
+    .character-modal-overlay {
+      padding: 1.5rem; 
+  }
+
+    .character-modal {
+        margin: 0.5rem;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        padding: 2.5rem 2rem;
+        max-height: 85vh; 
+    }
+
+    .character-animation {
+        width: 8rem;
+        height: 8rem;
+    }
+
+    .character-name {
+        font-size: 1.25rem;
+    }
+
+    .character-traits-list {
+      margin-bottom: 0.5rem;
+  }
+
+    .character-traits-title,
+    .character-evolution-title {
+        font-size: 1rem;
+    }
+
+    .character-trait-item,
+    .character-evolution-text {
+        font-size: 0.9rem;
+    }
+}
+
+/* For very small screens */
+@media (max-width: 320px) {
+    .character-modal {
+        margin: 0.25rem;
+        padding: 0.75rem;
+    }
+
+    .character-animation {
+        width: 8rem;
+        height: 8rem;
+    }
   }

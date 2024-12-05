@@ -74,9 +74,8 @@
 
 .ghost-status-wrapper {
   border-radius: 15px;
-  padding: 2rem;
+  padding: 1rem;
   width: 100%;
-  margin-bottom: 2rem;
   box-sizing: border-box;
 }
 
@@ -99,6 +98,7 @@
 
 .dream-entry-section {
   width: 100%;
+  padding: 40px;
   margin-top: 1rem;
 }
 

@@ -13,32 +13,36 @@ function LoginFormModal() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
   const { closeModal } = useModal();
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
     const validateForm = () => {
       const newErrors = {};
       
-      if (!credential) {
-        newErrors.credential = "Email or username is required";
-      } else if (credential.length < 3) {
-        newErrors.credential = "Email or username must be at least 3 characters";
+      if (isSubmitted) {  
+        if (!credential) {
+          newErrors.credential = "Email or username is required";
+        } else if (credential.length < 3) {
+          newErrors.credential = "Email or username must be at least 3 characters";
+        }
+        
+        if (!password) {
+          newErrors.password = "Password is required";
+        } else if (password.length < 6) {
+          newErrors.password = "Password must be at least 6 characters";
+        }
       }
-      
-      if (!password) {
-        newErrors.password = "Password is required";
-      } else if (password.length < 6) {
-        newErrors.password = "Password must be at least 6 characters";
-      }
-
+  
       setErrors(newErrors);
       setIsFormValid(credential.length >= 3 && password.length >= 6);
     };
-
+  
     validateForm();
-  }, [credential, password]);
+  }, [credential, password, isSubmitted]); 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitted(true);
     if (!isFormValid) return;
 
     setIsLoading(true);
@@ -93,7 +97,8 @@ function LoginFormModal() {
 
   return (
     <div className="login-form">
-      <h1>Log In</h1>
+    <button onClick={closeModal} className="close-button">×</button>
+    <h1>Log In</h1>
 
       <form onSubmit={handleSubmit} noValidate>
         <div className={`form-group ${errors.credential ? 'has-error' : credential ? 'is-valid' : ''}`}>
