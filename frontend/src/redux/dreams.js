@@ -168,20 +168,15 @@ export const thunkDeleteDream = (dreamId) => async (dispatch) => {
     dispatch(removeDream(dreamId));
     
     const today = new Date().toDateString();
-    const state = store.getState();
-    const deletedDream = state.dreams.allDreams[dreamId];
+    dispatch(setTodayDream(null));
     
-    if (deletedDream && new Date(deletedDream.date).toDateString() === today) {
-      dispatch(setTodayDream(null));
-    }
-    
-    const dreamDate = new Date(deletedDream?.date || Date.now());
+    const currentDate = new Date();
     await dispatch(thunkGetDreamsByMonth(
-      dreamDate.getFullYear(),
-      dreamDate.getMonth() + 1
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1
     ));
     
-    return { success: true };
+    return { success: true, deletedId: dreamId };
   } catch (error) {
     return { errors: error.errors || { server: "Failed to delete dream" } };
   }

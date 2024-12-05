@@ -55,8 +55,7 @@ const formatInterpretationText = (text) => {
   });
 };
 
-const DreamDetailsModal = ({ date: initialDate, dreams: initialDreams }) => {
-  const dispatch = useDispatch();
+const DreamDetailsModal = ({ date: initialDate, dreams: initialDreams, onUpdate }) => {  const dispatch = useDispatch();
   const { closeModal } = useModal();
   const [currentDate, setCurrentDate] = useState(initialDate);
   const [currentDreams, setCurrentDreams] = useState(initialDreams);
@@ -304,14 +303,19 @@ const DreamDetailsModal = ({ date: initialDate, dreams: initialDreams }) => {
         currentDate={currentDate}
         onClose={() => setIsEditing(false)}
         onSave={async (updatedDream) => {
-          const year = currentDate.getFullYear();
-          const month = currentDate.getMonth() + 1;
-          await dispatch(thunkGetDreamsByMonth(year, month));
-          
-          if (updatedDream) {
+          if (updatedDream === null) {
+            setCurrentDreams([]);
+            setIsEditing(false);
+            await onUpdate?.();
+            closeModal();
+          } else if (updatedDream) {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth() + 1;
+            await dispatch(thunkGetDreamsByMonth(year, month));
             setCurrentDreams([updatedDream]);
+            setIsEditing(false);
+            await onUpdate?.();
           }
-          setIsEditing(false);
         }}
       />
     )}
@@ -342,7 +346,7 @@ const DreamDetailsModal = ({ date: initialDate, dreams: initialDreams }) => {
                   <div className="loading-text">
                     <p className="loading-primary">Creating your dreamscape visualization</p>
                     <p className="loading-secondary">Channeling your dream into visual form...</p>
-                    <p className="loading-hint">This mystical process takes 1-2 minutes</p>
+                    <p className="loading-hint">This process can take 1-2 minutes</p>
                   </div>
                 </div>
               ) : dreamscapes[dream.id]?.image_url ? (
@@ -353,7 +357,7 @@ const DreamDetailsModal = ({ date: initialDate, dreams: initialDreams }) => {
                     className="dreamscape-image"
                     onError={(e) => {
                       console.error("Image failed to load:", e);
-                      setErrorMessage("Your dreamscape encountered a mystical barrier. Please try regenerating it.");
+                      setErrorMessage("Your dreamscape encountered a barrier. Please try regenerating it.");
                       e.target.style.display = "none";
                     }}
                   />

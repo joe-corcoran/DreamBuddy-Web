@@ -1,16 +1,21 @@
 // frontend/src/components/Dreams/DreamDetailsModal/DreamForm.jsx
-import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { thunkUpdateDream, thunkQuickDream, thunkDeleteDream, thunkGetDreamsByMonth } from '../../../redux/dreams';
+import React, { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import {
+  thunkUpdateDream,
+  thunkQuickDream,
+  thunkDeleteDream,
+  thunkGetDreamsByMonth,
+} from "../../../redux/dreams";
 
-const DreamForm = ({ dream, defaultTitle, currentDate, onClose, onSave }) => {  // Add currentDate to props
-    const dispatch = useDispatch();
-    const [title, setTitle] = useState(dream?.title || defaultTitle || '');
-    const [content, setContent] = useState(dream?.content || '');
-    const [isLucid, setIsLucid] = useState(dream?.is_lucid || false);
-    const [error, setError] = useState(null);
-    const [successMessage, setSuccessMessage] = useState(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+const DreamForm = ({ dream, defaultTitle, currentDate, onClose, onSave }) => {
+  const dispatch = useDispatch();
+  const [title, setTitle] = useState(dream?.title || defaultTitle || "");
+  const [content, setContent] = useState(dream?.content || "");
+  const [isLucid, setIsLucid] = useState(dream?.is_lucid || false);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (dream) {
@@ -28,10 +33,9 @@ const DreamForm = ({ dream, defaultTitle, currentDate, onClose, onSave }) => {  
     setIsSubmitting(true);
 
     try {
-      // Check if the selected date is in the future
       const today = new Date();
       if (currentDate > today) {
-        setError('Cannot create dreams for future dates');
+        setError("Cannot create dreams for future dates");
         setIsSubmitting(false);
         return;
       }
@@ -41,35 +45,53 @@ const DreamForm = ({ dream, defaultTitle, currentDate, onClose, onSave }) => {  
         content: content.trim(),
         is_lucid: isLucid,
         clientDate: currentDate.toISOString(),
-        allowMultiple: false
+        allowMultiple: false,
       };
 
       let result;
       if (dream) {
         result = await dispatch(thunkUpdateDream(dream.id, dreamData));
         if (result.dream) {
-          setSuccessMessage('Dream updated successfully!');
+          setSuccessMessage("Dream updated successfully!");
           const dreamDate = new Date(dream.date);
-          await dispatch(thunkGetDreamsByMonth(dreamDate.getFullYear(), dreamDate.getMonth() + 1));
+          await dispatch(
+            thunkGetDreamsByMonth(
+              dreamDate.getFullYear(),
+              dreamDate.getMonth() + 1
+            )
+          );
           await onSave?.(result.dream);
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         } else if (result.errors) {
-          setError(typeof result.errors === 'string' ? result.errors : Object.values(result.errors)[0]);
+          setError(
+            typeof result.errors === "string"
+              ? result.errors
+              : Object.values(result.errors)[0]
+          );
         }
       } else {
         result = await dispatch(thunkQuickDream(dreamData));
         if (result.dream) {
-          setSuccessMessage('Dream added successfully!');
-          await dispatch(thunkGetDreamsByMonth(currentDate.getFullYear(), currentDate.getMonth() + 1));
+          setSuccessMessage("Dream added successfully!");
+          await dispatch(
+            thunkGetDreamsByMonth(
+              currentDate.getFullYear(),
+              currentDate.getMonth() + 1
+            )
+          );
           await onSave?.(result.dream);
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         } else if (result.errors) {
-          setError(typeof result.errors === 'string' ? result.errors : Object.values(result.errors)[0]);
+          setError(
+            typeof result.errors === "string"
+              ? result.errors
+              : Object.values(result.errors)[0]
+          );
         }
       }
     } catch (err) {
-      console.error('Error submitting dream:', err);
-      setError('Failed to save dream');
+      console.error("Error submitting dream:", err);
+      setError("Failed to save dream");
     } finally {
       setIsSubmitting(false);
       if (!error && successMessage) {
@@ -79,25 +101,38 @@ const DreamForm = ({ dream, defaultTitle, currentDate, onClose, onSave }) => {  
   };
 
   const handleDelete = async () => {
-    if (!dream || !window.confirm('Are you sure you want to delete this dream?')) return;
-    
+    if (
+      !dream ||
+      !window.confirm("Are you sure you want to delete this dream?")
+    )
+      return;
+
     setIsSubmitting(true);
     try {
-        const result = await dispatch(thunkDeleteDream(dream.id));
-        if (result.errors) {
-          let errorMessage = result.errors;
-          if (typeof result.errors === 'object') {
-            errorMessage = Object.values(result.errors)[0]?.toString() || 'Failed to delete dream';
-          }
-          setError(errorMessage);
-        } else {
-          setSuccessMessage('Dream deleted successfully');
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          await onSave?.();
-          onClose();
+      const result = await dispatch(thunkDeleteDream(dream.id));
+      if (result.errors) {
+        let errorMessage = result.errors;
+        if (typeof result.errors === "object") {
+          errorMessage =
+            Object.values(result.errors)[0]?.toString() ||
+            "Failed to delete dream";
         }
+        setError(errorMessage);
+      } else {
+        const dreamDate = new Date(dream.date);
+        await dispatch(
+          thunkGetDreamsByMonth(
+            dreamDate.getFullYear(),
+            dreamDate.getMonth() + 1
+          )
+        );
+
+        setSuccessMessage("Dream deleted successfully");
+        onClose();
+        onSave?.(null);
+      }
     } catch (err) {
-      setError('Failed to delete dream');
+      setError("Failed to delete dream");
     } finally {
       setIsSubmitting(false);
     }
@@ -114,7 +149,7 @@ const DreamForm = ({ dream, defaultTitle, currentDate, onClose, onSave }) => {  
         disabled={isSubmitting}
         required
       />
-      
+
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
@@ -124,7 +159,7 @@ const DreamForm = ({ dream, defaultTitle, currentDate, onClose, onSave }) => {  
         required
       />
 
-       <div className="form-controls">
+      <div className="form-controls">
         <label className="lucid-toggle">
           <input
             type="checkbox"
@@ -143,7 +178,8 @@ const DreamForm = ({ dream, defaultTitle, currentDate, onClose, onSave }) => {  
               className="delete-button"
               disabled={isSubmitting}
             >
-              Delete Dream
+              <i className="fas fa-trash"></i>
+              <span>Delete</span>
             </button>
           )}
           <button
@@ -152,20 +188,30 @@ const DreamForm = ({ dream, defaultTitle, currentDate, onClose, onSave }) => {  
             className="cancel-button"
             disabled={isSubmitting}
           >
-            Cancel
+            <i className="fas fa-times"></i>
+            <span>Cancel</span>
           </button>
           <button
             type="submit"
             className="save-button"
             disabled={isSubmitting || !content.trim() || !title.trim()}
           >
-            {isSubmitting ? 'Saving...' : (dream ? 'Update Dream' : 'Add Dream')}
+            <i className="fas fa-save"></i>
+            <span>
+              {isSubmitting
+                ? "Saving..."
+                : dream
+                ? "Update Dream"
+                : "Add Dream"}
+            </span>
           </button>
         </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}
-      {successMessage && <div className="success-message">{successMessage}</div>}
+      {successMessage && (
+        <div className="success-message">{successMessage}</div>
+      )}
 
       {error && <div className="error-message">{error}</div>}
     </form>

@@ -117,7 +117,13 @@ const DreamCalendar = () => {
         key={`dream-modal-${date.toISOString()}`} 
         date={date}
         dreams={dreamsForDate}
-        allDreams={dreams} // Pass all dreams for navigation
+        allDreams={dreams}
+        onUpdate={async () => {
+          const year = date.getFullYear();
+          const month = date.getMonth() + 1;
+          await dispatch(thunkLoadDreams());
+          await dispatch(thunkGetDreamsByMonth(year, month));
+        }}
       />
     );
   };
