@@ -83,7 +83,10 @@ const QuickDreamEntry = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!content.trim() || !user) return;
+    if (!content.trim() || content.trim().length < 10 || !user) {
+      setError('Dream content must be at least 10 characters long');
+      return;
+    }
     if (!title.trim()) {
       setTitle(getDefaultTitle());
     }
@@ -145,15 +148,18 @@ const QuickDreamEntry = () => {
       />
       
       <form onSubmit={handleSubmit} className="quick-dream-form">
-        <div className="dream-input-container">
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="What did you dream about?"
-            className="dream-textarea"
-            disabled={isLoading}
-          />
-        </div>
+      <div className="dream-input-container">
+  <textarea
+    value={content}
+    onChange={(e) => setContent(e.target.value)}
+    placeholder="What did you dream about?"
+    className="dream-textarea"
+    disabled={isLoading}
+  />
+  <div className="input-helper-text" style={{ fontSize: '0.8rem', color: content.trim().length < 10 ? '#ff6b6b' : '#4caf50' }}>
+    {content.trim().length}/10 characters minimum
+  </div>
+</div>
 
         <div className="dream-controls">
           <label className="lucid-toggle">
@@ -169,7 +175,7 @@ const QuickDreamEntry = () => {
           <button 
             type="submit" 
             className="save-dream-btn"
-            disabled={isLoading || !content.trim()}
+            disabled={isLoading || !content.trim() || content.trim().length < 10}
           >
             {isLoading ? 'Saving...' : (todayDream ? 'Update Dream' : 'Save Dream')}
           </button>
