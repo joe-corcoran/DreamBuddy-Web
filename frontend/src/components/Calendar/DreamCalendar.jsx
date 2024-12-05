@@ -20,7 +20,6 @@ const DreamCalendar = () => {
     Object.values(state.dreams.allDreams)
   );
   const [selectedDate, setSelectedDate] = useState(new Date());
-  // const [showDreamPopover, setShowDreamPopover] = useState(false);
   const [selectedDreams, setSelectedDreams] = useState([]);
   const [popularTags, setPopularTags] = useState([]);
   const [tagColors, setTagColors] = useState({});
@@ -30,19 +29,18 @@ const DreamCalendar = () => {
     const loadCalendarData = async () => {
       setIsLoading(true);
       try {
-        // Load all dreams
         await dispatch(thunkLoadDreams());
 
-        // Load month-specific dreams
         const year = selectedDate.getFullYear();
         const month = selectedDate.getMonth() + 1;
-        await dispatch(thunkGetDreamsByMonth(year, month));
+        const monthDreams = await dispatch(thunkGetDreamsByMonth(year, month));
 
-        // Load popular tags
         const tagsData = await dispatch(thunkGetPopularTags());
-        const tags = tagsData.map(tagObj => tagObj.tag); // Extract tag names
-        setPopularTags(tags);
-        assignColorsToTags(tags);
+        if (tagsData && !tagsData.errors) {
+          const tags = tagsData.map(tagObj => tagObj.tag);
+          setPopularTags(tags);
+          assignColorsToTags(tags);
+        }
       } catch (error) {
         console.error('Error loading calendar data:', error);
       } finally {
@@ -51,7 +49,7 @@ const DreamCalendar = () => {
     };
 
     loadCalendarData();
-  }, [dispatch, selectedDate]);
+  }, [dispatch, selectedDate, dreams.length]); 
 
   const assignColorsToTags = (tags) => {
     const colors = [

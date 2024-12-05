@@ -10,6 +10,9 @@ import {
 } from "../../../redux/interpretations";
 import { generateDreamscape, getDreamscape } from "../../../redux/dreamscapes";
 import "./DreamDetailsModal.css";
+import DreamForm from './DreamForm';
+
+
 
 const InterpretationType = {
   SPIRITUAL: "spiritual",
@@ -66,6 +69,7 @@ const DreamDetailsModal = ({ date: initialDate, dreams: initialDreams }) => {
   const [initialFetchAttempted, setInitialFetchAttempted] = useState(false);
   const [generationStatus, setGenerationStatus] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const allDreams = useSelector((state) => state.dreams.allDreams);
   const interpretations = useSelector((state) => state.interpretations.byType);
@@ -246,25 +250,73 @@ const DreamDetailsModal = ({ date: initialDate, dreams: initialDreams }) => {
             />
           </div>
           {isDreamDetailsExpanded && (
-            <div className="section-content">
-              {currentDreams.map((dream) => (
-                <div key={dream.id} className="dream-entry">
-                  <h4>{dream.title}</h4>
-                  <p>{dream.content}</p>
-                  {dream.is_lucid && <span className="lucid-badge">Lucid</span>}
-                  {dream.tags?.length > 0 && (
-                    <div className="tags">
-                      {dream.tags.map((tag) => (
-                        <span key={tag} className="tag">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+  <div className="section-content">
+    {!isEditing ? (
+      <>
+        {currentDreams.length > 0 ? (
+          // Existing dream display
+          currentDreams.map((dream) => (
+            <div key={dream.id} className="dream-entry">
+              <div className="dream-header">
+                <h4>{dream.title}</h4>
+                <button
+                  className="edit-button"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <i className="fas fa-edit"></i>
+                </button>
+              </div>
+              <p>{dream.content}</p>
+              {dream.is_lucid && <span className="lucid-badge">Lucid</span>}
+              {dream.tags?.length > 0 && (
+                <div className="tags">
+                  {dream.tags.map((tag) => (
+                    <span key={tag} className="tag">
+                      {tag}
+                    </span>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
+          ))
+        ) : (
+          // Empty state
+          <div className="empty-dream">
+            <p>No dream logged for this date</p>
+            <button
+              className="add-dream-button"
+              onClick={() => setIsEditing(true)}
+            >
+              <i className="fas fa-plus"></i> Add Dream
+            </button>
+          </div>
+        )}
+      </>
+    ) : (
+      <DreamForm
+        dream={currentDreams[0]}
+        defaultTitle={`Dream on ${new Date(currentDate).toLocaleString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric"
+        })}`}
+        currentDate={currentDate}
+        onClose={() => setIsEditing(false)}
+        onSave={async (updatedDream) => {
+          const year = currentDate.getFullYear();
+          const month = currentDate.getMonth() + 1;
+          await dispatch(thunkGetDreamsByMonth(year, month));
+          
+          if (updatedDream) {
+            setCurrentDreams([updatedDream]);
+          }
+          setIsEditing(false);
+        }}
+      />
+    )}
+  </div>
+)}
         </div>
 
         {/* Dreamscape Section */}

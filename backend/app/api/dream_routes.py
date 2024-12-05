@@ -108,12 +108,13 @@ def quick_dream():
             return {'errors': {'date': 'Client date is required'}}, 400
 
         target_date = parse_client_date(client_date_str)
-        # Use date only for comparison
         target_date_only = target_date.date()
 
-        existing_dream = DreamJournal.get_dream_for_date(current_user.id, target_date_only)
-        if existing_dream:
-            return {'errors': {'date': 'You have already logged a dream for this date'}}, 400
+        # Only check for existing dream if not explicitly allowing multiple dreams
+        if not data.get('allowMultiple'):
+            existing_dream = DreamJournal.get_dream_for_date(current_user.id, target_date_only)
+            if existing_dream:
+                return {'errors': {'date': 'You have already logged a dream for this date'}}, 400
 
         new_dream = DreamJournal(
             user_id=current_user.id,
@@ -145,19 +146,12 @@ def update_dream(dream_id):
             return {'errors': {'unauthorized': 'Dream not found'}}, 404
 
         data = request.json
-        client_date_str = data.get('clientDate')
-        client_date = parse_client_date(client_date_str).date()
-        dream_date = dream.date.date()
-
-        if dream_date != client_date:
-            return {'errors': {'date': 'Can only update dreams from the current day'}}, 400
-
         dream.title = data.get('title', dream.title)
         dream.content = data.get('content', dream.content)
         dream.is_lucid = data.get('is_lucid', dream.is_lucid)
         dream.updated_at = datetime.now(timezone.utc)
 
-        # Update tags
+        # Update tags if provided
         if 'tags' in data:
             DreamTags.query.filter_by(dream_id=dream_id).delete()
             for tag in data['tags']:

@@ -73,15 +73,43 @@ export const thunkCheckTodayDream = (clientDate) => async (dispatch) => {
   try {
     const response = await csrfFetch(`/api/dreams/today?clientDate=${encodeURIComponent(clientDate)}`);
     const dream = await response.json();
-    dispatch(setTodayDream(dream));
+    
+    // Only set as today's dream if we actually got a dream back
+    if (dream && dream.id) {
+      const today = new Date(clientDate);
+      const dreamDate = new Date(dream.date);
+      
+      // Verify the dates match
+      if (today.getFullYear() === dreamDate.getFullYear() &&
+          today.getMonth() === dreamDate.getMonth() &&
+          today.getDate() === dreamDate.getDate()) {
+        dispatch(setTodayDream(dream));
+        // Also ensure it's in allDreams
+        dispatch(addDream(dream));
+      } else {
+        dispatch(setTodayDream(null));
+      }
+    } else {
+      dispatch(setTodayDream(null));
+    }
+    
     return dream;
   } catch (error) {
+    console.error('Error checking today\'s dream:', error);
+    dispatch(setTodayDream(null));
     return { errors: { server: "Failed to check today's dream" } };
   }
 };
 
 export const thunkQuickDream = (dreamData) => async (dispatch) => {
   try {
+    // Validate the date - no future dreams
+    const clientDate = new Date(dreamData.clientDate);
+    const currentDate = new Date();
+    if (clientDate > currentDate) {
+      return { errors: { date: 'Cannot create dreams for future dates' } };
+    }
+
     const response = await csrfFetch('/api/dreams/quick', {
       method: "POST",
       body: JSON.stringify(dreamData)
@@ -93,7 +121,13 @@ export const thunkQuickDream = (dreamData) => async (dispatch) => {
     }
     
     dispatch(addDream(newDream));
-    dispatch(setTodayDream(newDream));
+    
+    // Only set as today's dream if it's actually for today
+    const isToday = new Date(newDream.date).toDateString() === currentDate.toDateString();
+    if (isToday) {
+      dispatch(setTodayDream(newDream));
+    }
+    
     return { dream: newDream };
   } catch (error) {
     return { errors: error.errors || { server: "Failed to save dream" } };
@@ -122,15 +156,34 @@ export const thunkUpdateDream = (dreamId, dreamData) => async (dispatch) => {
 
 export const thunkDeleteDream = (dreamId) => async (dispatch) => {
   try {
-    await csrfFetch(`/api/dreams/${dreamId}`, {
+    const response = await csrfFetch(`/api/dreams/${dreamId}`, {
       method: "DELETE"
     });
     
+    if (!response.ok) {
+      const error = await response.json();
+      throw error;
+    }
+
     dispatch(removeDream(dreamId));
-    dispatch(setTodayDream(null));
+    
+    const today = new Date().toDateString();
+    const state = store.getState();
+    const deletedDream = state.dreams.allDreams[dreamId];
+    
+    if (deletedDream && new Date(deletedDream.date).toDateString() === today) {
+      dispatch(setTodayDream(null));
+    }
+    
+    const dreamDate = new Date(deletedDream?.date || Date.now());
+    await dispatch(thunkGetDreamsByMonth(
+      dreamDate.getFullYear(),
+      dreamDate.getMonth() + 1
+    ));
+    
     return { success: true };
   } catch (error) {
-    return { errors: await error.json() };
+    return { errors: error.errors || { server: "Failed to delete dream" } };
   }
 };
 

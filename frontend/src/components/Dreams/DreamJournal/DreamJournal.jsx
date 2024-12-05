@@ -1,3 +1,4 @@
+//frontend/src/components/Dreams/DreamJournal/DreamJournal.jsx
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getDreamscape } from '../../../redux/dreamscapes';

@@ -19,9 +19,20 @@ const QuickDreamEntry = () => {
 
   const getUserLocalDate = () => {
     const now = new Date();
-    return new Date(now.toLocaleString('en-US', { 
+    const localDate = new Date(now.toLocaleString('en-US', { 
       timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone 
     }));
+        localDate.setHours(0, 0, 0, 0);
+    return localDate;
+  };
+  
+  // Add this new function
+  const isSameDay = (date1, date2) => {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth() &&
+           d1.getDate() === d2.getDate();
   };
 
   const getDefaultTitle = () => {
@@ -34,33 +45,41 @@ const QuickDreamEntry = () => {
 
   useEffect(() => {
     if (!user) return;
-
-    const checkTodayDream = async () => {
+    
+    const checkAndSetTodayDream = async () => {
       setIsLoading(true);
       try {
-        const clientDate = getUserLocalDate().toISOString();
-        await dispatch(thunkCheckTodayDream(clientDate));
+        const todayDate = getUserLocalDate();
+        const response = await dispatch(thunkCheckTodayDream(todayDate.toISOString()));
+        
+        if (response && !response.errors && response.id) {
+          // Verify this is actually today's dream
+          if (isSameDay(response.date, todayDate)) {
+            setTitle(response.title);
+            setContent(response.content);
+            setIsLucid(response.is_lucid);
+          } else {
+            setTitle(getDefaultTitle());
+            setContent('');
+            setIsLucid(false);
+          }
+        } else {
+          setTitle(getDefaultTitle());
+          setContent('');
+          setIsLucid(false);
+        }
       } catch (err) {
         console.error('Error checking today\'s dream:', err);
+        setTitle(getDefaultTitle());
+        setContent('');
+        setIsLucid(false);
       } finally {
         setIsLoading(false);
       }
     };
-
-    checkTodayDream();
+  
+    checkAndSetTodayDream();
   }, [dispatch, user]);
-
-  useEffect(() => {
-    if (todayDream) {
-      setTitle(todayDream.title);
-      setContent(todayDream.content);
-      setIsLucid(todayDream.is_lucid);
-    } else {
-      setTitle(getDefaultTitle());
-      setContent('');
-      setIsLucid(false);
-    }
-  }, [todayDream]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,10 +87,10 @@ const QuickDreamEntry = () => {
     if (!title.trim()) {
       setTitle(getDefaultTitle());
     }
-
+  
     setIsLoading(true);
     setError(null);
-
+  
     try {
       const localDate = getUserLocalDate();
       const dreamData = {
@@ -81,18 +100,12 @@ const QuickDreamEntry = () => {
         clientDate: localDate.toISOString(),
         tags: []
       };
-
+  
       let result;
       if (todayDream) {
-        const dreamDate = new Date(todayDream.date);
-        const today = getUserLocalDate();
-        const isDreamFromToday = 
-          dreamDate.getFullYear() === today.getFullYear() &&
-          dreamDate.getMonth() === today.getMonth() &&
-          dreamDate.getDate() === today.getDate();
-
-        if (!isDreamFromToday) {
-          setError('Can only update dreams from the current day');
+        // Only update if it's actually today's dream
+        if (!isSameDay(new Date(todayDream.date), localDate)) {
+          setError('Can only update dreams from the current day in quick entry');
           setIsLoading(false);
           return;
         }
@@ -103,7 +116,7 @@ const QuickDreamEntry = () => {
           await dispatch(updateCharacterStats());
         }
       }
-
+  
       if (result.errors) {
         setError(typeof result.errors === 'string' ? result.errors : Object.values(result.errors)[0]);
       } else {
