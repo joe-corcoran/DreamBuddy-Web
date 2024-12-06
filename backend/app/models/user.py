@@ -35,6 +35,13 @@ class User(db.Model, UserMixin):
         cascade='all, delete-orphan'
     )
 
+    profile = db.relationship(
+    'UserProfile',
+    back_populates='user',
+    uselist=False,
+    cascade='all, delete-orphan'
+)
+
     @property
     def password(self):
         return self.hashed_password
@@ -50,5 +57,6 @@ class User(db.Model, UserMixin):
         return {
             'id': self.id,
             'username': self.username,
-            'email': self.email
+            'email': self.email,
+            'profile': self.profile.to_dict() if self.profile else None
         }

@@ -1,12 +1,14 @@
 // frontend/src/components/Navigation/Navigation.jsx
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { useSelector } from "react-redux"; 
+import { useSelector } from "react-redux";
 import ProfileButton from "./ProfileButton";
+import OpenModalButton from "../OpenModalButton";
+import ProfileModal from "../ProfileModal/ProfileModal";
 import "./Navigation.css";
 
 function Navigation() {
-  const user = useSelector((state) => state.session.user); 
+  const user = useSelector((state) => state.session.user);
 
   return (
     <nav className="top-navigation">
@@ -17,10 +19,14 @@ function Navigation() {
       </div>
 
       <div className="nav-right">
-        <button className="nav-icon">
-          <i className="fas fa-eye"></i>
-        </button>
-        <ProfileButton user={user} /> {/* Pass user as a prop */}
+        {user && (
+          <OpenModalButton
+            buttonText={<i className="fas fa-eye"></i>}
+            modalComponent={<ProfileModal />}
+            className="nav-icon"
+          />
+        )}
+        <ProfileButton user={user} />
       </div>
     </nav>
   );

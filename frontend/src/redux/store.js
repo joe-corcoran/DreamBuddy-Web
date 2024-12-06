@@ -12,6 +12,7 @@ import dreamsReducer from "./dreams";
 import characterReducer from "./character";
 import dreamscapesReducer from "./dreamscapes";
 import interpretationsReducer from "./interpretations";
+import profileReducer from './profile';
 
 export const CLEAR_STATE = 'app/CLEAR_STATE';
 
@@ -29,6 +30,7 @@ const combinedReducer = combineReducers({
   character: characterReducer,
   dreamscapes: dreamscapesReducer,
   interpretations: interpretationsReducer,
+  profile: profileReducer
 });
 
 const rootReducer = (state, action) => {
