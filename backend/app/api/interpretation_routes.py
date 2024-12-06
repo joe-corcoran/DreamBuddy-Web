@@ -72,7 +72,11 @@ def generate_interpretation():
         
         # Use OpenAIService instead of direct client call
         try:
-            interpretation_text = OpenAIService.generate_interpretation(dream_content, interp_type)
+            interpretation_text = OpenAIService.generate_interpretation(
+                dream_content, 
+                interp_type,
+                current_user.id 
+            )
         except Exception as e:
             logger.error(f"OpenAI interpretation generation error: {str(e)}")
             return jsonify({'errors': {'server': 'Failed to generate interpretation'}}), 500

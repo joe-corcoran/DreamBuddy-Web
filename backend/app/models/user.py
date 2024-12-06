@@ -36,11 +36,17 @@ class User(db.Model, UserMixin):
     )
 
     profile = db.relationship(
-    'UserProfile',
-    back_populates='user',
-    uselist=False,
-    cascade='all, delete-orphan'
-)
+        'UserProfile',
+        back_populates='user',
+        uselist=False,
+        cascade='all, delete-orphan'
+    )
+
+    dream_entities = db.relationship(
+        'DreamEntity',
+        back_populates='user',
+        cascade='all, delete-orphan'
+    )
 
     @property
     def password(self):

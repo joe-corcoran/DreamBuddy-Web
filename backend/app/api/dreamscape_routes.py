@@ -21,7 +21,10 @@ def generate_dreamscape(dream_id):
             return jsonify({'errors': {'auth': 'Unauthorized'}}), 403
 
         # Generate dreamscape using OpenAI
-        dreamscape_data = OpenAIService.generate_dreamscape(dream.content)
+        dreamscape_data = OpenAIService.generate_dreamscape(
+            dream.content,
+            current_user.id  # Add user_id parameter
+        )
         if not dreamscape_data or 'image_url' not in dreamscape_data:
             return jsonify({'errors': {'server': 'Failed to generate image'}}), 500
 

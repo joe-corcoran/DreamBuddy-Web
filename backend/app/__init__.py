@@ -16,6 +16,8 @@ from .api.dreamscape_routes import dreamscape_routes
 from .api.character_routes import character_routes
 from .api.profile_routes import profile_routes
 from app.aws import aws_helpers
+from .api.dream_entity_routes import dream_entity_routes
+
 import logging 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -59,6 +61,7 @@ app.register_blueprint(interpretation_routes, url_prefix='/api/interpretations')
 app.register_blueprint(dreamscape_routes, url_prefix='/api/dreamscapes')
 app.register_blueprint(character_routes, url_prefix='/api/character')
 app.register_blueprint(profile_routes, url_prefix='/api/profile')
+app.register_blueprint(dream_entity_routes, url_prefix='/api/dream-entities')
 
 
 @app.after_request

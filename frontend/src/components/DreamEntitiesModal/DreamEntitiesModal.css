@@ -1,0 +1,198 @@
+/* frontend/src/components/DreamEntitiesModal/DreamEntitiesModal.css */
+.dream-entities-modal {
+    padding: 20px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.dream-entities-modal h2 {
+    margin-bottom: 20px;
+    text-align: center;
+    color: #333;
+}
+
+.entities-list {
+    display: grid;
+    gap: 15px;
+}
+
+.entity-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.entity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.entity-header h3 {
+    margin: 0;
+    color: #2c3e50;
+}
+
+.entity-type {
+    background: #e9ecef;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    color: #495057;
+}
+
+.entity-description {
+    color: #6c757d;
+    margin: 10px 0;
+    font-size: 0.9em;
+}
+
+.entity-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8em;
+    color: #868e96;
+    margin: 10px 0;
+}
+
+.entity-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.entity-actions button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.entity-actions button:first-child {
+    background: #4dabf7;
+    color: white;
+}
+
+.entity-actions button:last-child {
+    background: #ff6b6b;
+    color: white;
+}
+
+.add-entity-button {
+    background: #40c057;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 15px;
+    font-size: 1em;
+}
+
+.add-entity-button:hover {
+    background: #37b24d;
+}
+
+.entity-form {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #495057;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.form-actions button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.form-actions button[type="submit"] {
+    background: #40c057;
+    color: white;
+}
+
+.form-actions button[type="button"] {
+    background: #868e96;
+    color: white;
+}
+
+.error {
+    color: #ff6b6b;
+    margin: 10px 0;
+    font-size: 0.9em;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #868e96;
+}
+
+/* Hover effects */
+.entity-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+    transition: all 0.2s ease;
+}
+
+.entity-actions button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+.form-actions button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+/* Focus states */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #4dabf7;
+    box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.2);
+}

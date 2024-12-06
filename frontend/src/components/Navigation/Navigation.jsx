@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import ProfileButton from "./ProfileButton";
 import OpenModalButton from "../OpenModalButton";
 import ProfileModal from "../ProfileModal/ProfileModal";
+import DreamEntitiesModal from "../DreamEntitiesModal/DreamEntitiesModal";
 import "./Navigation.css";
 
 function Navigation() {
@@ -20,11 +21,18 @@ function Navigation() {
 
       <div className="nav-right">
         {user && (
-          <OpenModalButton
-            buttonText={<i className="fas fa-eye"></i>}
-            modalComponent={<ProfileModal />}
-            className="nav-icon"
-          />
+          <>
+            <OpenModalButton
+              buttonText={<i className="fas fa-eye"></i>}
+              modalComponent={<ProfileModal />}
+              className="nav-icon"
+            />
+            <OpenModalButton
+              buttonText={<i className="fas fa-star"></i>}
+              modalComponent={<DreamEntitiesModal />}
+              className="nav-icon"
+            />
+          </>
         )}
         <ProfileButton user={user} />
       </div>
