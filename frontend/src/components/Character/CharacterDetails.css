@@ -103,6 +103,42 @@
     color: white;
     margin-bottom: 0.5rem;
   }
+
+  .streak-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  
+  .streak-button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .streak-button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+  }
+  
+  .streak-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .character-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
   
   .character-evolution-text {
     color: rgba(255, 255, 255, 0.8);

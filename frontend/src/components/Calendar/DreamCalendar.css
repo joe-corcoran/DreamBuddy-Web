@@ -1,10 +1,8 @@
-/* DreamCalendar.css */
-
 .dream-calendar-container {
     position: relative;
     width: 100%;
     min-height: 100vh;
-    background: linear-gradient(to bottom, #000000, #4B0082); 
+    background: linear-gradient(to bottom, #000000, #4B0082);
     overflow: hidden;
 }
 
@@ -36,7 +34,7 @@
     position: relative;
     z-index: 1;
     padding: 20px;
-    max-width: 1000px; 
+    width: var(--calendar-width);
     margin: 0 auto;
     box-sizing: border-box;
 }
@@ -53,7 +51,7 @@
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 5px; 
+    gap: 10px;
 }
 
 .calendar-header-cell {
@@ -63,36 +61,314 @@
     padding: 5px 0;
 }
 
+.calendar-cell {
+    position: relative;
+    aspect-ratio: var(--cell-aspect-ratio);
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden; 
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    padding: 0; 
+}
+
+.dreamscape-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(.7px) brightness(0.7); 
+    transition: all 0.3s ease;
+    z-index: 0;
+}
+
+.cell-content {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s ease;
+}
+
+.calendar-cell:hover {
+    transform: scale(1.02);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.calendar-cell:hover .dreamscape-background {
+    filter: blur(0px) brightness(.95);
+    transform: scale(1.1);
+}
+
+.calendar-cell:hover .cell-content {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.calendar-cell.empty {
+    background: transparent;
+    cursor: default;
+    border: none;
+}
+
+.calendar-cell.today {
+    border: 2px solid rgba(255, 0, 0, 0.5);
+}
+
+.calendar-cell.lucid .cell-content {
+    background: rgba(255, 215, 0, 0.1);
+}
+
+.date-number {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    color: white;
+    font-size: 0.9rem;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.dream-indicators {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.tag-dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.2s ease;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.calendar-cell:hover .tag-dot {
+    transform: translate(-50%, -50%) scale(1.2);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
 .loading-spinner {
     text-align: center;
     color: white;
     margin-top: 20px;
 }
 
+.calendar-grid.week-view {
+    gap: 15px;
+    height: calc(85vh - 300px);
+    grid-template-rows: auto 1fr; 
+}
 
-@media (max-width: 600px) {
+.calendar-grid.week-view .calendar-header-cell {
+    padding: 10px 0;
+    font-size: 1.1rem;
+}
+
+.calendar-grid.week-view .calendar-cell {
+    aspect-ratio: unset; /* Remove the aspect ratio constraint */
+    height: 100%; /* Fill the available height */
+    min-height: 300px; /* Ensure minimum height */
+}
+
+.calendar-grid.week-view .calendar-cell .dreamscape-background {
+    height: 100%;
+}
+
+.calendar-grid.week-view .calendar-cell .cell-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 15px;
+}
+
+.calendar-grid.week-view .date-number {
+    font-size: 1.2rem;
+    padding: 5px 10px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+}
+
+.calendar-grid.week-view .dream-indicators {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendar-grid.week-view .tag-dot {
+    width: 10px;
+    height: 10px;
+}
+
+/* Adjust container padding for week view */
+.calendar-container.week-mode {
+    padding: 10px;
+    max-width: 98vw;
+    margin: 1rem auto;
+}
+/* Tablet Responsiveness */
+/* Tablet Responsiveness */
+/* Tablet Responsiveness */
+@media (max-width: 1024px) {
+    .calendar-content {
+        --calendar-width: 95vw;
+        padding: 15px;
+    }
+
+    .calendar-container {
+        padding: 15px;
+    }
+
+    .calendar-grid {
+        gap: 8px;
+    }
+
+    /* Month View Adjustments */
+    .calendar-cell {
+        --cell-aspect-ratio: 1.2;
+    }
+
+    .date-number {
+        font-size: 0.85rem;
+    }
+
+    .tag-dot {
+        width: 7px;
+        height: 7px;
+    }
+
+    /* Week View Specific */
+    .calendar-grid.week-view {
+        height: 60vh;
+        gap: 10px;
+    }
+
+    .calendar-grid.week-view .calendar-cell {
+        min-height: 200px;
+        height: 100%;
+    }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    :root {
+        --calendar-width: 100%;
+    }
+
     .calendar-content {
         padding: 10px;
     }
 
     .calendar-container {
         padding: 10px;
+        margin-top: 1rem;
     }
 
-    .calendar-grid {
-        gap: 2px;
+    /* Month View Adjustments */
+    .calendar-grid:not(.week-view) {
+        gap: 4px;
     }
 
+    .calendar-grid:not(.week-view) .calendar-cell {
+        --cell-aspect-ratio: 1;
+        padding: 4px;
+    }
+
+    /* Week View Specific */
+    .calendar-grid.week-view {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
+    }
+
+    /* Hide day names in week view on mobile */
+    .calendar-grid.week-view .calendar-header-cell {
+        display: none;
+    }
+
+    .calendar-grid.week-view .calendar-cell {
+        min-height: 150px;
+        margin-bottom: 5px;
+    }
+
+    /* Remove transparent overlay in week view */
+    .calendar-grid.week-view .cell-content {
+        background: none;
+    }
+
+    .calendar-grid.week-view .date-number {
+        font-size: 1rem;
+        padding: 4px 8px;
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 4px;
+        top: 8px;
+        left: 8px;
+    }
+
+    /* Shared Styles */
     .calendar-header-cell {
         font-size: 0.8em;
-    }
-
-    .calendar-cell .date-number {
-        font-size: 0.7em;
+        padding: 3px 0;
     }
 
     .tag-dot {
         width: 6px;
         height: 6px;
+    }
+
+    .calendar-cell:hover {
+        transform: none;
+    }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+    .calendar-grid:not(.week-view) {
+        gap: 2px;
+    }
+
+    .calendar-grid.week-view {
+        gap: 8px;
+    }
+
+    .calendar-grid.week-view .calendar-cell {
+        min-height: 120px;
+    }
+
+    .calendar-header-cell {
+        font-size: 0.7em;
+    }
+
+    .date-number {
+        font-size: 0.7rem;
+    }
+
+    .tag-dot {
+        width: 5px;
+        height: 5px;
+    }
+
+    .dreamscape-background {
+        filter: blur(1px) brightness(0.8);
+    }
+
+    .calendar-cell:hover .dreamscape-background {
+        filter: blur(0.5px) brightness(0.9);
+    }
+
+    /* Week view specific adjustments for very small screens */
+    .calendar-grid.week-view .date-number {
+        font-size: 0.9rem;
+        top: 6px;
+        left: 6px;
     }
 }

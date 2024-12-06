@@ -1,4 +1,5 @@
-// frontend/src/components/HomePage/HomePage.jsx
+// HomePage.jsx
+// HomePage.jsx
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useModal } from "../../context/Modal";
@@ -8,7 +9,7 @@ import QuickDreamEntry from "../QuickDreamEntry/QuickDreamEntry";
 import GhostView from "../Character/GhostView";
 import CharacterDetails from "../Character/CharacterDetails";
 import StatusBars from "../Character/StatusBars";
-import { getCharacter } from "../../redux/character";
+import { getCharacter, CHARACTER_STAGES } from "../../redux/character";
 import "./HomePage.css";
 
 const HomePage = () => {
@@ -21,7 +22,10 @@ const HomePage = () => {
 
   useEffect(() => {
     if (sessionUser) {
-      dispatch(getCharacter());
+      setIsLoading(true);
+      dispatch(getCharacter()).finally(() => {
+        setIsLoading(false);
+      });
     }
   }, [dispatch, sessionUser]);
 
@@ -40,35 +44,43 @@ const HomePage = () => {
     </div>
   );
 
-  const renderCharacterSection = () => (
-    <div className="character-section">
-      <div className="ghost-container">
-        <div className="ghost-status-wrapper">
-          <div className="ghost-view-wrapper">
-            <h2 className="character-name">{character.stage_name || "Drifty"}</h2>
-            <GhostView
-              stageName={character.stage_name}
-              streakDays={character.streak_days}
-              happiness={character.happiness}
-              onCharacterClick={() => setShowCharacterDetails(true)}
-            />
-          </div>
-          <StatusBars 
-            happiness={character.happiness} 
-            health={character.health}
+  const renderAuthenticatedContent = () => (
+    <div className="authenticated-content">
+      <div className="ghost-status-wrapper">
+        <div className="ghost-view-wrapper">
+          <h2 className="character-name">
+            {character.stage_name ? 
+              CHARACTER_STAGES[character.stage_name].name : 
+              "Drifty"}
+          </h2>
+          <GhostView
+            stageName={character.stage_name}
+            streakDays={character.streak_days}
+            happiness={character.happiness}
+            onCharacterClick={() => setShowCharacterDetails(true)}
           />
         </div>
+        <StatusBars 
+          happiness={character.happiness} // Use actual happiness
+          health={character.health} // Use actual health
+        />
       </div>
-    </div>
-  );
-
-  const renderDreamSection = () => (
-    <div className="dream-entry-section">
-      <div className="dream-entry-header">
-        <h2>Record Today's Dream</h2>
-        <p>Share your nightly adventures and unlock dream insights</p>
+      <div className="dream-entry-section">
+        <div className="dream-entry-header">
+          <h2>Record Today's Dream</h2>
+          <p>Share your nightly adventures and unlock dream insights</p>
+        </div>
+        <QuickDreamEntry />
       </div>
-      <QuickDreamEntry />
+      {showCharacterDetails && (
+        <CharacterDetails
+          stageName={character.stage_name}
+          happiness={character.happiness}
+          health={character.health}
+          streakDays={character.streak_days}
+          onClose={() => setShowCharacterDetails(false)}
+        />
+      )}
     </div>
   );
 
@@ -89,48 +101,16 @@ const HomePage = () => {
       </div>
 
       <div className="content-container">
-      {isLoading ? (
-        <div className="loading-spinner">Loading...</div>
-      ) : sessionUser ? (
-        <div className="authenticated-content">
-          <div className="ghost-status-wrapper">
-            <div className="ghost-view-wrapper">
-              <h2 className="character-name">{character.stage_name || "Drifty"}</h2>
-              <GhostView
-                stageName={character.stage_name}
-                streakDays={character.streak_days}
-                happiness={character.happiness}
-                onCharacterClick={() => setShowCharacterDetails(true)}
-              />
-            </div>
-            <StatusBars 
-              happiness={character.happiness} 
-              health={character.health}
-            />
-          </div>
-          <div className="dream-entry-section">
-            <div className="dream-entry-header">
-              <h2>Record Today's Dream</h2>
-              <p>Share your nightly adventures and unlock dream insights</p>
-            </div>
-            <QuickDreamEntry />
-          </div>
-          {showCharacterDetails && (
-            <CharacterDetails
-              stageName={character.stage_name}
-              happiness={character.happiness}
-              health={character.health}
-              streakDays={character.streak_days}
-              onClose={() => setShowCharacterDetails(false)}
-            />
-          )}
-        </div>
-      ) : (
-        renderAuthContent()
-      )}
+        {isLoading ? (
+          <div className="loading-spinner">Loading...</div>
+        ) : sessionUser ? (
+          renderAuthenticatedContent()
+        ) : (
+          renderAuthContent()
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default HomePage;

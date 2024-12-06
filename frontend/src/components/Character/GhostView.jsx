@@ -1,6 +1,6 @@
 //frontend/src/components/Character/GhostView.jsx
 // GhostView.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Player } from '@lottiefiles/react-lottie-player';
 import { CHARACTER_STAGES } from '../../redux/character';
 import './GhostView.css';
@@ -19,6 +19,7 @@ const GhostView = ({
   isInteractive = true
 }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [currentStage, setCurrentStage] = useState(stageName);
 
   const animations = {
     aether,
@@ -28,6 +29,18 @@ const GhostView = ({
     shimmer,
     wisp
   };
+
+  // Update stage based on happiness
+  useEffect(() => {
+    let newStage = 'drifty';
+    if (happiness >= CHARACTER_STAGES.aether.minHappiness) newStage = 'aether';
+    else if (happiness >= CHARACTER_STAGES.lumos.minHappiness) newStage = 'lumos';
+    else if (happiness >= CHARACTER_STAGES.phantom.minHappiness) newStage = 'phantom';
+    else if (happiness >= CHARACTER_STAGES.shimmer.minHappiness) newStage = 'shimmer';
+    else if (happiness >= CHARACTER_STAGES.wisp.minHappiness) newStage = 'wisp';
+
+    setCurrentStage(newStage);
+  }, [happiness]);
 
   const getAccessories = () => {
     if (streakDays >= 14) return <div className="ghost-accessories ghost-crown">👑</div>;
@@ -47,22 +60,17 @@ const GhostView = ({
       )}
       
       <Player
-        src={animations[stageName]}
+        src={animations[currentStage]}
         className="ghost-animation"
         loop
         autoplay
+        key={currentStage} // Force re-render on stage change
         onEvent={event => {
           if (event === 'load') setIsLoading(false);
         }}
       />
       
       {getAccessories()}
-      
-      {/* {CHARACTER_STAGES[stageName] && (
-        // <div className="ghost-name">
-        //   {CHARACTER_STAGES[stageName].name}
-        // </div>
-      )} */}
     </div>
   );
 };

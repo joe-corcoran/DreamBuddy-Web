@@ -7,6 +7,7 @@ import OpenModalButton from "../OpenModalButton";
 import ProfileModal from "../ProfileModal/ProfileModal";
 import DreamEntitiesModal from "../DreamEntitiesModal/DreamEntitiesModal";
 import AppearanceModal from "../AppearanceModal/AppearanceModal";
+import dbLogo from "../../assets/images/db_logo.png";
 import "./Navigation.css";
 
 function Navigation() {
@@ -16,7 +17,7 @@ function Navigation() {
     <nav className="top-navigation">
       <div className="nav-left">
         <NavLink to="/" className="home-link">
-          <h1 className="app-title">DreamBuddy</h1>
+          <img src={dbLogo} alt="DreamBuddy Logo" className="nav-logo" />
         </NavLink>
       </div>
 

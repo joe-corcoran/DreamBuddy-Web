@@ -1,11 +1,10 @@
 /* frontend/src/components/Calendar/DayView.css */
 /* frontend/src/components/Calendar/CalendarHeader.css */
-
 .calendar-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 }
 
 .month-nav-button {
@@ -22,10 +21,54 @@
     transform: scale(1.2);
 }
 
+.header-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
 .month-year {
     color: white;
     font-size: 1.5rem;
     text-align: center;
-    flex-grow: 1;
     margin: 0;
+}
+
+.view-toggle {
+    display: flex;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 3px;
+    border-radius: 20px;
+    gap: 4px;
+}
+
+.toggle-btn {
+    background: none;
+    border: none;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.toggle-btn.active {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.toggle-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+    .month-year {
+        font-size: 1.2rem;
+    }
+    
+    .toggle-btn {
+        padding: 4px 12px;
+        font-size: 0.8rem;
+    }
 }

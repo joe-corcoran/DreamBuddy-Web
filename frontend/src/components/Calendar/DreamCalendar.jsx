@@ -6,7 +6,8 @@ import {
   thunkGetDreamsByMonth,
   thunkGetPopularTags,
 } from '../../redux/dreams';
-import { useModal } from '../../context/Modal'; 
+import { getAllDreamscapes } from '../../redux/dreamscapes';
+import { useModal } from '../../context/Modal';
 import DreamDetailsModal from '../Dreams/DreamDetailsModal/DreamDetailsModal';
 import CalendarHeader from './CalendarHeader';
 import DayView from './DayView';
@@ -19,21 +20,28 @@ const DreamCalendar = () => {
   const dreams = useSelector((state) =>
     Object.values(state.dreams.allDreams)
   );
+  const dreamscapes = useSelector((state) => state.dreamscapes.byDreamId);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedDreams, setSelectedDreams] = useState([]);
   const [popularTags, setPopularTags] = useState([]);
   const [tagColors, setTagColors] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+  const [view, setView] = useState('month');
+
 
   useEffect(() => {
     const loadCalendarData = async () => {
       setIsLoading(true);
       try {
-        await dispatch(thunkLoadDreams());
+        // Load both dreams and dreamscapes in parallel
+        await Promise.all([
+          dispatch(thunkLoadDreams()),
+          dispatch(getAllDreamscapes())
+        ]);
 
         const year = selectedDate.getFullYear();
         const month = selectedDate.getMonth() + 1;
-        const monthDreams = await dispatch(thunkGetDreamsByMonth(year, month));
+        await dispatch(thunkGetDreamsByMonth(year, month));
 
         const tagsData = await dispatch(thunkGetPopularTags());
         if (tagsData && !tagsData.errors) {
@@ -49,7 +57,7 @@ const DreamCalendar = () => {
     };
 
     loadCalendarData();
-  }, [dispatch, selectedDate, dreams.length]); 
+  }, [dispatch, selectedDate]);
 
   const assignColorsToTags = (tags) => {
     const colors = [
@@ -79,13 +87,11 @@ const DreamCalendar = () => {
     const date = new Date(year, month, 1);
     const days = [];
 
-    // Add empty slots for days before the first of the month
     const firstDay = date.getDay();
     for (let i = 0; i < firstDay; i++) {
       days.push(null);
     }
 
-    // Add all days in the month
     while (date.getMonth() === month) {
       days.push(new Date(date));
       date.setDate(date.getDate() + 1);
@@ -104,6 +110,19 @@ const DreamCalendar = () => {
         dreamDate.getFullYear() === date.getFullYear()
       );
     });
+  };
+
+  const daysInWeek = () => {
+    const curr = new Date(selectedDate);
+    const first = curr.getDate() - curr.getDay();
+    const days = [];
+  
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(curr.setDate(first + i));
+      days.push(new Date(day));
+    }
+  
+    return days;
   };
 
   const handleDateClick = (date) => {
@@ -127,10 +146,14 @@ const DreamCalendar = () => {
       />
     );
   };
-  
+
+  const style = {
+    '--calendar-width': 'min(95vw, 1400px)',
+    '--cell-aspect-ratio': view === 'week' ? '2' : '1.4'
+  };
 
   return (
-    <div className="dream-calendar-container">
+    <div className="dream-calendar-container" style={style}>
       <div className="stars-background">
         {[...Array(50)].map((_, i) => (
           <div
@@ -147,48 +170,46 @@ const DreamCalendar = () => {
 
       <div className="calendar-content">
         <div className="calendar-container">
-          <CalendarHeader
-            selectedDate={selectedDate}
-            onChange={setSelectedDate}
-          />
+        <CalendarHeader
+  selectedDate={selectedDate}
+  onChange={setSelectedDate}
+  view={view}
+  onViewChange={setView}
+/>
 
           {isLoading ? (
             <div className="loading-spinner">Loading dreams...</div>
           ) : (
             <>
-              <div className="calendar-grid">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                  <div key={day} className="calendar-header-cell">
-                    {day}
-                  </div>
-                ))}
-                {daysInMonth().map((date, index) => (
-                  <DayView
-                    key={index}
-                    date={date}
-                    dreams={getDreamsForDate(date)}
-                    tagColors={tagColors}
-                    popularTags={popularTags}
-                    onClick={() => handleDateClick(date)}
-                    isToday={
-                      date &&
-                      new Date().toDateString() === date.toDateString()
-                    }
-                  />
-                ))}
-              </div>
+              <div className={`calendar-grid ${view === 'week' ? 'week-view' : ''}`}>
+  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+    <div key={day} className="calendar-header-cell">
+      {day}
+    </div>
+  ))}
+  {(view === 'month' ? daysInMonth() : daysInWeek()).map((date, index) => {
+    const dreamsForDate = getDreamsForDate(date);
+    const dreamWithImage = dreamsForDate.find(dream => dreamscapes[dream.id]?.image_url);
+    const dreamscapeUrl = dreamWithImage ? dreamscapes[dreamWithImage.id]?.image_url : null;
+
+    return (
+      <DayView
+        key={index}
+        date={date}
+        dreams={dreamsForDate}
+        tagColors={tagColors}
+        popularTags={popularTags}
+        onClick={() => handleDateClick(date)}
+        isToday={date && new Date().toDateString() === date.toDateString()}
+        dreamscapeUrl={dreamscapeUrl}
+      />
+    );
+  })}
+</div>
 
               <TagLegend tags={popularTags} tagColors={tagColors} />
             </>
           )}
-
-          {/* {showDreamPopover && (
-            <DreamPopover
-              date={selectedDate}
-              dreams={selectedDreams}
-              onClose={() => setShowDreamPopover(false)}
-            />
-          )} */}
         </div>
       </div>
     </div>
