@@ -160,18 +160,19 @@ const handleUserSubmit = async (e) => {
                 >
                     Your Appearance
                 </button>
-                <button 
+                {/* <button 
                     className={showCharacterForm ? 'active' : ''} 
                     onClick={() => setShowCharacterForm(true)}
                 >
                     Recurring Characters
-                </button>
+                </button> */}
             </div>
 
             {!showCharacterForm ? (
                 <form onSubmit={handleUserSubmit} className="appearance-form">
+                   <div className="form-title">
                     <h3>Your Physical Appearance</h3>
-                    
+                    </div> 
                     {Object.entries(APPEARANCE_OPTIONS).map(([field, options]) => {
     const fieldName = field.endsWith('s') ? field.slice(0, -1) : field;
     return (
