@@ -47,12 +47,12 @@ const DreamscapeViewer = ({ dream, onClose }) => {
               </div>
             )}
             
-            {dreamscape.optimized_prompt && (
+            {/* {dreamscape.optimized_prompt && (
               <div className="dream-prompt">
                 <h3>Dreamscape Inspiration</h3>
                 <p>{dreamscape.optimized_prompt}</p>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </div>
