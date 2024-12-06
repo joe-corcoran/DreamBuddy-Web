@@ -361,9 +361,9 @@ const DreamDetailsModal = ({ date: initialDate, dreams: initialDreams, onUpdate 
                       e.target.style.display = "none";
                     }}
                   />
-                  <div className="prompt-text">
+                  {/* <div className="prompt-text">
                     <small>Inspiration: {dreamscapes[dream.id].optimized_prompt}</small>
-                  </div>
+                  </div> */}
                 </div>
               ) : (
                 <div className="dreamscape-generate">

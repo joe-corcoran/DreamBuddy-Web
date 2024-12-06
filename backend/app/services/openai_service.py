@@ -3,12 +3,47 @@ from openai import OpenAI
 import os
 import logging
 from tenacity import retry, stop_after_attempt, wait_exponential
-from app.models import UserProfile, DreamEntity
+from app.models import UserProfile, DreamEntity, UserAppearance, RecurringCharacter  # Add these imports
 
 logger = logging.getLogger(__name__)
 client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
 
 class OpenAIService:
+    @staticmethod
+    def _get_appearance_context(user_id):
+        """Get detailed appearance context for the user and recurring characters"""
+        context = ""
+        
+        # Get user appearance
+        appearance = UserAppearance.query.filter_by(user_id=user_id).first()
+        if appearance:
+            context += (
+                f"Physical appearance of dreamer: A {appearance.age_range} year old "
+                f"{appearance.gender} of {appearance.height_range} height with a {appearance.build} build. "
+                f"Has {appearance.hair_style} {appearance.hair_color} hair, {appearance.eye_color} eyes, "
+                f"and {appearance.skin_tone} skin tone"
+            )
+            if appearance.facial_hair and appearance.facial_hair != 'none':
+                context += f" with {appearance.facial_hair}"
+            context += ".\n"
+
+        # Get recurring characters
+        characters = RecurringCharacter.query.filter_by(user_id=user_id).all()
+        if characters:
+            context += "\nRecurring characters in dreams:\n"
+            for char in characters:
+                context += (
+                    f"- {char.name} ({char.relationship}): A {char.age_range} {char.gender} "
+                    f"of {char.height_range} height with a {char.build} build. "
+                    f"Has {char.hair_style} {char.hair_color} hair, {char.eye_color} eyes, "
+                    f"and {char.skin_tone} skin tone"
+                )
+                if char.facial_hair and char.facial_hair != 'none':
+                    context += f" with {char.facial_hair}"
+                context += ".\n"
+
+        return context.strip()
+
     @staticmethod
     def _get_user_context(user_id):
         """Get user profile and dream entities context"""
@@ -115,37 +150,53 @@ class OpenAIService:
     def generate_dreamscape(dream_content, user_id):
         """Generate both the optimized prompt and image for a dreamscape"""
         try:
-            # Get user context for dreamscape generation
+            # Get both profile and appearance context
             user_context = OpenAIService._get_user_context(user_id)
+            appearance_context = OpenAIService._get_appearance_context(user_id)
             
             # Generate the optimized prompt
             prompt_messages = [
                 {
                     "role": "system",
                     "content": """Create vivid, artistic image generation prompts. 
-                    Focus on visual elements while maintaining consistency with the 
-                    dreamer's personal context and recurring dream elements."""
+                    You MUST maintain exact physical appearance accuracy for any people 
+                    depicted in the scene. Pay careful attention to gender, age, height, 
+                    build, hair, eyes, and skin tone as specified."""
                 }
             ]
             
+            if appearance_context:
+                prompt_messages.append({
+                    "role": "user",
+                    "content": f"IMPORTANT - Physical appearances to match exactly:\n{appearance_context}"
+                })
+
             if user_context:
                 prompt_messages.append({
                     "role": "user",
-                    "content": f"Dreamer's context:\n{user_context}"
+                    "content": f"Additional context about the dreamer:\n{user_context}"
                 })
             
             prompt_messages.append({
                 "role": "user",
-                "content": f"Create an artistic image prompt based on this dream:\n{dream_content}"
+                "content": f"Create an artistic image prompt based on this dream, ensuring any people depicted EXACTLY match their physical descriptions above:\n{dream_content}"
             })
             
             prompt_response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=prompt_messages,
+                temperature=0.7,
                 timeout=30
             )
             
             optimized_prompt = prompt_response.choices[0].message.content
+            
+            # Add appearance reinforcement directly to DALL-E prompt
+            if appearance_context:
+                optimized_prompt = (
+                    f"IMPORTANT - Maintain exact physical accuracy: {appearance_context}\n\n"
+                    f"{optimized_prompt}"
+                )
 
             # Generate the image
             image_response = client.images.generate(
@@ -154,6 +205,7 @@ class OpenAIService:
                 n=1,
                 size="1792x1024",
                 quality="hd",
+                style="vivid",
                 timeout=60
             )
             
