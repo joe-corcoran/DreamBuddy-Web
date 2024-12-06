@@ -6,6 +6,7 @@ import ProfileButton from "./ProfileButton";
 import OpenModalButton from "../OpenModalButton";
 import ProfileModal from "../ProfileModal/ProfileModal";
 import DreamEntitiesModal from "../DreamEntitiesModal/DreamEntitiesModal";
+import AppearanceModal from "../AppearanceModal/AppearanceModal";
 import "./Navigation.css";
 
 function Navigation() {
@@ -30,6 +31,11 @@ function Navigation() {
             <OpenModalButton
               buttonText={<i className="fas fa-star"></i>}
               modalComponent={<DreamEntitiesModal />}
+              className="nav-icon"
+            />
+            <OpenModalButton
+              buttonText={<i className="fas fa-user-edit"></i>}
+              modalComponent={<AppearanceModal />}
               className="nav-icon"
             />
           </>

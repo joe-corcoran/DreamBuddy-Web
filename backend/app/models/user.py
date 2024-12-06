@@ -16,6 +16,20 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(255), nullable=False, unique=True)
     hashed_password = db.Column(db.String(255), nullable=False)
     
+    # Add these new relationships
+    appearance = db.relationship(
+        'UserAppearance',
+        back_populates='user',
+        uselist=False,
+        cascade='all, delete-orphan'
+    )
+
+    recurring_characters = db.relationship(
+        'RecurringCharacter',
+        back_populates='user',
+        cascade='all, delete-orphan'
+    )
+    
     dreams = db.relationship(
         'DreamJournal', 
         back_populates='user',

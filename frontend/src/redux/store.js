@@ -14,6 +14,8 @@ import dreamscapesReducer from "./dreamscapes";
 import interpretationsReducer from "./interpretations";
 import profileReducer from './profile';
 import dreamEntitiesReducer from './dreamEntities';
+import appearancesReducer from './appearances';
+
 
 export const CLEAR_STATE = 'app/CLEAR_STATE';
 
@@ -32,7 +34,9 @@ const combinedReducer = combineReducers({
   dreamscapes: dreamscapesReducer,
   interpretations: interpretationsReducer,
   profile: profileReducer,
-  dreamEntities: dreamEntitiesReducer
+  dreamEntities: dreamEntitiesReducer,
+  appearances: appearancesReducer
+
 });
 
 const rootReducer = (state, action) => {
