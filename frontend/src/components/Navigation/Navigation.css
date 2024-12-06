@@ -18,7 +18,17 @@
 .nav-left, .nav-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 15px;
+}
+
+.nav-right {
+  height: 60px;
+  padding-right: 1rem;
+}
+
+.nav-right hover {
+  color: white;
+  transform: translateY(-1px);
 }
 
 .home-link {
@@ -28,8 +38,32 @@
   padding: 5px 0;
 }
 
+.nav-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+}
+
+.app-store-link {
+  display: block;
+  height: 45px;
+}
+
+.app-store-button {
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+.app-store-button:hover {
+  transform: scale(1.05);
+}
+
 .nav-logo {
-  height: 80px;
+  height: 70px;
   width: auto;
   object-fit: contain;
 }
@@ -37,8 +71,8 @@
 .nav-icon {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1.2rem;
+  color: rgb(255, 255, 255);
+  font-size: 1.4rem;
   cursor: pointer;
   padding: 8px;
   display: flex;
@@ -98,7 +132,9 @@
   .top-navigation {
     padding: 0 10px;
   }
-  
+  .app-store-button {
+    height: 40px;
+  }
   .nav-logo {
     height: 40px;
   }

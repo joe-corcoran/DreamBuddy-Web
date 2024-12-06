@@ -10,7 +10,7 @@
 .dream-entities-modal h2 {
     margin-bottom: 20px;
     text-align: center;
-    color: #333;
+    color: #ffffff;
 }
 
 .entities-list {
@@ -167,6 +167,11 @@
     text-align: center;
     padding: 20px;
     color: #868e96;
+}
+
+.elements-title {
+    color: #ffffff;
+
 }
 
 /* Hover effects */

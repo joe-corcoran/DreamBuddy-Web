@@ -85,8 +85,9 @@ function DreamEntitiesModal() {
 
     return (
         <div className="dream-entities-modal">
+              <div className="elements-title">
             <h2>Dream Elements Library</h2>
-            
+            </div>
             {!showForm ? (
                 <div className="entities-list">
                     {entities.map(entity => (
